@@ -11,6 +11,9 @@ import {
   UserMultipleIcon,
   UserStar01Icon,
   Wallet02Icon,
+  Bank02Icon,
+  File01Icon,
+  CreditCard02Icon,
 } from "@hugeicons/core-free-icons"
 
 export const navItems = [
@@ -60,6 +63,23 @@ export const navItems = [
     href: "/financeiro",
     icon: ChartIncreaseIcon,
     description: "Receitas, despesas e metas",
+    children: [
+      {
+        title: "Contas bancárias",
+        href: "/financeiro/contas-bancarias",
+        icon: Bank02Icon,
+      },
+      {
+        title: "Categorias Financeiras",
+        href: "/financeiro/categorias",
+        icon: File01Icon,
+      },
+      {
+        title: "Formas de pagamento",
+        href: "/financeiro/formas-pagamento",
+        icon: CreditCard02Icon,
+      },
+    ],
   },
   {
     title: "Planos",
