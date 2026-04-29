@@ -103,46 +103,29 @@ const paymentTones = [
   "bg-zinc-400",
   "bg-emerald-500",
 ]
-const paymentMix = database.paymentMethods.map((method, index) => ({
-  label: method.name,
-  value: method.amount,
-  tone: paymentTones[index % paymentTones.length],
-}))
 
-const financeSummary = {
-  services: todayAppointments.length,
-  fees: Math.round(database.analytics.monthlyGrossRevenue * 0.0349),
-  averageTicket,
-  margin: Math.round(
-    ((database.analytics.monthlyGrossRevenue -
-      database.analytics.monthlyExpenses) /
-      database.analytics.monthlyNetRevenue) *
-      100
-  ),
-}
-
-const dashboardGoalsStorageKey = "mydashbarber.dashboard.goals"
+const dashboardGoalsStorageKey = "admin.dashboard.goals"
 
 const initialGoals: Goal[] = [
   {
     id: "revenue",
     label: "Meta de faturamento",
     current: database.analytics.monthlyGrossRevenue,
-    target: 51000,
+    target: roundGoalTarget(database.analytics.monthlyGrossRevenue, 1.12),
     kind: "currency",
   },
   {
     id: "new-clients",
     label: "Novos clientes",
     current: database.analytics.newClientsThisMonth,
-    target: 45,
+    target: roundGoalTarget(database.analytics.newClientsThisMonth, 1.2),
     kind: "number",
   },
   {
     id: "subscriptions",
     label: "Assinaturas",
     current: database.analytics.activeSubscriptions,
-    target: 180,
+    target: roundGoalTarget(database.analytics.activeSubscriptions, 1.15),
     kind: "number",
   },
 ]
@@ -166,7 +149,7 @@ export function DashboardView() {
   const marginRate = Math.round(
     ((database.analytics.monthlyGrossRevenue -
       database.analytics.monthlyExpenses) /
-      database.analytics.monthlyNetRevenue) *
+      database.analytics.monthlyGrossRevenue) *
       100
   )
   const strategicMetrics = [
@@ -281,7 +264,7 @@ function OperationalDashboard() {
         />
       </SectionCard>
 
-      <SectionCard title="Receita" description="22/04 a 28/04">
+      <SectionCard title="Receita" description={revenuePeriod.label}>
         <WeeklyRevenueChart />
       </SectionCard>
     </div>
@@ -428,13 +411,28 @@ function WeeklyRevenueChart() {
   const totalGross = revenue.reduce((sum, item) => sum + item.gross, 0)
   const totalNet = revenue.reduce((sum, item) => sum + item.net, 0)
   const totalPrevious = revenue.reduce((sum, item) => sum + item.previous, 0)
+  const totalAppointments = revenue.reduce(
+    (sum, item) => sum + item.appointments,
+    0
+  )
   const maxValue = Math.max(
     ...revenue.map((item) => Math.max(item.gross, item.previous))
   )
-  const weeklyDelta = Math.round(
-    ((totalGross - totalPrevious) / totalPrevious) * 100
+  const weeklyDelta =
+    totalPrevious > 0
+      ? Math.round(((totalGross - totalPrevious) / totalPrevious) * 100)
+      : 0
+  const weeklyPaymentMix = buildWeeklyPaymentMix(totalGross)
+  const totalPayments = weeklyPaymentMix.reduce(
+    (sum, item) => sum + item.value,
+    0
   )
-  const totalPayments = paymentMix.reduce((sum, item) => sum + item.value, 0)
+  const weeklyFees = estimatePaymentFees(weeklyPaymentMix)
+  const weeklyExpenses = Math.round(database.analytics.monthlyExpenses / 4.33)
+  const weeklyMargin =
+    totalGross > 0
+      ? Math.round(((totalGross - weeklyExpenses) / totalGross) * 100)
+      : 0
 
   return (
     <div className="space-y-4">
@@ -485,11 +483,9 @@ function WeeklyRevenueChart() {
 
         <div className="flex h-56 items-end gap-2 sm:h-64 sm:gap-3">
           {revenue.map((item) => {
-            const grossHeight = Math.max((item.gross / maxValue) * 100, 8)
-            const previousHeight = Math.max((item.previous / maxValue) * 100, 8)
-            const delta = Math.round(
-              ((item.gross - item.previous) / item.previous) * 100
-            )
+            const grossHeight = getChartHeight(item.gross, maxValue)
+            const previousHeight = getChartHeight(item.previous, maxValue)
+            const delta = formatRevenueDelta(item.gross, item.previous)
 
             return (
               <div
@@ -519,11 +515,10 @@ function WeeklyRevenueChart() {
                   <span
                     className={cn(
                       "block text-[11px] font-medium",
-                      delta >= 0 ? "text-primary" : "text-destructive"
+                      delta.className
                     )}
                   >
-                    {delta >= 0 ? "+" : ""}
-                    {delta}%
+                    {delta.label}
                   </span>
                 </div>
               </div>
@@ -538,7 +533,7 @@ function WeeklyRevenueChart() {
             <div>
               <p className="text-sm font-semibold">Formas de pagamento</p>
               <p className="text-xs text-muted-foreground">
-                Distribuicao da receita bruta
+                Distribuicao da receita bruta semanal
               </p>
             </div>
             <span className="text-sm font-semibold">
@@ -547,17 +542,19 @@ function WeeklyRevenueChart() {
           </div>
 
           <div className="flex h-3 overflow-hidden rounded-full bg-muted">
-            {paymentMix.map((item) => (
+            {weeklyPaymentMix.map((item) => (
               <span
                 key={item.label}
                 className={item.tone}
-                style={{ width: `${(item.value / totalPayments) * 100}%` }}
+                style={{
+                  width: `${totalPayments > 0 ? (item.value / totalPayments) * 100 : 0}%`,
+                }}
               />
             ))}
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
-            {paymentMix.map((item) => (
+            {weeklyPaymentMix.map((item) => (
               <div
                 key={item.label}
                 className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1.5 text-xs"
@@ -577,20 +574,20 @@ function WeeklyRevenueChart() {
         <div className="grid grid-cols-2 gap-2 xl:grid-cols-1">
           <FinanceMiniCard
             label="Atendimentos"
-            value={String(financeSummary.services)}
+            value={String(totalAppointments)}
           />
           <FinanceMiniCard
             label="Ticket medio"
-            value={formatCurrency(financeSummary.averageTicket)}
+            value={formatCurrency(averageTicket)}
           />
           <FinanceMiniCard
             label="Taxas estimadas"
-            value={formatCurrency(financeSummary.fees)}
+            value={formatCurrency(weeklyFees)}
             positive={false}
           />
           <FinanceMiniCard
-            label="Margem liquida"
-            value={`${financeSummary.margin}%`}
+            label="Margem operacional"
+            value={`${weeklyMargin}%`}
           />
         </div>
       </div>
@@ -709,6 +706,61 @@ function PeakHoursChart() {
   )
 }
 
+function buildWeeklyPaymentMix(totalGross: number) {
+  const totalMethodAmount = database.paymentMethods.reduce(
+    (sum, method) => sum + method.amount,
+    0
+  )
+  let allocated = 0
+
+  return database.paymentMethods.map((method, index) => {
+    const isLast = index === database.paymentMethods.length - 1
+    const value = isLast
+      ? Math.max(0, totalGross - allocated)
+      : Math.round(totalGross * (method.amount / totalMethodAmount))
+
+    allocated += value
+
+    return {
+      label: method.name,
+      value,
+      fee: method.fee,
+      tone: paymentTones[index % paymentTones.length],
+    }
+  })
+}
+
+function estimatePaymentFees(
+  paymentMix: ReturnType<typeof buildWeeklyPaymentMix>
+) {
+  return Math.round(
+    paymentMix.reduce((sum, item) => sum + item.value * (item.fee / 100), 0)
+  )
+}
+
+function getChartHeight(value: number, maxValue: number) {
+  if (value <= 0 || maxValue <= 0) {
+    return 0
+  }
+
+  return Math.max((value / maxValue) * 100, 6)
+}
+
+function formatRevenueDelta(gross: number, previous: number) {
+  if (previous <= 0) {
+    return gross > 0
+      ? { label: "Novo", className: "text-primary" }
+      : { label: "Fechado", className: "text-muted-foreground" }
+  }
+
+  const delta = Math.round(((gross - previous) / previous) * 100)
+
+  return {
+    label: `${delta > 0 ? "+" : ""}${delta}%`,
+    className: delta >= 0 ? "text-primary" : "text-destructive",
+  }
+}
+
 function FinanceMiniCard({
   label,
   value,
@@ -783,6 +835,16 @@ function readSavedGoals() {
 
 function formatGoalValue(value: number, kind: GoalKind) {
   return kind === "currency" ? formatCurrency(value) : String(value)
+}
+
+function roundGoalTarget(value: number, multiplier: number) {
+  const nextTarget = Math.ceil(value * multiplier)
+
+  if (nextTarget >= 1000) {
+    return Math.ceil(nextTarget / 100) * 100
+  }
+
+  return Math.max(1, nextTarget)
 }
 
 function calculateGoalProgress(goal: Goal) {

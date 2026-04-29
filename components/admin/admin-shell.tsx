@@ -1,18 +1,17 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   ArrowDown01Icon,
+  DashboardSquare01Icon,
   Menu01Icon,
   Notification03Icon,
   Search01Icon,
 } from "@hugeicons/core-free-icons"
 import { useState } from "react"
 
-import logoIcon from "@/app/icon-mydash/logo-icon-3.png"
 import { navItems } from "@/components/admin/nav-items"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -55,6 +54,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           />
           <aside className="relative h-full w-[min(18rem,calc(100vw-2rem))] border-r border-sidebar-border bg-sidebar px-4 py-5 shadow-xl">
             <SidebarContent
+              key={pathname}
               pathname={pathname}
               onNavigate={() => setMobileOpen(false)}
             />
@@ -64,7 +64,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       <div className="admin-app grid h-svh min-w-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside className="z-30 hidden h-full min-h-0 border-r border-sidebar-border bg-sidebar px-4 py-5 lg:flex lg:flex-col">
-          <SidebarContent pathname={pathname} />
+          <SidebarContent key={pathname} pathname={pathname} />
         </aside>
 
         <div className="flex h-full min-h-0 min-w-0 flex-col">
@@ -83,7 +83,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium text-muted-foreground">
-                  MyDash Barber
+                  Painel administrativo
                 </p>
                 <h1 className="truncate text-base font-semibold md:text-lg">
                   {activeItem.title}
@@ -107,12 +107,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <HugeiconsIcon icon={Notification03Icon} size={19} />
               </Button>
 
-              <Image
-                src={logoIcon}
-                alt="MyDash Barber"
-                className="size-8 rounded-full object-contain sm:size-9"
-                sizes="36px"
-              />
+              <span className="hidden size-9 items-center justify-center rounded-full border bg-muted text-muted-foreground sm:flex">
+                <HugeiconsIcon icon={DashboardSquare01Icon} size={18} />
+              </span>
             </div>
           </header>
 
@@ -134,38 +131,34 @@ function SidebarContent({
   pathname: string
   onNavigate?: () => void
 }) {
-  const activeParentHref = navItems.find(
-    (item) =>
-      "children" in item && item.children && pathname.startsWith(item.href)
-  )?.href
+  const activeParentHref = getParentHref(pathname)
   const [openItems, setOpenItems] = useState<string[]>(
     activeParentHref ? [activeParentHref] : []
   )
 
   function toggleItem(href: string) {
-    setOpenItems((current) =>
-      current.includes(href)
-        ? current.filter((item) => item !== href)
-        : [...current, href]
-    )
+    setOpenItems((current) => (current.includes(href) ? [] : [href]))
+  }
+
+  function handleNavigate(href: string) {
+    const nextParentHref = getParentHref(href)
+
+    setOpenItems(nextParentHref ? [nextParentHref] : [])
+    onNavigate?.()
   }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Link href="/dashboard" className="mb-6 flex items-center gap-3">
-        <Image
-          src={logoIcon}
-          alt="MyDash Barber"
-          className="size-10 rounded-md object-contain"
-          sizes="40px"
-          priority
-        />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
+          <HugeiconsIcon icon={DashboardSquare01Icon} size={20} />
+        </span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">
-            MyDash Barber
+            Painel administrativo
           </span>
           <span className="block truncate text-xs text-sidebar-foreground/60">
-            Admin da barbearia
+            Sistema sem marca configurada
           </span>
         </span>
       </Link>
@@ -188,7 +181,7 @@ function SidebarContent({
                 >
                   <Link
                     href={item.href}
-                    onClick={onNavigate}
+                    onClick={() => handleNavigate(item.href)}
                     className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5"
                   >
                     <HugeiconsIcon icon={item.icon} size={19} />
@@ -230,7 +223,7 @@ function SidebarContent({
                         <Link
                           key={child.href}
                           href={child.href}
-                          onClick={onNavigate}
+                          onClick={() => handleNavigate(child.href)}
                           className={cn(
                             "flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-sidebar-foreground/65 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                             isChildActive &&
@@ -251,11 +244,18 @@ function SidebarContent({
       </ScrollArea>
 
       <div className="mt-4 shrink-0 rounded-md border border-sidebar-border bg-background/60 p-3">
-        <p className="text-xs font-semibold">Plano atual</p>
+        <p className="text-xs font-semibold">Ambiente</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Barbearia Pro, 3 usuarios ativos
+          Configuracao generica ativa
         </p>
       </div>
     </div>
   )
+}
+
+function getParentHref(pathname: string) {
+  return navItems.find(
+    (item) =>
+      "children" in item && item.children && pathname.startsWith(item.href)
+  )?.href
 }

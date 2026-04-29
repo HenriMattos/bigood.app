@@ -70,7 +70,7 @@ export default function CadastrarProfissionalPage() {
         <Field label="Nome completo">
           <Input
             value={form.name}
-            placeholder="Ex.: Paulo Junior"
+            placeholder="Ex.: Profissional 1"
             onChange={(event) => updateForm("name", event.target.value)}
           />
         </Field>

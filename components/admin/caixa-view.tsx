@@ -64,7 +64,7 @@ const services = serviceCatalog.map((service) => ({
 
 const appointments = database.agendaEvents
   .filter((event) => event.type === "appointment")
-  .map((event) => {
+  .map((event, index) => {
     const service = serviceCatalog.find((item) => item.name === event.detail)
 
     return {
@@ -72,7 +72,7 @@ const appointments = database.agendaEvents
       label: `${event.start} - ${event.title}`,
       client: event.title,
       barber: event.barber,
-      chair: event.barber === "Paulo Jean" ? "Cadeira 2" : "Cadeira 1",
+      chair: index % 2 === 0 ? "Cadeira 1" : "Cadeira 2",
       service: event.detail,
       price: service?.price ?? 0,
     }
@@ -82,7 +82,7 @@ const products = database.products
 const barberOptions = database.professionals
   .filter((professional) => professional.status === "Ativo")
   .map((professional) => professional.name)
-const chairOptions = ["Cadeira 1", "Cadeira 2", "Sala Dpote"]
+const chairOptions = ["Cadeira 1", "Cadeira 2", "Sala de atendimento"]
 
 export function CaixaView() {
   const [comandas, setComandas] = useState<Comanda[]>(initialComandas)

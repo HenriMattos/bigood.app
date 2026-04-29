@@ -100,7 +100,7 @@ export type Product = {
 
 export type AgendaEvent = {
   id: number
-  barber: "Paulo Junior" | "Paulo Jean" | "Bruno Castro"
+  barber: string
   date: string
   start: string
   end: string
@@ -181,10 +181,45 @@ export type CashMovement = {
 
 const baseDate = new Date(2026, 3, 29)
 
+const company = {
+  corporateName: "Empresa demonstrativa",
+  tradeName: "Empresa sem nome definido",
+  cnpj: "00.000.000/0000-00",
+  email: "contato@example.test",
+  timezone: "America/Sao_Paulo",
+  phone: "00000000000",
+  slug: "empresa",
+  primaryColor: { r: 145, g: 230, b: 104 },
+}
+
+const professionalNames = ["Profissional 1", "Profissional 2", "Atendimento"]
+
 const services: ServiceCatalogItem[] = [
-  service(52409, "Barba", "Barba", 30, 45, 1, 15, "Paulo Jean", true, 1),
+  service(
+    52409,
+    "Barba",
+    "Barba",
+    30,
+    45,
+    1,
+    15,
+    professionalNames[0],
+    true,
+    1
+  ),
   service(52408, "Corte", "Cabelo", 35, 55, 1, 21, "Todos", true, 2),
-  service(53102, "Degrade", "Cabelo", 45, 65, 1, 21, "Paulo Junior", true, 3),
+  service(
+    53102,
+    "Degrade",
+    "Cabelo",
+    45,
+    65,
+    1,
+    21,
+    professionalNames[1],
+    true,
+    3
+  ),
   service(53104, "Corte + barba", "Combo", 60, 95, 2, 30, "Todos", true, 4),
   service(
     67662,
@@ -194,7 +229,7 @@ const services: ServiceCatalogItem[] = [
     150,
     3,
     30,
-    "Paulo Jean",
+    professionalNames[0],
     true,
     5,
     true
@@ -207,7 +242,7 @@ const services: ServiceCatalogItem[] = [
     110,
     2,
     30,
-    "Paulo Jean",
+    professionalNames[0],
     true,
     6,
     true
@@ -233,7 +268,7 @@ const services: ServiceCatalogItem[] = [
     120,
     2,
     15,
-    "Paulo Jean",
+    professionalNames[0],
     false,
     9
   ),
@@ -245,7 +280,7 @@ const services: ServiceCatalogItem[] = [
     180,
     3,
     45,
-    "Paulo Jean",
+    professionalNames[0],
     false,
     10,
     true
@@ -267,8 +302,8 @@ const services: ServiceCatalogItem[] = [
 const plans: Plan[] = [
   {
     id: 1,
-    name: "Simetria Essencial",
-    benefit: "1 corte mensal com prioridade de agenda",
+    name: "Plano Essencial",
+    benefit: "1 atendimento mensal com prioridade de agenda",
     price: 99.9,
     status: "Ativo",
     recurrence: "Mensal",
@@ -277,8 +312,8 @@ const plans: Plan[] = [
   },
   {
     id: 2,
-    name: "Barba Club",
-    benefit: "4 barbas por mes e manutencao expressa",
+    name: "Plano Barba",
+    benefit: "4 atendimentos de barba por mes",
     price: 129.9,
     status: "Ativo",
     recurrence: "Mensal",
@@ -287,8 +322,8 @@ const plans: Plan[] = [
   },
   {
     id: 3,
-    name: "Simetria Club+",
-    benefit: "Corte, barba e beneficios VIP",
+    name: "Plano Completo",
+    benefit: "Corte, barba e beneficios recorrentes",
     price: 249.9,
     status: "Destaque",
     recurrence: "Mensal",
@@ -297,8 +332,8 @@ const plans: Plan[] = [
   },
   {
     id: 4,
-    name: "Quiro + Visual",
-    benefit: "Cuidados visuais e quiropraxia no mesmo plano",
+    name: "Plano Integral",
+    benefit: "Atendimentos completos e servicos especializados",
     price: 349.9,
     status: "Ativo",
     recurrence: "Mensal",
@@ -314,8 +349,8 @@ const overdueSubscriptions = buildOverdueSubscriptions(subscriptions)
 const professionals: Professional[] = [
   {
     id: 1,
-    name: "Paulo Junior",
-    role: "Barbeiro",
+    name: professionalNames[0],
+    role: "Profissional",
     commission: "40%",
     scheduleStart: "2026-04-29",
     scheduleEnd: "2026-05-29",
@@ -323,17 +358,17 @@ const professionals: Professional[] = [
   },
   {
     id: 2,
-    name: "Paulo Jean",
-    role: "Barbeiro e quiropraxista",
-    commission: "45%",
+    name: professionalNames[1],
+    role: "Profissional",
+    commission: "40%",
     scheduleStart: "2026-04-29",
     scheduleEnd: "2026-05-29",
     status: "Ativo",
   },
   {
     id: 3,
-    name: "Bruno Castro",
-    role: "Atendente",
+    name: professionalNames[2],
+    role: "Atendimento",
     commission: "Fixo",
     scheduleStart: "2026-04-29",
     scheduleEnd: "2026-05-29",
@@ -342,20 +377,34 @@ const professionals: Professional[] = [
 ]
 
 const products: Product[] = [
-  { id: 1, name: "Pomada modeladora", category: "Finalizadores", price: 42 },
-  { id: 2, name: "Oleo para barba", category: "Barba", price: 36 },
-  { id: 3, name: "Shampoo antiqueda", category: "Cabelo", price: 58 },
-  { id: 4, name: "Balm pos-barba", category: "Barba", price: 34 },
+  { id: 1, name: "Produto finalizador", category: "Finalizadores", price: 42 },
+  { id: 2, name: "Produto para barba", category: "Barba", price: 36 },
+  { id: 3, name: "Produto para cabelo", category: "Cabelo", price: 58 },
+  { id: 4, name: "Produto pos-atendimento", category: "Barba", price: 34 },
 ]
 
 const agendaEvents: AgendaEvent[] = [
-  appointment(1, "Paulo Junior", "09:00", "09:45", clients[0], "Corte"),
-  appointment(2, "Paulo Junior", "10:00", "11:00", clients[1], "Degrade"),
-  appointment(3, "Paulo Jean", "09:30", "10:45", clients[2], "Corte + barba"),
-  appointment(4, "Paulo Jean", "11:00", "11:45", clients[3], "Quiropraxia"),
+  appointment(1, professionalNames[0], "09:00", "09:45", clients[0], "Corte"),
+  appointment(2, professionalNames[0], "10:00", "11:00", clients[1], "Degrade"),
+  appointment(
+    3,
+    professionalNames[1],
+    "09:30",
+    "10:45",
+    clients[2],
+    "Corte + barba"
+  ),
+  appointment(
+    4,
+    professionalNames[1],
+    "11:00",
+    "11:45",
+    clients[3],
+    "Quiropraxia"
+  ),
   {
     id: 5,
-    barber: "Paulo Junior",
+    barber: professionalNames[0],
     date: "2026-04-29",
     start: "12:00",
     end: "13:00",
@@ -363,9 +412,23 @@ const agendaEvents: AgendaEvent[] = [
     detail: "Agenda bloqueada",
     type: "break",
   },
-  appointment(6, "Paulo Jean", "14:00", "15:00", clients[4], "Corte Visagismo"),
-  appointment(7, "Paulo Junior", "15:30", "16:30", clients[5], "Corte + barba"),
-  appointment(8, "Paulo Jean", "17:00", "18:00", clients[6], "Selagem"),
+  appointment(
+    6,
+    professionalNames[1],
+    "14:00",
+    "15:00",
+    clients[4],
+    "Corte Visagismo"
+  ),
+  appointment(
+    7,
+    professionalNames[0],
+    "15:30",
+    "16:30",
+    clients[5],
+    "Corte + barba"
+  ),
+  appointment(8, professionalNames[1], "17:00", "18:00", clients[6], "Selagem"),
 ]
 
 const comandas: Comanda[] = [
@@ -373,20 +436,20 @@ const comandas: Comanda[] = [
     id: "CMD-2041",
     time: "09:00",
     client: clients[0].name,
-    barber: "Paulo Junior",
+    barber: professionalNames[0],
     chair: "Cadeira 1",
     status: "paga",
     payment: "Pix",
     items: [
       item("Corte", 1, 55, "servico"),
-      item("Pomada modeladora", 1, 42, "produto"),
+      item("Produto finalizador", 1, 42, "produto"),
     ],
   },
   {
     id: "CMD-2042",
     time: "10:00",
     client: clients[1].name,
-    barber: "Paulo Junior",
+    barber: professionalNames[0],
     chair: "Cadeira 1",
     status: "aberta",
     payment: "Aguardando",
@@ -396,7 +459,7 @@ const comandas: Comanda[] = [
     id: "CMD-2043",
     time: "09:30",
     client: clients[2].name,
-    barber: "Paulo Jean",
+    barber: professionalNames[1],
     chair: "Cadeira 2",
     status: "paga",
     payment: "Cartao de credito",
@@ -406,8 +469,8 @@ const comandas: Comanda[] = [
     id: "CMD-2044",
     time: "11:00",
     client: clients[3].name,
-    barber: "Paulo Jean",
-    chair: "Sala Dpote",
+    barber: professionalNames[1],
+    chair: "Sala de atendimento",
     status: "parcial",
     payment: "Pix",
     discount: 20,
@@ -418,13 +481,13 @@ const comandas: Comanda[] = [
     id: "CMD-2045",
     time: "15:30",
     client: clients[5].name,
-    barber: "Paulo Junior",
+    barber: professionalNames[0],
     chair: "Cadeira 1",
     status: "paga",
     payment: "Cartao de debito",
     items: [
       item("Corte + barba", 1, 95, "servico"),
-      item("Oleo para barba", 1, 36, "produto"),
+      item("Produto para barba", 1, 36, "produto"),
     ],
   },
 ]
@@ -459,44 +522,69 @@ const cashMovements: CashMovement[] = [
   },
 ]
 
+const servicesCompletedThisMonth = clients.reduce(
+  (sum, client, index) => sum + getMonthlyVisits(client, index),
+  0
+)
+const averageTicket = Math.round(
+  clients.reduce((sum, client) => sum + client.averageTicket, 0) /
+    clients.length
+)
+const monthlyServiceRevenue = clients.reduce(
+  (sum, client, index) =>
+    sum + client.averageTicket * getMonthlyVisits(client, index),
+  0
+)
 const monthlyRecurringRevenue = subscriptions
   .filter((subscription) => subscription.status !== "Pausada")
   .reduce((sum, subscription) => sum + subscription.value, 0)
-const serviceRevenue = clients.reduce(
-  (sum, client) => sum + client.averageTicket * Math.min(client.visits, 5),
-  0
+const monthlyProductRevenue = Math.round(
+  products.reduce((sum, product) => sum + product.price, 0) * 18
 )
-const monthlyGrossRevenue = Math.round(
-  serviceRevenue * 0.36 + monthlyRecurringRevenue
+const monthlyGrossRevenue =
+  monthlyServiceRevenue + monthlyRecurringRevenue + monthlyProductRevenue
+const paymentMethods = buildPaymentMethods(
+  monthlyGrossRevenue,
+  monthlyRecurringRevenue
 )
-const monthlyExpenses = Math.round(monthlyGrossRevenue * 0.57)
+const paymentFeesEstimated = Math.round(
+  paymentMethods.reduce(
+    (sum, method) => sum + method.amount * (method.fee / 100),
+    0
+  )
+)
+const payrollExpense = Math.round(monthlyServiceRevenue * 0.48)
+const fixedOperationalExpense = 11000
+const stockExpense = Math.round(monthlyProductRevenue * 0.6)
+const monthlyExpenses =
+  payrollExpense + fixedOperationalExpense + stockExpense + paymentFeesEstimated
 
 const bankAccounts: BankAccount[] = [
   {
     id: 1,
-    name: "Conta Corrente - Bradesco",
-    agency: "1234-5",
-    account: "98765-0",
+    name: "Conta operacional",
+    agency: "0000-1",
+    account: "00000-1",
     type: "Conta corrente",
-    balance: 28420,
+    balance: Math.round(monthlyGrossRevenue * 0.62),
     status: "Ativa",
   },
   {
     id: 2,
-    name: "Conta PJ - Itau",
-    agency: "6789-0",
-    account: "22334-9",
+    name: "Conta de reservas",
+    agency: "0000-2",
+    account: "00000-2",
     type: "Conta corrente",
-    balance: 18750.5,
+    balance: Math.round(monthlyGrossRevenue * 0.28),
     status: "Ativa",
   },
   {
     id: 3,
-    name: "Cartao Corporativo",
+    name: "Cartao corporativo",
     agency: "0001",
-    account: "****-1234",
+    account: "****-0000",
     type: "Cartao de credito",
-    balance: -2250,
+    balance: -Math.round(monthlyExpenses * 0.08),
     status: "Em uso",
   },
 ]
@@ -507,8 +595,8 @@ const financialCategories: FinancialCategory[] = [
     "Receitas de Servicos",
     "Atendimentos avulsos e pacotes",
     "Receita",
-    monthlyGrossRevenue - monthlyRecurringRevenue,
-    9
+    monthlyServiceRevenue,
+    0
   ),
   category(
     2,
@@ -516,39 +604,47 @@ const financialCategories: FinancialCategory[] = [
     "Planos recorrentes ativos",
     "Receita",
     monthlyRecurringRevenue,
-    14
+    0
   ),
   category(
     3,
     "Receitas de Produtos",
     "Produtos de cuidado e finalizacao",
     "Receita",
-    4260,
-    5
+    monthlyProductRevenue,
+    0
   ),
   category(
     4,
     "Folha e Comissoes",
     "Pagamentos da equipe e comissoes",
     "Despesa",
-    14900,
-    2
+    payrollExpense,
+    0
   ),
   category(
     5,
-    "Aluguel e Utilidades",
-    "Aluguel, energia, agua e internet",
+    "Custos fixos",
+    "Aluguel, energia, agua, internet e servicos essenciais",
     "Despesa",
-    5200,
-    1
+    fixedOperationalExpense,
+    0
   ),
   category(
     6,
     "Estoque e Insumos",
     "Reposicao de produtos e materiais",
     "Despesa",
-    3800,
-    -4
+    stockExpense,
+    0
+  ),
+  category(
+    7,
+    "Taxas de pagamento",
+    "Taxas variaveis dos meios de pagamento",
+    "Despesa",
+    paymentFeesEstimated,
+    0
   ),
 ]
 
@@ -558,8 +654,8 @@ const financialMovements: FinancialMovement[] = [
     date: "29/04/2026",
     description: `Recebimento - ${clients[0].name}`,
     category: "Receitas de Servicos",
-    account: "Conta Corrente - Bradesco",
-    amount: 97,
+    account: "Conta operacional",
+    amount: getComandaTotal(comandas[0]),
     type: "Receita",
   },
   {
@@ -567,8 +663,8 @@ const financialMovements: FinancialMovement[] = [
     date: "29/04/2026",
     description: "Assinaturas liquidadas - lote diario",
     category: "Receitas de Assinaturas",
-    account: "Conta Corrente - Bradesco",
-    amount: 1849.2,
+    account: "Conta operacional",
+    amount: Math.round(monthlyRecurringRevenue / 30),
     type: "Receita",
   },
   {
@@ -577,102 +673,29 @@ const financialMovements: FinancialMovement[] = [
     description: "Reposicao de descartaveis",
     category: "Estoque e Insumos",
     account: "Pix",
-    amount: 86,
+    amount: cashMovements[1].value,
     type: "Despesa",
   },
   {
     id: 4,
     date: "28/04/2026",
-    description: "Conta de energia",
-    category: "Aluguel e Utilidades",
-    account: "Conta PJ - Itau",
-    amount: 540,
+    description: "Custo fixo operacional",
+    category: "Custos fixos",
+    account: "Conta operacional",
+    amount: Math.round(fixedOperationalExpense / 6),
     type: "Despesa",
   },
 ]
 
-const paymentMethods: PaymentMethod[] = [
-  method(
-    1,
-    "Pix",
-    "Chave PJ: 55.540.659/0001-22",
-    0.49,
-    "Imediato",
-    18420,
-    118
-  ),
-  method(
-    2,
-    "Cartao de credito",
-    "Visa, Mastercard e Elo",
-    3.49,
-    "30 dias",
-    13980,
-    74
-  ),
-  method(
-    3,
-    "Cartao de debito",
-    "Visa, Mastercard e Elo",
-    1.69,
-    "1 dia util",
-    8520,
-    51
-  ),
-  method(
-    4,
-    "Dinheiro",
-    "Pagamento presencial no caixa",
-    0,
-    "Imediato",
-    4560,
-    36
-  ),
-  method(
-    5,
-    "Cobranca online",
-    "Links de assinatura e cobranca",
-    3.49,
-    "2 dias uteis",
-    monthlyRecurringRevenue,
-    subscriptions.length
-  ),
-]
-
-const revenueWeek = [
-  { day: "23/04", weekday: "Qui", gross: 1810, net: 1539, previous: 1490 },
-  { day: "24/04", weekday: "Sex", gross: 1980, net: 1683, previous: 1720 },
-  { day: "25/04", weekday: "Sab", gross: 2540, net: 2159, previous: 1870 },
-  { day: "26/04", weekday: "Dom", gross: 760, net: 646, previous: 680 },
-  { day: "27/04", weekday: "Seg", gross: 1680, net: 1428, previous: 1100 },
-  { day: "28/04", weekday: "Ter", gross: 2140, net: 1819, previous: 1420 },
-  { day: "29/04", weekday: "Qua", gross: 2320, net: 1972, previous: 1560 },
-]
-
-const peakHours = [
-  { time: "09:00", appointments: 42, revenue: 2980, occupancy: 68 },
-  { time: "10:00", appointments: 58, revenue: 4310, occupancy: 81 },
-  { time: "11:00", appointments: 51, revenue: 3890, occupancy: 76 },
-  { time: "12:00", appointments: 18, revenue: 1210, occupancy: 32 },
-  { time: "13:00", appointments: 29, revenue: 2040, occupancy: 48 },
-  { time: "14:00", appointments: 46, revenue: 3420, occupancy: 71 },
-  { time: "15:00", appointments: 64, revenue: 4920, occupancy: 88 },
-  { time: "16:00", appointments: 72, revenue: 5580, occupancy: 94 },
-  { time: "17:00", appointments: 69, revenue: 5290, occupancy: 91 },
-  { time: "18:00", appointments: 37, revenue: 2760, occupancy: 62 },
-]
+const revenueWeek = buildRevenueWeek(
+  monthlyGrossRevenue,
+  servicesCompletedThisMonth,
+  paymentFeesEstimated / monthlyGrossRevenue
+)
+const peakHours = buildPeakHours(servicesCompletedThisMonth, averageTicket)
 
 export const database = {
-  company: {
-    corporateName: "Paulo Jean Barros Ferreira Junior",
-    tradeName: "Studio Simetria",
-    cnpj: "55.540.659/0001-22",
-    email: "paulojeanbarbeiro@gmail.com",
-    timezone: "America/Manaus",
-    phone: "5592994592664",
-    slug: "studiosimetria",
-    primaryColor: { r: 150, g: 229, b: 110 },
-  },
+  company,
   services,
   plans,
   clients,
@@ -700,10 +723,15 @@ export const database = {
     activeSubscriptions: subscriptions.filter(
       (subscription) => subscription.status === "Ativa"
     ).length,
+    servicesCompletedThisMonth,
+    averageTicket,
+    monthlyServiceRevenue,
     monthlyRecurringRevenue,
+    monthlyProductRevenue,
     monthlyGrossRevenue,
     monthlyExpenses,
-    monthlyNetRevenue: Math.round(monthlyGrossRevenue * 0.888),
+    monthlyNetRevenue: monthlyGrossRevenue - paymentFeesEstimated,
+    paymentFeesEstimated,
     overdueAmount: overdueSubscriptions.reduce(
       (sum, item) => sum + item.value,
       0
@@ -741,8 +769,8 @@ function service(
     repurchaseDays,
     professionals,
     status: "Ativo",
-    createdAt: "10/07/2025 10:00",
-    updatedAt: "29/04/2026 09:00",
+    createdAt: "2025-07-10 10:00",
+    updatedAt: "2026-04-29 09:00",
     hidden: false,
     fitIn: durationMinutes <= 45,
     startingFrom,
@@ -752,51 +780,6 @@ function service(
 }
 
 function buildClients(): Client[] {
-  const firstNames = [
-    "Rafael",
-    "Mateus",
-    "Pedro",
-    "Lucas",
-    "Thiago",
-    "Gabriel",
-    "Felipe",
-    "Joao",
-    "Carlos",
-    "Bruno",
-    "Marcos",
-    "Daniel",
-    "Gustavo",
-    "Leonardo",
-    "Vinicius",
-    "Eduardo",
-    "Andre",
-    "Rodrigo",
-    "Henrique",
-    "Caio",
-  ]
-  const lastNames = [
-    "Lima",
-    "Alves",
-    "Santos",
-    "Rocha",
-    "Martins",
-    "Souza",
-    "Barbosa",
-    "Ferreira",
-    "Mendes",
-    "Castro",
-    "Oliveira",
-    "Nunes",
-    "Pereira",
-    "Gomes",
-    "Ribeiro",
-    "Carvalho",
-    "Moreira",
-    "Teixeira",
-    "Araujo",
-    "Costa",
-  ]
-
   return Array.from({ length: 100 }, (_, index) => {
     const plan = index < 72 ? plans[index % plans.length] : undefined
     const serviceRef = services[(index * 3) % services.length]
@@ -811,20 +794,16 @@ function buildClients(): Client[] {
 
     return {
       id: 1001 + index,
-      name: `${firstNames[index % firstNames.length]} ${
-        lastNames[
-          (index * 7 + Math.floor(index / firstNames.length)) % lastNames.length
-        ]
-      }`,
-      phone: `(92) 9${String(94000000 + index * 1371).slice(0, 8)}`,
-      email: `cliente${String(index + 1).padStart(3, "0")}@studiosimetria.com.br`,
+      name: `Cliente ${String(index + 1).padStart(3, "0")}`,
+      phone: `(00) 90000-${String(index + 1).padStart(4, "0")}`,
+      email: `cliente${String(index + 1).padStart(3, "0")}@example.test`,
       visits,
       averageTicket: serviceRef.price + 18 + ((index * 5) % 38),
       status,
       lastVisit: toDisplayDate(addDays(baseDate, -((index * 3) % 54))),
       favoriteService: serviceRef.name,
       active: true,
-      createdAt: toDisplayDate(addDays(baseDate, -((index * 11) % 95))),
+      createdAt: toDateInputValue(addDays(baseDate, -((index * 11) % 95))),
       planName: plan?.name,
     }
   })
@@ -874,7 +853,7 @@ function buildOverdueSubscriptions(
 
 function appointment(
   id: number,
-  barber: AgendaEvent["barber"],
+  barber: string,
   start: string,
   end: string,
   client: Client,
@@ -912,6 +891,66 @@ function category(
   return { id, name, description, type, monthlyAmount, trend }
 }
 
+function buildPaymentMethods(
+  grossRevenue: number,
+  recurringRevenue: number
+): PaymentMethod[] {
+  const serviceAndProductRevenue = Math.max(grossRevenue - recurringRevenue, 0)
+  const pixAmount = Math.round(serviceAndProductRevenue * 0.42)
+  const creditAmount = Math.round(serviceAndProductRevenue * 0.28)
+  const debitAmount = Math.round(serviceAndProductRevenue * 0.18)
+  const cashAmount =
+    serviceAndProductRevenue - pixAmount - creditAmount - debitAmount
+
+  return [
+    method(
+      1,
+      "Pix",
+      "Chave Pix demonstrativa",
+      0.49,
+      "Imediato",
+      pixAmount,
+      118
+    ),
+    method(
+      2,
+      "Cartao de credito",
+      "Meio de pagamento por adquirente",
+      3.49,
+      "30 dias",
+      creditAmount,
+      74
+    ),
+    method(
+      3,
+      "Cartao de debito",
+      "Meio de pagamento por adquirente",
+      1.69,
+      "1 dia util",
+      debitAmount,
+      51
+    ),
+    method(
+      4,
+      "Dinheiro",
+      "Pagamento presencial no caixa",
+      0,
+      "Imediato",
+      cashAmount,
+      36
+    ),
+    method(
+      5,
+      "Cobranca online",
+      "Links de assinatura e cobranca",
+      3.49,
+      "2 dias uteis",
+      recurringRevenue,
+      subscriptions.length
+    ),
+  ]
+}
+
 function method(
   id: number,
   name: string,
@@ -933,6 +972,80 @@ function method(
   }
 }
 
+function buildRevenueWeek(
+  monthlyRevenue: number,
+  monthlyServices: number,
+  effectiveFeeRate: number
+) {
+  const weeklyTarget = Math.round(monthlyRevenue / 4.33)
+  const weeklyServices = Math.round(monthlyServices / 4.33)
+  const weights = [0.14, 0.17, 0.22, 0, 0.13, 0.16, 0.18]
+  const serviceWeights = [0.15, 0.18, 0.24, 0, 0.12, 0.15, 0.16]
+  const previousMultipliers = [0.98, 1.08, 0.94, 0, 1.02, 0.91, 1.05]
+  const days = [
+    ["23/04", "Qui"],
+    ["24/04", "Sex"],
+    ["25/04", "Sab"],
+    ["26/04", "Dom"],
+    ["27/04", "Seg"],
+    ["28/04", "Ter"],
+    ["29/04", "Qua"],
+  ] as const
+
+  return days.map(([day, weekday], index) => {
+    const gross = Math.round(weeklyTarget * weights[index])
+    const net = Math.round(gross * (1 - effectiveFeeRate))
+    const previous = Math.round(gross * previousMultipliers[index])
+    const appointments = Math.round(weeklyServices * serviceWeights[index])
+
+    return { day, weekday, gross, net, previous, appointments }
+  })
+}
+
+function buildPeakHours(monthlyServices: number, ticket: number) {
+  const distribution = [
+    ["09:00", 0.08],
+    ["10:00", 0.12],
+    ["11:00", 0.11],
+    ["12:00", 0.04],
+    ["13:00", 0.06],
+    ["14:00", 0.1],
+    ["15:00", 0.15],
+    ["16:00", 0.17],
+    ["17:00", 0.13],
+    ["18:00", 0.04],
+  ] as const
+  const maxAppointments = Math.max(
+    ...distribution.map(([, ratio]) => Math.round(monthlyServices * ratio))
+  )
+
+  return distribution.map(([time, ratio]) => {
+    const appointments = Math.round(monthlyServices * ratio)
+
+    return {
+      time,
+      appointments,
+      revenue: appointments * ticket,
+      occupancy: Math.round((appointments / maxAppointments) * 92),
+    }
+  })
+}
+
+function getMonthlyVisits(client: Client, index: number) {
+  if (client.status === "recorrente") return 2 + (index % 2)
+  if (client.status === "novo") return 1
+  return 1 + (index % 2)
+}
+
+function getComandaTotal(comanda: Comanda) {
+  return (
+    comanda.items.reduce(
+      (sum, currentItem) => sum + currentItem.quantity * currentItem.unitPrice,
+      0
+    ) - (comanda.discount ?? 0)
+  )
+}
+
 function addDays(date: Date, days: number) {
   const next = new Date(date)
   next.setDate(next.getDate() + days)
@@ -941,4 +1054,12 @@ function addDays(date: Date, days: number) {
 
 function toDisplayDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR").format(date)
+}
+
+function toDateInputValue(date: Date) {
+  return [
+    String(date.getFullYear()),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-")
 }

@@ -103,7 +103,11 @@ const dialogPanelClass =
   "grid grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:h-[min(40rem,calc(100dvh-1rem))] sm:max-w-2xl"
 
 const initialMovements: FinancialMovement[] = database.financialMovements
+const initialMovementIds = new Set(
+  initialMovements.map((movement) => movement.id)
+)
 const initialAccounts: BankAccount[] = database.bankAccounts
+const defaultAccountName = initialAccounts[0]?.name ?? "Conta operacional"
 const accountOptions = [
   ...initialAccounts.map((account) => account.name),
   "Pix",
@@ -123,12 +127,26 @@ export function FinanceiroOverview() {
     "Nenhuma ação executada nesta sessão."
   )
 
-  const totals = useMemo(() => summarizeMovements(movements), [movements])
+  const totals = useMemo(
+    () =>
+      summarizeMovements(
+        movements.filter((movement) => !initialMovementIds.has(movement.id))
+      ),
+    [movements]
+  )
+  const additionalFeeRate =
+    database.analytics.monthlyGrossRevenue > 0
+      ? database.analytics.paymentFeesEstimated /
+        database.analytics.monthlyGrossRevenue
+      : 0
+  const additionalPaymentFees = Math.round(totals.income * additionalFeeRate)
   const grossRevenue = database.analytics.monthlyGrossRevenue + totals.income
-  const expenses = database.analytics.monthlyExpenses + totals.expense
+  const expenses =
+    database.analytics.monthlyExpenses + totals.expense + additionalPaymentFees
   const operatingProfit = grossRevenue - expenses
-  const netRevenue = Math.round(grossRevenue * 0.888)
-  const margin = operatingProfit / netRevenue
+  const netRevenue =
+    database.analytics.monthlyNetRevenue + totals.income - additionalPaymentFees
+  const margin = grossRevenue > 0 ? operatingProfit / grossRevenue : 0
 
   const overviewRows = [
     ["Receita Bruta", formatCurrency(grossRevenue), "Base consolidada"],
@@ -184,7 +202,9 @@ export function FinanceiroOverview() {
   }
 
   function exportReport() {
-    setFeedback("Relatorio financeiro de abril/2026 preparado para exportacao.")
+    setFeedback(
+      "Relatorio financeiro do periodo atual preparado para exportacao."
+    )
     setReportOpen(false)
   }
 
@@ -745,6 +765,9 @@ export function FormasPagamentoView() {
   const averageTicket =
     totalTransactions > 0 ? totalAmount / totalTransactions : 0
   const activeMethods = methods.filter((method) => method.status === "Ativo")
+  const estimatedDailyVolume = Math.round(totalAmount / 30)
+  const activeGridRate =
+    methods.length > 0 ? activeMethods.length / methods.length : 0
 
   function openCreate() {
     setDraft({
@@ -801,22 +824,22 @@ export function FormasPagamentoView() {
       <div className="admin-metric-grid">
         <MetricCard
           title="Transações Hoje"
-          value={formatCurrency(1240)}
-          change="+15% vs ontem"
+          value={formatCurrency(estimatedDailyVolume)}
+          change="Estimativa diaria pela base mensal"
           icon={Wallet02Icon}
           tone="green"
         />
         <MetricCard
           title="Ticket Médio"
           value={formatCurrency(averageTicket)}
-          change="+3% vs mês anterior"
+          change={`${totalTransactions} transacoes no periodo`}
           icon={ArrowLeftRightIcon}
           tone="blue"
         />
         <MetricCard
           title="Formas Ativas"
           value={String(activeMethods.length)}
-          change="98,5% de aprovação"
+          change={`${formatPercent(activeGridRate)} da grade ativa`}
           icon={CheckmarkCircle01Icon}
           tone="green"
         />
@@ -964,7 +987,7 @@ function MovementModal({
     description: "",
     category:
       type === "Receita" ? "Receitas de Serviços" : "Aluguel e Utilidades",
-    account: account ?? "Conta Corrente - Bradesco",
+    account: account ?? defaultAccountName,
     amount: "",
   }))
 

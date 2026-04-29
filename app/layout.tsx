@@ -16,11 +16,8 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "MyDash Barber",
-  description: "Painel administrativo para barbearias",
-  icons: {
-    icon: "/icon.png",
-  },
+  title: "Painel administrativo",
+  description: "Sistema administrativo",
 }
 
 export default function RootLayout({
