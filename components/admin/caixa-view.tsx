@@ -26,7 +26,12 @@ import {
   formatCurrency,
   getComandaTotal,
 } from "@/components/admin/caixa-data"
+import {
+  paymentMethodOptions,
+  serviceCatalog,
+} from "@/components/admin/catalog-data"
 import { clients as registeredClients } from "@/components/admin/clientes-data"
+import { database } from "@/components/admin/database"
 import { LatestComandaCard } from "@/components/admin/comanda-card"
 import { MetricCard } from "@/components/admin/metric-card"
 import { SectionCard } from "@/components/admin/section-card"
@@ -51,50 +56,33 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
-const appointments = [
-  {
-    id: "ag-0900",
-    label: "09:00 - Rafael Lima",
-    client: "Rafael Lima",
-    barber: "Bruno",
-    chair: "Cadeira 1",
-    service: "Corte + barba",
-    price: 95,
-  },
-  {
-    id: "ag-1030",
-    label: "10:30 - Mateus Alves",
-    client: "Mateus Alves",
-    barber: "Caio",
-    chair: "Cadeira 2",
-    service: "Degrade",
-    price: 65,
-  },
-  {
-    id: "ag-1530",
-    label: "15:30 - Lucas Rocha",
-    client: "Lucas Rocha",
-    barber: "Diego",
-    chair: "Cadeira 3",
-    service: "Corte premium",
-    price: 110,
-  },
-]
+const services = serviceCatalog.map((service) => ({
+  name: service.name,
+  category: service.category,
+  price: service.price,
+}))
 
-const products = [
-  { name: "Pomada modeladora", category: "Finalizadores", price: 42 },
-  { name: "Oleo para barba", category: "Barba", price: 36 },
-  { name: "Shampoo antiqueda", category: "Cabelo", price: 58 },
-  { name: "Balm pos-barba", category: "Barba", price: 34 },
-]
+const appointments = database.agendaEvents
+  .filter((event) => event.type === "appointment")
+  .map((event) => {
+    const service = serviceCatalog.find((item) => item.name === event.detail)
 
-const services = [
-  { name: "Corte social", category: "Cabelo", price: 55 },
-  { name: "Degrade", category: "Cabelo", price: 65 },
-  { name: "Barba completa", category: "Barba", price: 40 },
-  { name: "Corte + barba", category: "Combo", price: 95 },
-  { name: "Sobrancelha", category: "Acabamento", price: 25 },
-]
+    return {
+      id: `ag-${event.id}`,
+      label: `${event.start} - ${event.title}`,
+      client: event.title,
+      barber: event.barber,
+      chair: event.barber === "Paulo Jean" ? "Cadeira 2" : "Cadeira 1",
+      service: event.detail,
+      price: service?.price ?? 0,
+    }
+  })
+
+const products = database.products
+const barberOptions = database.professionals
+  .filter((professional) => professional.status === "Ativo")
+  .map((professional) => professional.name)
+const chairOptions = ["Cadeira 1", "Cadeira 2", "Sala Dpote"]
 
 export function CaixaView() {
   const [comandas, setComandas] = useState<Comanda[]>(initialComandas)
@@ -337,7 +325,9 @@ function CashMovementModal({
   const [category, setCategory] = useState(
     type === "entrada" ? "Suprimento" : "Despesa operacional"
   )
-  const [payment, setPayment] = useState(type === "entrada" ? "Dinheiro" : "Pix")
+  const [payment, setPayment] = useState(
+    type === "entrada" ? "Dinheiro" : "Pix"
+  )
   const [value, setValue] = useState("")
   const isIncome = type === "entrada"
   const parsedValue = Number(value.replace(",", ".")) || 0
@@ -375,17 +365,16 @@ function CashMovementModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bottom-0 left-0 top-auto grid h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] rounded-b-none rounded-t-2xl border-x-0 border-b-0 shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[min(38rem,calc(100dvh-2rem))] sm:w-[calc(100vw-2rem)] sm:max-w-[36rem] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border">
-        <div className="mx-auto mt-2 h-1 w-14 rounded-full bg-border sm:hidden" />
+      <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] shadow-2xl sm:h-[min(38rem,calc(100dvh-2rem))] sm:max-w-[36rem] sm:rounded-xl">
         <DialogHeader
           className={cn(
-            "relative overflow-hidden gap-2 border-b p-4 pt-3 sm:gap-3 sm:p-4",
+            "relative gap-2 overflow-hidden border-b p-4 pt-3 sm:gap-3 sm:p-4",
             isIncome ? "bg-primary/5" : "bg-destructive/5"
           )}
         >
           <span
             className={cn(
-              "pointer-events-none absolute right-4 top-4 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-normal sm:right-4 sm:top-4",
+              "pointer-events-none absolute top-4 right-4 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-normal uppercase sm:top-4 sm:right-4",
               isIncome
                 ? "border-primary/20 bg-primary/10 text-primary"
                 : "border-destructive/20 bg-destructive/10 text-destructive"
@@ -411,9 +400,11 @@ function CashMovementModal({
               <span className="block truncate">
                 {isIncome ? "Nova entrada" : "Nova saida"}
               </span>
-              <span className="mt-0.5 block truncate text-[10px] font-semibold uppercase tracking-normal text-muted-foreground sm:text-[11px]">
+              <span className="mt-0.5 block truncate text-[10px] font-semibold tracking-normal text-muted-foreground uppercase sm:text-[11px]">
                 <span className="sm:hidden">Manual do caixa</span>
-                <span className="hidden sm:inline">Lancamento manual do caixa</span>
+                <span className="hidden sm:inline">
+                  Lancamento manual do caixa
+                </span>
               </span>
             </span>
           </DialogTitle>
@@ -427,7 +418,7 @@ function CashMovementModal({
         <ScrollArea className="min-h-0 bg-muted/15">
           <div className="grid gap-3 p-3 sm:p-4">
             <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
-              <Label className="text-xs font-semibold uppercase text-muted-foreground">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase">
                 Descricao
               </Label>
               <Input
@@ -443,7 +434,7 @@ function CashMovementModal({
 
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
               <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">
                   Categoria
                 </Label>
                 <Select value={category} onValueChange={setCategory}>
@@ -477,7 +468,7 @@ function CashMovementModal({
                 </Select>
               </div>
               <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">
                   Forma
                 </Label>
                 <Select value={payment} onValueChange={setPayment}>
@@ -485,17 +476,18 @@ function CashMovementModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="Pix">Pix</SelectItem>
-                    <SelectItem value="Credito">Credito</SelectItem>
-                    <SelectItem value="Debito">Debito</SelectItem>
+                    {paymentMethodOptions.map((method) => (
+                      <SelectItem key={method} value={method}>
+                        {method}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="rounded-lg border bg-background p-3 shadow-xs">
-              <Label className="text-xs font-semibold uppercase text-muted-foreground">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase">
                 Valor do lancamento
               </Label>
               <div className="mt-2 flex items-center rounded-lg border bg-muted/20 px-3 transition-colors focus-within:border-ring/50 focus-within:bg-background focus-within:ring-2 focus-within:ring-ring/25">
@@ -574,12 +566,16 @@ export function NovaComandaModal({
   const [type, setType] = useState(editingComanda?.notes ?? "Atendimento")
   const [appointmentId, setAppointmentId] = useState("")
   const [client, setClient] = useState(editingComanda?.client ?? "")
-  const [barber, setBarber] = useState(editingComanda?.barber ?? "Bruno")
+  const [barber, setBarber] = useState(
+    editingComanda?.barber ?? barberOptions[0] ?? ""
+  )
   const [chair, setChair] = useState(editingComanda?.chair ?? "Cadeira 1")
   const [status, setStatus] = useState<ComandaStatus>(
     editingComanda?.status ?? "aberta"
   )
-  const [payment, setPayment] = useState(editingComanda?.payment ?? "Aguardando")
+  const [payment, setPayment] = useState(
+    editingComanda?.payment ?? "Aguardando"
+  )
   const [productName, setProductName] = useState("")
   const [productQuantity, setProductQuantity] = useState("1")
   const [serviceName, setServiceName] = useState("")
@@ -598,7 +594,7 @@ export function NovaComandaModal({
     setType("Atendimento")
     setAppointmentId("")
     setClient("")
-    setBarber("Bruno")
+    setBarber(barberOptions[0] ?? "")
     setChair("Cadeira 1")
     setStatus("aberta")
     setPayment("Aguardando")
@@ -707,8 +703,7 @@ export function NovaComandaModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bottom-0 left-0 top-auto grid h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] rounded-b-none rounded-t-xl border-x-0 border-b-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[min(38rem,calc(100dvh-1rem))] sm:w-[calc(100vw-2rem)] sm:max-w-3xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:border">
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border sm:hidden" />
+      <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:h-[min(38rem,calc(100dvh-1rem))] sm:max-w-3xl">
         <DialogHeader className="shrink-0 border-b p-3 sm:p-4">
           <DialogTitle className="flex items-center gap-2">
             <HugeiconsIcon icon={CashierIcon} size={18} />
@@ -752,13 +747,19 @@ export function NovaComandaModal({
                   </div>
                   <div className="grid gap-1.5">
                     <Label>Agendamento</Label>
-                    <Select value={appointmentId} onValueChange={handleAppointment}>
+                    <Select
+                      value={appointmentId}
+                      onValueChange={handleAppointment}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecionar agendamento" />
                       </SelectTrigger>
                       <SelectContent>
                         {appointments.map((appointment) => (
-                          <SelectItem key={appointment.id} value={appointment.id}>
+                          <SelectItem
+                            key={appointment.id}
+                            value={appointment.id}
+                          >
                             {appointment.label}
                           </SelectItem>
                         ))}
@@ -768,28 +769,28 @@ export function NovaComandaModal({
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-4">
-                <div className="grid gap-1.5 md:col-span-2">
-                  <Label>Cliente</Label>
-                  <Select value={client} onValueChange={setClient}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {registeredClients.map((item) => (
-                        <SelectItem key={item.id} value={item.name}>
-                          <span className="flex min-w-0 flex-col gap-0.5">
-                            <span className="truncate font-medium">
-                              {item.name}
+                  <div className="grid gap-1.5 md:col-span-2">
+                    <Label>Cliente</Label>
+                    <Select value={client} onValueChange={setClient}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {registeredClients.map((item) => (
+                          <SelectItem key={item.id} value={item.name}>
+                            <span className="flex min-w-0 flex-col gap-0.5">
+                              <span className="truncate font-medium">
+                                {item.name}
+                              </span>
+                              <span className="truncate text-xs text-muted-foreground">
+                                {item.phone} - {item.favoriteService}
+                              </span>
                             </span>
-                            <span className="truncate text-xs text-muted-foreground">
-                              {item.phone} - {item.favoriteService}
-                            </span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="grid gap-1.5">
                     <Label>Barbeiro</Label>
                     <Select value={barber} onValueChange={setBarber}>
@@ -797,7 +798,7 @@ export function NovaComandaModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {["Bruno", "Caio", "Diego"].map((item) => (
+                        {barberOptions.map((item) => (
                           <SelectItem key={item} value={item}>
                             {item}
                           </SelectItem>
@@ -812,7 +813,7 @@ export function NovaComandaModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {["Cadeira 1", "Cadeira 2", "Cadeira 3"].map((item) => (
+                        {chairOptions.map((item) => (
                           <SelectItem key={item} value={item}>
                             {item}
                           </SelectItem>
@@ -826,125 +827,133 @@ export function NovaComandaModal({
 
             {step === 1 ? (
               <section className="grid gap-3 rounded-md border bg-background p-3">
-              <h3 className="text-sm font-semibold">Produtos</h3>
-              <div className="grid gap-2 md:grid-cols-[1.1fr_0.8fr_0.8fr_2.25rem]">
-                <Select value={appointmentId} onValueChange={handleAppointment}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Agendamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {appointments.map((appointment) => (
-                      <SelectItem key={appointment.id} value={appointment.id}>
-                        {appointment.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value="Todas">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Todas">Todas categorias</SelectItem>
-                    <SelectItem value="Barba">Barba</SelectItem>
-                    <SelectItem value="Cabelo">Cabelo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={productName} onValueChange={setProductName}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Produto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.name} value={product.name}>
-                        {product.name} - {formatCurrency(product.price)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  size="icon"
-                  aria-label="Adicionar produto"
-                  onClick={addProduct}
-                >
-                  <HugeiconsIcon icon={Add01Icon} size={18} />
-                </Button>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-[9rem_1fr]">
-                <div className="grid gap-1.5">
-                  <Label>Quantidade</Label>
-                  <Input
-                    value={productQuantity}
-                    onChange={(event) => setProductQuantity(event.target.value)}
-                    inputMode="numeric"
-                  />
+                <h3 className="text-sm font-semibold">Produtos</h3>
+                <div className="grid gap-2 md:grid-cols-[1.1fr_0.8fr_0.8fr_2.25rem]">
+                  <Select
+                    value={appointmentId}
+                    onValueChange={handleAppointment}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Agendamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {appointments.map((appointment) => (
+                        <SelectItem key={appointment.id} value={appointment.id}>
+                          {appointment.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value="Todas">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todas">Todas categorias</SelectItem>
+                      <SelectItem value="Barba">Barba</SelectItem>
+                      <SelectItem value="Cabelo">Cabelo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={productName} onValueChange={setProductName}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Produto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((product) => (
+                        <SelectItem key={product.name} value={product.name}>
+                          {product.name} - {formatCurrency(product.price)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    size="icon"
+                    aria-label="Adicionar produto"
+                    onClick={addProduct}
+                  >
+                    <HugeiconsIcon icon={Add01Icon} size={18} />
+                  </Button>
                 </div>
-              </div>
-              <ItemsList
-                items={items.filter((item) => item.category === "produto")}
-                allItems={items}
-                onRemove={removeItem}
-                empty="Nenhum produto adicionado."
-              />
-            </section>
+                <div className="grid gap-2 sm:grid-cols-[9rem_1fr]">
+                  <div className="grid gap-1.5">
+                    <Label>Quantidade</Label>
+                    <Input
+                      value={productQuantity}
+                      onChange={(event) =>
+                        setProductQuantity(event.target.value)
+                      }
+                      inputMode="numeric"
+                    />
+                  </div>
+                </div>
+                <ItemsList
+                  items={items.filter((item) => item.category === "produto")}
+                  allItems={items}
+                  onRemove={removeItem}
+                  empty="Nenhum produto adicionado."
+                />
+              </section>
             ) : null}
 
             {step === 2 ? (
               <section className="grid gap-3 rounded-md border bg-background p-3">
-              <h3 className="text-sm font-semibold">Servicos</h3>
-              <div className="grid gap-2 md:grid-cols-[1fr_0.75fr_1fr_2.25rem]">
-                <Select value={appointmentId} onValueChange={handleAppointment}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Agendamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {appointments.map((appointment) => (
-                      <SelectItem key={appointment.id} value={appointment.id}>
-                        {appointment.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value="Todas">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Todas">Todas categorias</SelectItem>
-                    <SelectItem value="Cabelo">Cabelo</SelectItem>
-                    <SelectItem value="Barba">Barba</SelectItem>
-                    <SelectItem value="Combo">Combo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={serviceName} onValueChange={setServiceName}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Servico" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.name} value={service.name}>
-                        {service.name} - {formatCurrency(service.price)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  size="icon"
-                  aria-label="Adicionar servico"
-                  onClick={addService}
-                >
-                  <HugeiconsIcon icon={Add01Icon} size={18} />
-                </Button>
-              </div>
-              <ItemsList
-                items={items.filter((item) => item.category === "servico")}
-                allItems={items}
-                onRemove={removeItem}
-                empty="Nenhum servico adicionado."
-              />
-            </section>
+                <h3 className="text-sm font-semibold">Servicos</h3>
+                <div className="grid gap-2 md:grid-cols-[1fr_0.75fr_1fr_2.25rem]">
+                  <Select
+                    value={appointmentId}
+                    onValueChange={handleAppointment}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Agendamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {appointments.map((appointment) => (
+                        <SelectItem key={appointment.id} value={appointment.id}>
+                          {appointment.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value="Todas">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todas">Todas categorias</SelectItem>
+                      <SelectItem value="Cabelo">Cabelo</SelectItem>
+                      <SelectItem value="Barba">Barba</SelectItem>
+                      <SelectItem value="Combo">Combo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={serviceName} onValueChange={setServiceName}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Servico" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {services.map((service) => (
+                        <SelectItem key={service.name} value={service.name}>
+                          {service.name} - {formatCurrency(service.price)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    size="icon"
+                    aria-label="Adicionar servico"
+                    onClick={addService}
+                  >
+                    <HugeiconsIcon icon={Add01Icon} size={18} />
+                  </Button>
+                </div>
+                <ItemsList
+                  items={items.filter((item) => item.category === "servico")}
+                  allItems={items}
+                  onRemove={removeItem}
+                  empty="Nenhum servico adicionado."
+                />
+              </section>
             ) : null}
 
             {step === 3 ? (
@@ -954,7 +963,9 @@ export function NovaComandaModal({
                     <Label>Status</Label>
                     <Select
                       value={status}
-                      onValueChange={(value) => setStatus(value as ComandaStatus)}
+                      onValueChange={(value) =>
+                        setStatus(value as ComandaStatus)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -974,15 +985,18 @@ export function NovaComandaModal({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Aguardando">Aguardando</SelectItem>
-                        <SelectItem value="Pix">Pix</SelectItem>
-                        <SelectItem value="Credito">Credito</SelectItem>
-                        <SelectItem value="Debito">Debito</SelectItem>
-                        <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                        {paymentMethodOptions.map((method) => (
+                          <SelectItem key={method} value={method}>
+                            {method}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="rounded-md border bg-card p-3">
-                    <p className="text-xs text-muted-foreground">Total da comanda</p>
+                    <p className="text-xs text-muted-foreground">
+                      Total da comanda
+                    </p>
                     <p className="mt-1 text-2xl font-semibold">
                       {formatCurrency(total)}
                     </p>

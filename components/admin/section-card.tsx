@@ -24,20 +24,20 @@ export function SectionCard({
     >
       <div className="flex min-w-0 flex-col gap-3 border-b p-3 sm:p-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h2 className="break-words text-base font-semibold">{title}</h2>
+          <h2 className="text-base font-semibold break-words">{title}</h2>
           {description ? (
-            <p className="mt-1 break-words text-sm leading-snug text-muted-foreground">
+            <p className="mt-1 text-sm leading-snug break-words text-muted-foreground">
               {description}
             </p>
           ) : null}
         </div>
         {action ? (
-          <div className="min-w-0 shrink-0 [&_[data-slot=button]]:w-full md:[&_[data-slot=button]]:w-auto">
+          <div className="w-full min-w-0 md:w-auto md:shrink-0 [&_[data-slot=button]]:w-full md:[&_[data-slot=button]]:w-auto">
             {action}
           </div>
         ) : null}
       </div>
-      <div className="p-3 sm:p-4">{children}</div>
+      <div className="min-w-0 p-3 sm:p-4">{children}</div>
     </section>
   )
 }

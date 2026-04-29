@@ -2,40 +2,59 @@ import { CrownIcon } from "@hugeicons/core-free-icons"
 import Link from "next/link"
 
 import { MetricCard } from "@/components/admin/metric-card"
+import { database } from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 
-const plans = [
-  ["Corte Mensal", "1 corte por mes", "R$ 79,90", "84 assinantes", <StatusBadge key="active" tone="green">Ativo</StatusBadge>],
-  ["Barba Club", "4 barbas por mes", "R$ 119,90", "37 assinantes", <StatusBadge key="active2" tone="green">Ativo</StatusBadge>],
-  ["Premium", "Corte + barba semanal", "R$ 249,90", "21 assinantes", <StatusBadge key="featured" tone="amber">Destaque</StatusBadge>],
-  ["Kids", "2 cortes infantis", "R$ 99,90", "12 assinantes", <StatusBadge key="draft" tone="neutral">Rascunho</StatusBadge>],
-]
-
 export default function PlanosPage() {
+  const activeSubscriptions = database.subscriptions.filter(
+    (subscription) => subscription.status === "Ativa"
+  )
+  const canceledOrPaused = database.subscriptions.filter(
+    (subscription) => subscription.status === "Pausada"
+  ).length
+  const planRows = database.plans.map((plan) => {
+    const subscribers = database.subscriptions.filter(
+      (subscription) => subscription.plan === plan.name
+    ).length
+
+    return [
+      plan.name,
+      plan.benefit,
+      formatCurrency(plan.price),
+      `${subscribers} assinantes`,
+      <StatusBadge
+        key={plan.id}
+        tone={plan.status === "Destaque" ? "amber" : "green"}
+      >
+        {plan.status}
+      </StatusBadge>,
+    ]
+  })
+
   return (
     <>
       <div className="admin-metric-grid">
         <MetricCard
           title="Assinantes ativos"
-          value="154"
-          change="+18 no mes atual"
+          value={String(activeSubscriptions.length)}
+          change={`${database.analytics.newClientsThisMonth} novos clientes no mes`}
           icon={CrownIcon}
           tone="green"
         />
         <MetricCard
           title="MRR estimado"
-          value="R$ 18.930"
+          value={formatCurrency(database.analytics.monthlyRecurringRevenue)}
           change="Receita recorrente mensal"
           icon={CrownIcon}
           tone="blue"
         />
         <MetricCard
-          title="Cancelamentos"
-          value="6"
-          change="Churn de 3,7%"
+          title="Pausadas"
+          value={String(canceledOrPaused)}
+          change="Assinaturas sem cobranca ativa"
           icon={CrownIcon}
           tone="amber"
         />
@@ -52,9 +71,16 @@ export default function PlanosPage() {
       >
         <SimpleTable
           columns={["Plano", "Beneficio", "Preco", "Base", "Status"]}
-          rows={plans}
+          rows={planRows}
         />
       </SectionCard>
     </>
   )
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value)
 }

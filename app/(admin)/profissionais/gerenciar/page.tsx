@@ -4,12 +4,14 @@ import { useState } from "react"
 import { UserListIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { database, type Professional } from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -26,47 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-type ProfessionalStatus = "Ativo" | "Férias" | "Inativo"
-
-type Professional = {
-  id: number
-  name: string
-  role: string
-  commission: string
-  scheduleStart: string
-  scheduleEnd: string
-  status: ProfessionalStatus
-}
-
-const initialProfessionals: Professional[] = [
-  {
-    id: 1,
-    name: "Paulo Junior",
-    role: "Barbeiro",
-    commission: "40%",
-    scheduleStart: "2026-04-29",
-    scheduleEnd: "2026-05-29",
-    status: "Ativo",
-  },
-  {
-    id: 2,
-    name: "Paulo Jean",
-    role: "Barbeiro",
-    commission: "45%",
-    scheduleStart: "2026-04-30",
-    scheduleEnd: "2026-05-30",
-    status: "Ativo",
-  },
-  {
-    id: 3,
-    name: "Bruno Castro",
-    role: "Atendente",
-    commission: "Fixo",
-    scheduleStart: "2026-05-06",
-    scheduleEnd: "2026-05-20",
-    status: "Férias",
-  },
-]
+const initialProfessionals: Professional[] = database.professionals
 
 export default function GerenciarProfissionalPage() {
   const [professionals, setProfessionals] = useState(initialProfessionals)
@@ -121,27 +83,49 @@ export default function GerenciarProfissionalPage() {
         title="Gerenciar profissional"
         description="Equipe, comissão, disponibilidade e status de agenda"
         action={
-          <Button size="sm" variant="outline" onClick={() => setScaleOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setScaleOpen(true)}
+          >
             <HugeiconsIcon icon={UserListIcon} size={16} />
             Escalas
           </Button>
         }
       >
         <SimpleTable
-          columns={["Profissional", "Função", "Comissão", "Agenda", "Status", "Ações"]}
+          columns={[
+            "Profissional",
+            "Função",
+            "Comissão",
+            "Agenda",
+            "Status",
+            "Ações",
+          ]}
           rows={professionals.map((professional) => [
             professional.name,
             professional.role,
             professional.commission,
-            formatDateRange(professional.scheduleStart, professional.scheduleEnd),
+            formatDateRange(
+              professional.scheduleStart,
+              professional.scheduleEnd
+            ),
             <StatusBadge key="status" tone={getStatusTone(professional.status)}>
               {professional.status}
             </StatusBadge>,
             <div key="actions" className="flex flex-wrap gap-2">
-              <Button size="xs" variant="outline" onClick={() => openEdit(professional)}>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => openEdit(professional)}
+              >
                 Editar
               </Button>
-              <Button size="xs" variant="outline" onClick={() => toggleStatus(professional)}>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => toggleStatus(professional)}
+              >
                 {professional.status === "Ativo" ? "Inativar" : "Ativar"}
               </Button>
             </div>,
@@ -152,7 +136,10 @@ export default function GerenciarProfissionalPage() {
         </p>
       </SectionCard>
 
-      <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && closeEdit()}>
+      <Dialog
+        open={Boolean(editing)}
+        onOpenChange={(open) => !open && closeEdit()}
+      >
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Editar profissional</DialogTitle>
@@ -161,7 +148,7 @@ export default function GerenciarProfissionalPage() {
             </DialogDescription>
           </DialogHeader>
           {draft ? (
-            <div className="grid gap-4 p-4 md:grid-cols-2">
+            <DialogBody className="grid gap-4 md:grid-cols-2">
               <Field label="Nome">
                 <Input
                   value={draft.name}
@@ -195,7 +182,7 @@ export default function GerenciarProfissionalPage() {
                 <Select
                   value={draft.status}
                   onValueChange={(value) =>
-                    updateDraft("status", value as ProfessionalStatus)
+                    updateDraft("status", value as Professional["status"])
                   }
                 >
                   <SelectTrigger>
@@ -203,12 +190,12 @@ export default function GerenciarProfissionalPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Férias">Férias</SelectItem>
+                    <SelectItem value="Ferias">Ferias</SelectItem>
                     <SelectItem value="Inativo">Inativo</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
-            </div>
+            </DialogBody>
           ) : null}
           <DialogFooter>
             <Button variant="outline" onClick={closeEdit}>
@@ -227,7 +214,7 @@ export default function GerenciarProfissionalPage() {
               Resumo do período de agenda cadastrado por profissional.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 p-4">
+          <DialogBody className="grid gap-2">
             {professionals.map((professional) => (
               <div
                 key={professional.id}
@@ -235,11 +222,14 @@ export default function GerenciarProfissionalPage() {
               >
                 <span className="font-medium">{professional.name}</span>
                 <span className="text-muted-foreground">
-                  {formatDateRange(professional.scheduleStart, professional.scheduleEnd)}
+                  {formatDateRange(
+                    professional.scheduleStart,
+                    professional.scheduleEnd
+                  )}
                 </span>
               </div>
             ))}
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button onClick={() => setScaleOpen(false)}>Concluir</Button>
           </DialogFooter>
@@ -266,9 +256,9 @@ function Field({
   )
 }
 
-function getStatusTone(status: ProfessionalStatus) {
+function getStatusTone(status: Professional["status"]) {
   if (status === "Ativo") return "green"
-  if (status === "Férias") return "amber"
+  if (status === "Ferias") return "amber"
   return "neutral"
 }
 

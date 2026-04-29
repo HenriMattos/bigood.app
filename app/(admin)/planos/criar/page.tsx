@@ -2,6 +2,8 @@
 
 import { useMemo, useState, type ReactNode } from "react"
 
+import { serviceCatalog, serviceNames } from "@/components/admin/catalog-data"
+import { database } from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -84,11 +86,17 @@ const planThemes: PlanTheme[] = [
   },
 ]
 
-const serviceCategories = ["Cabelo", "Barba", "Sobrancelha", "Tratamentos"]
-const services = ["Corte social", "Degradê", "Barba completa", "Corte premium"]
-const productCategories = ["Pomadas", "Shampoos", "Óleos", "Acessórios"]
-const products = ["Pomada modeladora", "Shampoo premium", "Óleo para barba"]
-const professionals = ["Paulo Junior", "Paulo Jean"]
+const serviceCategories = Array.from(
+  new Set(serviceCatalog.map((service) => service.category))
+)
+const services = serviceNames
+const productCategories = Array.from(
+  new Set(database.products.map((product) => product.category))
+)
+const products = database.products.map((product) => product.name)
+const professionals = database.professionals
+  .filter((professional) => professional.status === "Ativo")
+  .map((professional) => professional.name)
 const freeDays = [
   "Segunda-feira",
   "Terça-feira",
@@ -175,7 +183,7 @@ export default function CriarPlanosPage() {
     <div className="grid min-w-0 gap-4">
       <div className="flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase text-primary">
+          <p className="text-xs font-semibold text-primary uppercase">
             Planos de assinatura
           </p>
           <h2 className="mt-1 text-xl font-semibold">Criar novo plano</h2>
@@ -231,16 +239,21 @@ export default function CriarPlanosPage() {
           >
             <div className="absolute inset-0 bg-white/16" />
             <div className="relative">
-              <p className="text-sm font-medium opacity-75">Valor total do plano</p>
+              <p className="text-sm font-medium opacity-75">
+                Valor total do plano
+              </p>
               <p className="mt-2 text-2xl font-semibold">{totalValue}</p>
             </div>
           </div>
         </SectionCard>
 
-        <SectionCard title="Contrato" description="Adicione o contrato do plano.">
+        <SectionCard
+          title="Contrato"
+          description="Adicione o contrato do plano."
+        >
           <textarea
             rows={7}
-            className="min-h-40 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+            className="min-h-40 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
             placeholder="Cole ou escreva aqui as regras do contrato do plano."
           />
         </SectionCard>
@@ -439,7 +452,9 @@ function ThemePicker({
               type="button"
               aria-pressed={selected}
               className={`min-w-0 rounded-md border p-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                selected ? "border-primary ring-2 ring-primary/25" : "border-border"
+                selected
+                  ? "border-primary ring-2 ring-primary/25"
+                  : "border-border"
               }`}
               onClick={() => onSelect(theme.id)}
             >
@@ -531,7 +546,7 @@ function NumberInput({
         onChange={(event) => onChange?.(parseNumeric(event.target.value))}
       />
       {suffix ? (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+        <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">
           {suffix}
         </span>
       ) : null}
@@ -589,7 +604,8 @@ function AddedDiscountList({
 }
 
 function AddedServiceList({ items }: { items: ServiceItem[] }) {
-  if (items.length === 0) return <EmptyList>Nenhum serviço adicionado!</EmptyList>
+  if (items.length === 0)
+    return <EmptyList>Nenhum serviço adicionado!</EmptyList>
 
   return (
     <div className="mt-4 grid gap-2">
@@ -598,7 +614,7 @@ function AddedServiceList({ items }: { items: ServiceItem[] }) {
           key={item.id}
           className="grid gap-1 rounded-md border bg-background px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_auto_auto]"
         >
-          <span className="break-words font-medium">{item.name}</span>
+          <span className="font-medium break-words">{item.name}</span>
           <span className="text-muted-foreground">{item.discount}%</span>
           <span className="text-muted-foreground">
             {item.freeQuantity} gratuitos
@@ -610,12 +626,17 @@ function AddedServiceList({ items }: { items: ServiceItem[] }) {
 }
 
 function AddedProductList({ items }: { items: ProductItem[] }) {
-  if (items.length === 0) return <EmptyList>Nenhum produto adicionado!</EmptyList>
+  if (items.length === 0)
+    return <EmptyList>Nenhum produto adicionado!</EmptyList>
 
   return (
     <div className="mt-4 grid gap-2">
       {items.map((item) => (
-        <ListRow key={item.id} label={item.name} value={formatCurrency(item.value)} />
+        <ListRow
+          key={item.id}
+          label={item.name}
+          value={formatCurrency(item.value)}
+        />
       ))}
     </div>
   )
@@ -624,7 +645,7 @@ function AddedProductList({ items }: { items: ProductItem[] }) {
 function ListRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 rounded-md border bg-background px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-      <span className="break-words font-medium">{label}</span>
+      <span className="font-medium break-words">{label}</span>
       <span className="text-muted-foreground">{value}</span>
     </div>
   )

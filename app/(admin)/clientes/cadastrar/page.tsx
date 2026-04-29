@@ -1,6 +1,11 @@
-import { CashierIcon, CrownIcon, UserAdd01Icon } from "@hugeicons/core-free-icons"
+import {
+  CashierIcon,
+  CrownIcon,
+  UserAdd01Icon,
+} from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { planCatalog, serviceNames } from "@/components/admin/catalog-data"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,7 +52,22 @@ export default function CadastrarClientePage() {
             <SelectContent>
               <SelectItem value="ativo">Ativo</SelectItem>
               <SelectItem value="recorrente">Recorrente</SelectItem>
-              <SelectItem value="sem-retorno">Sem retorno</SelectItem>
+              <SelectItem value="sem-plano">Sem plano</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-1.5 md:col-span-2">
+          <Label>Servico preferido</Label>
+          <Select defaultValue={serviceNames[0]}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {serviceNames.map((service) => (
+                <SelectItem key={service} value={service}>
+                  {service}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -84,7 +104,9 @@ export default function CadastrarClientePage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sim">Sim, cliente pode pagar no cartao</SelectItem>
+              <SelectItem value="sim">
+                Sim, cliente pode pagar no cartao
+              </SelectItem>
               <SelectItem value="nao">Nao, cobrar sem cartao</SelectItem>
             </SelectContent>
           </Select>
@@ -101,9 +123,11 @@ export default function CadastrarClientePage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="sem-plano">Sem plano</SelectItem>
-              <SelectItem value="corte-mensal">Plano Corte Mensal</SelectItem>
-              <SelectItem value="barba-corte">Plano Barba + Corte</SelectItem>
-              <SelectItem value="premium">Plano Premium</SelectItem>
+              {planCatalog.map((plan) => (
+                <SelectItem key={plan.name} value={plan.name}>
+                  Plano {plan.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

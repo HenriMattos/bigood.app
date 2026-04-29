@@ -14,6 +14,7 @@ import {
   BankIcon,
   File01Icon,
   CreditCardIcon,
+  EyeIcon,
   PlusSignCircleIcon,
   CancelCircleIcon,
   CheckmarkCircle01Icon,
@@ -143,6 +144,23 @@ export const navItems = [
     href: "/servicos",
     icon: ScissorIcon,
     description: "Catalogo, precos e duracao",
+    children: [
+      {
+        title: "Cadastrar servicos",
+        href: "/servicos/cadastrar",
+        icon: PlusSignCircleIcon,
+      },
+      {
+        title: "Exibicao de servicos",
+        href: "/servicos/exibicao",
+        icon: EyeIcon,
+      },
+      {
+        title: "Listagem de servicos",
+        href: "/servicos/listagem",
+        icon: UserListIcon,
+      },
+    ],
   },
   {
     title: "Empresa",

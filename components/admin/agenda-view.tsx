@@ -18,6 +18,8 @@ import {
   UserSearch01Icon,
 } from "@hugeicons/core-free-icons"
 
+import { serviceNames } from "@/components/admin/catalog-data"
+import { database } from "@/components/admin/database"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -45,7 +47,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
-type Barber = "Bruno" | "Caio" | "Diego"
+type Barber = string
 type EventType = "appointment" | "blocked" | "break" | "unavailable"
 type RepeatMode = "today" | "automatic"
 
@@ -76,60 +78,38 @@ type NewAgendaClient = {
   notes: string
 }
 
-const barbers: Barber[] = ["Bruno", "Caio", "Diego"]
-const appointmentTypes = ["Agendamento", "Retorno", "Encaixe", "Intervalo", "Bloqueio"]
-const branches = ["Flores", "Centro", "Shopping"]
-const initialClients: AgendaClient[] = [
-  {
-    id: "rafael-lima",
-    name: "Rafael Lima",
-    phone: "(11) 98211-2045",
-    lastVisit: "20/04/2026",
-  },
-  {
-    id: "mateus-alves",
-    name: "Mateus Alves",
-    phone: "(11) 97340-1190",
-    lastVisit: "13/04/2026",
-  },
-  {
-    id: "lucas-rocha",
-    name: "Lucas Rocha",
-    phone: "(11) 96422-8821",
-    lastVisit: "06/04/2026",
-  },
-  {
-    id: "gustavo-nunes",
-    name: "Gustavo Nunes",
-    phone: "(11) 95513-7440",
-    lastVisit: "Primeira visita",
-  },
-  {
-    id: "hamilton-rodrigues",
-    name: "Hamilton Rodrigues",
-    phone: "(11) 94482-0133",
-    lastVisit: "27/03/2026",
-  },
+const barbers: Barber[] = database.professionals
+  .filter((professional) => professional.status === "Ativo")
+  .map((professional) => professional.name)
+const appointmentTypes = [
+  "Agendamento",
+  "Retorno",
+  "Encaixe",
+  "Intervalo",
+  "Bloqueio",
 ]
-const services = [
-  "Corte social",
-  "Degrade",
-  "Barba completa",
-  "Corte + barba",
-  "Corte premium",
-  "Sobrancelha",
-]
-const recentAppointments = [
-  { date: "20/04/2026", service: "Corte + barba", professional: "Bruno" },
-  { date: "13/04/2026", service: "Degrade", professional: "Caio" },
-  { date: "06/04/2026", service: "Barba completa", professional: "Diego" },
-]
-const repurchaseItems = [
-  { id: "selagem", label: "Selagem", days: 45 },
-  { id: "barba", label: "Barba completa", days: 15 },
-  { id: "pomada", label: "Pomada modeladora", days: 30 },
-  { id: "oleo", label: "Oleo para barba", days: 30 },
-]
+const branches = [database.company.tradeName]
+const initialClients: AgendaClient[] = database.clients.map((client) => ({
+  id: String(client.id),
+  name: client.name,
+  phone: client.phone,
+  email: client.email,
+  lastVisit: client.lastVisit,
+}))
+const services = serviceNames
+const recentAppointments = database.agendaEvents
+  .filter((event) => event.type === "appointment")
+  .slice(0, 3)
+  .map((event) => ({
+    date: "29/04/2026",
+    service: event.detail,
+    professional: event.barber,
+  }))
+const repurchaseItems = database.services.map((service) => ({
+  id: String(service.id),
+  label: service.name,
+  days: service.repurchaseDays,
+}))
 const weekdays = [
   { value: 0, label: "Dom" },
   { value: 1, label: "Seg" },
@@ -156,72 +136,11 @@ const months = [
 const timeSlots = buildTimeSlots("09:00", "18:00", 10)
 const slotHeight = 38
 
-const initialEvents: AgendaEvent[] = [
-  {
-    id: 1,
-    barber: "Bruno",
-    date: "2026-04-27",
-    start: "09:00",
-    end: "10:00",
-    title: "Rafael Lima",
-    detail: "Corte + barba",
-    type: "appointment",
-  },
-  {
-    id: 2,
-    barber: "Bruno",
-    date: "2026-04-27",
-    start: "12:00",
-    end: "13:00",
-    title: "Intervalo",
-    detail: "Automatico",
-    type: "break",
-  },
-  {
-    id: 3,
-    barber: "Bruno",
-    date: "2026-04-27",
-    start: "15:30",
-    end: "16:30",
-    title: "Lucas Rocha",
-    detail: "Corte premium",
-    type: "appointment",
-  },
-  {
-    id: 4,
-    barber: "Caio",
-    date: "2026-04-27",
-    start: "09:00",
-    end: "18:00",
-    title: "Nao atende",
-    detail: "09:00 - 18:00",
-    type: "unavailable",
-  },
-  {
-    id: 5,
-    barber: "Diego",
-    date: "2026-04-27",
-    start: "10:30",
-    end: "11:30",
-    title: "Mateus Alves",
-    detail: "Degrade",
-    type: "appointment",
-  },
-  {
-    id: 6,
-    barber: "Diego",
-    date: "2026-04-27",
-    start: "14:00",
-    end: "14:30",
-    title: "Gustavo Nunes",
-    detail: "Barba completa",
-    type: "appointment",
-  },
-]
+const initialEvents: AgendaEvent[] = database.agendaEvents
 
 export function AgendaView() {
-  const [selectedBarber, setSelectedBarber] = useState<Barber>("Bruno")
-  const [selectedDay, setSelectedDay] = useState("27")
+  const [selectedBarber, setSelectedBarber] = useState<Barber>(barbers[0] ?? "")
+  const [selectedDay, setSelectedDay] = useState("29")
   const [selectedMonth, setSelectedMonth] = useState("04")
   const [selectedYear, setSelectedYear] = useState("2026")
   const [events, setEvents] = useState(initialEvents)
@@ -232,13 +151,15 @@ export function AgendaView() {
   const [formStart, setFormStart] = useState("09:00")
   const [formEnd, setFormEnd] = useState("09:30")
   const [formClient, setFormClient] = useState("")
-  const [formService, setFormService] = useState("Corte social")
+  const [formService, setFormService] = useState(serviceNames[0] ?? "")
   const [formAddedServices, setFormAddedServices] = useState<string[]>([])
-  const [formBranch, setFormBranch] = useState("Flores")
+  const [formBranch, setFormBranch] = useState(database.company.tradeName)
   const [formNoPreference, setFormNoPreference] = useState(false)
   const [blockReason, setBlockReason] = useState("Horario bloqueado")
   const [formRepeatMode, setFormRepeatMode] = useState<RepeatMode>("today")
-  const [formRepeatDays, setFormRepeatDays] = useState<number[]>([1, 2, 3, 4, 5])
+  const [formRepeatDays, setFormRepeatDays] = useState<number[]>([
+    1, 2, 3, 4, 5,
+  ])
   const [formRepurchaseItem, setFormRepurchaseItem] = useState("none")
 
   const selectedDate = `${selectedYear}-${selectedMonth}-${selectedDay.padStart(2, "0")}`
@@ -261,9 +182,9 @@ export function AgendaView() {
     setFormStart(slot)
     setFormEnd(nextSlot(slot))
     setFormClient("")
-    setFormService("Corte social")
+    setFormService(serviceNames[0] ?? "")
     setFormAddedServices([])
-    setFormBranch("Flores")
+    setFormBranch(database.company.tradeName)
     setFormNoPreference(false)
     setBlockReason("Horario bloqueado")
     setFormRepeatMode("today")
@@ -295,9 +216,13 @@ export function AgendaView() {
       setFormStart(event.start)
       setFormEnd(event.end)
       setFormClient(event.type === "appointment" ? event.title : "")
-      setFormService(event.type === "appointment" ? event.detail : "Corte social")
+      setFormService(
+        event.type === "appointment" ? event.detail : (serviceNames[0] ?? "")
+      )
       setFormAddedServices(event.type === "appointment" ? [event.detail] : [])
-      setBlockReason(event.type !== "appointment" ? event.title : "Horario bloqueado")
+      setBlockReason(
+        event.type !== "appointment" ? event.title : "Horario bloqueado"
+      )
       setFormRepeatMode("today")
       setFormRepeatDays([1, 2, 3, 4, 5])
       setFormRepurchaseItem("none")
@@ -324,12 +249,16 @@ export function AgendaView() {
       detail: eventServices,
       type: "appointment",
     }
-    const repurchase = repurchaseItems.find((item) => item.id === formRepurchaseItem)
+    const repurchase = repurchaseItems.find(
+      (item) => item.id === formRepurchaseItem
+    )
     const repurchaseEvent: AgendaEvent | null = repurchase
       ? {
           ...nextEvent,
           id: baseId + 1,
-          date: toDateInputValue(addDays(parseLocalDate(selectedDate), repurchase.days)),
+          date: toDateInputValue(
+            addDays(parseLocalDate(selectedDate), repurchase.days)
+          ),
           detail: `${repurchase.label} (recompra)`,
         }
       : null
@@ -388,7 +317,9 @@ export function AgendaView() {
   }
 
   function removeAddedService(service: string) {
-    setFormAddedServices((current) => current.filter((item) => item !== service))
+    setFormAddedServices((current) =>
+      current.filter((item) => item !== service)
+    )
   }
 
   function createClient(client: NewAgendaClient) {
@@ -434,7 +365,7 @@ export function AgendaView() {
         onYearChange={setSelectedYear}
         onToday={() =>
           setDateFromObject(
-            new Date(2026, 3, 27),
+            new Date(2026, 3, 29),
             setSelectedDay,
             setSelectedMonth,
             setSelectedYear
@@ -553,7 +484,7 @@ function AgendaDayScreen({
       <div className="border-b p-3 sm:p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase text-muted-foreground sm:hidden">
+            <p className="text-xs font-semibold text-muted-foreground uppercase sm:hidden">
               Agenda do dia
             </p>
             <h2 className="hidden text-lg font-semibold tracking-normal sm:block sm:text-xl">
@@ -586,8 +517,7 @@ function AgendaDayScreen({
               aria-label="Dia anterior"
               onClick={onPreviousDay}
             >
-              <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
-              ‹
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />‹
             </Button>
             <Button
               size="icon-sm"
@@ -596,8 +526,7 @@ function AgendaDayScreen({
               aria-label="Proximo dia"
               onClick={onNextDay}
             >
-              <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
-              ›
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} />›
             </Button>
             <Button
               size="sm"
@@ -612,7 +541,7 @@ function AgendaDayScreen({
 
         <div className="mt-3 grid gap-2 rounded-lg border bg-muted/20 p-2 sm:mt-4 sm:gap-3 sm:border-0 sm:bg-transparent sm:p-0 lg:grid-cols-[1fr_1fr]">
           <div className="grid gap-1">
-            <span className="px-1 text-[11px] font-semibold uppercase text-muted-foreground sm:hidden">
+            <span className="px-1 text-[11px] font-semibold text-muted-foreground uppercase sm:hidden">
               Barbeiro
             </span>
             <Select value={selectedBarber} onValueChange={onBarberChange}>
@@ -741,7 +670,7 @@ function ScheduleBoard({
             gridTemplateColumns: "4.25rem minmax(32rem, 1fr)",
           }}
         >
-          <div className="border-b border-r bg-background" />
+          <div className="border-r border-b bg-background" />
           <div className="border-b bg-background px-4 py-3" />
         </div>
 
@@ -860,7 +789,7 @@ function BarberScheduleColumn({
           key={event.id}
           type="button"
           onClick={() => onOpenSlot(barber, event.start)}
-          className="absolute left-1 right-1 text-left"
+          className="absolute right-1 left-1 text-left"
           style={eventPosition(event)}
         >
           <AgendaEventCard event={event} />
@@ -885,7 +814,12 @@ function AgendaEventCard({ event }: { event: AgendaEvent }) {
   }[event.type]
 
   return (
-    <span className={cn("block h-full overflow-hidden rounded-md border px-3 py-2", tone)}>
+    <span
+      className={cn(
+        "block h-full overflow-hidden rounded-md border px-3 py-2",
+        tone
+      )}
+    >
       <span className="flex flex-col gap-1">
         <span className="min-w-0">
           <span className="flex items-center gap-1.5 text-sm font-medium">
@@ -1000,7 +934,12 @@ function ScheduleModal({
   const [newClientEmail, setNewClientEmail] = useState("")
   const [newClientNotes, setNewClientNotes] = useState("")
   const steps = isRestrictionType
-    ? ["Dados", "Periodo", isIntervalType ? "Intervalo" : "Bloqueio", "Confirmar"]
+    ? [
+        "Dados",
+        "Periodo",
+        isIntervalType ? "Intervalo" : "Bloqueio",
+        "Confirmar",
+      ]
     : ["Dados", "Cliente", "Servicos", "Confirmar"]
   const lastStep = steps.length - 1
   const selectedClient = clients.find((item) => item.name === client)
@@ -1059,572 +998,605 @@ function ScheduleModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bottom-0 left-0 top-auto grid h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] rounded-b-none rounded-t-xl border-x-0 border-b-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[min(42rem,calc(100dvh-1rem))] sm:w-[calc(100vw-2rem)] sm:max-w-3xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:border">
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border sm:hidden" />
+        <DialogContent className="grid grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] sm:h-[min(42rem,calc(100dvh-1rem))] sm:max-w-3xl">
+          <DialogHeader className="flex-row items-start justify-between gap-2 border-b-0 p-3 pb-2 sm:gap-3 sm:border-b sm:p-4">
+            <div className="min-w-0">
+              <DialogTitle className="flex items-center gap-2 text-[17px] leading-tight sm:text-lg">
+                <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-primary sm:size-auto sm:bg-transparent sm:text-foreground">
+                  <HugeiconsIcon icon={Calendar03Icon} size={17} />
+                </span>
+                {editing ? "Editar agendamento" : "Novo agendamento"}
+              </DialogTitle>
+              <DialogDescription className="mt-1 flex items-center gap-2 text-xs leading-snug sm:block sm:text-sm">
+                <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground sm:bg-transparent sm:px-0 sm:py-0 sm:font-normal">
+                  {step + 1}/{steps.length}
+                </span>
+                <span>{steps[step]}</span>
+              </DialogDescription>
+            </div>
+            <DialogClose asChild>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className="rounded-full"
+                aria-label="Fechar modal"
+              >
+                <span className="sr-only">Fechar</span>
+                <HugeiconsIcon icon={Cancel01Icon} size={18} />
+              </Button>
+            </DialogClose>
+          </DialogHeader>
 
-        <DialogHeader className="flex-row items-start justify-between gap-2 border-b-0 p-3 pb-2 sm:gap-3 sm:border-b sm:p-4">
-          <div className="min-w-0">
-            <DialogTitle className="flex items-center gap-2 text-[17px] leading-tight sm:text-lg">
-              <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-primary sm:size-auto sm:bg-transparent sm:text-foreground">
-                <HugeiconsIcon icon={Calendar03Icon} size={17} />
-              </span>
-              {editing ? "Editar agendamento" : "Novo agendamento"}
-            </DialogTitle>
-            <DialogDescription className="mt-1 flex items-center gap-2 text-xs leading-snug sm:block sm:text-sm">
-              <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground sm:bg-transparent sm:px-0 sm:py-0 sm:font-normal">
-                {step + 1}/{steps.length}
-              </span>
-              <span>{steps[step]}</span>
-            </DialogDescription>
+          <div className="px-3 pt-0 pb-2 sm:border-b sm:px-4 sm:py-2">
+            <ModalStepper steps={steps} currentStep={step} />
           </div>
-          <DialogClose asChild>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              className="rounded-full"
-              aria-label="Fechar modal"
-            >
-              <span className="sr-only">Fechar</span>
-              <HugeiconsIcon icon={Cancel01Icon} size={18} />
-            </Button>
-          </DialogClose>
-        </DialogHeader>
 
-        <div className="px-3 pb-2 pt-0 sm:border-b sm:px-4 sm:py-2">
-          <ModalStepper steps={steps} currentStep={step} />
-        </div>
+          <ScrollArea className="h-full min-h-0">
+            <div className="min-h-0 space-y-3 px-3 pt-1 pb-3 sm:space-y-4 sm:p-4">
+              {step === 0 ? (
+                <>
+                  <div className="grid gap-2.5 sm:gap-3">
+                    <div className="grid gap-1 sm:gap-1.5">
+                      <FieldLabel required icon={Calendar03Icon}>
+                        Tipo de agendamento
+                      </FieldLabel>
+                      <Select
+                        value={appointmentType}
+                        onValueChange={onAppointmentTypeChange}
+                      >
+                        <SelectTrigger className="h-9 text-sm sm:h-10">
+                          <SelectValue placeholder="Tipo de agendamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {appointmentTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-        <ScrollArea className="h-full min-h-0">
-          <div className="min-h-0 space-y-3 px-3 pb-3 pt-1 sm:space-y-4 sm:p-4">
-            {step === 0 ? (
-              <>
-            <div className="grid gap-2.5 sm:gap-3">
-              <div className="grid gap-1 sm:gap-1.5">
-                <FieldLabel required icon={Calendar03Icon}>
-                  Tipo de agendamento
-                </FieldLabel>
-                <Select
-                  value={appointmentType}
-                  onValueChange={onAppointmentTypeChange}
-                >
-                  <SelectTrigger className="h-9 text-sm sm:h-10">
-                    <SelectValue placeholder="Tipo de agendamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {appointmentTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                    {!isRestrictionType ? (
+                      <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                        <div className="grid gap-1 sm:gap-1.5">
+                          <FieldLabel required icon={UserSearch01Icon}>
+                            Cliente
+                          </FieldLabel>
+                          <Select value={client} onValueChange={onClientChange}>
+                            <SelectTrigger className="h-12 scroll-mt-28 items-center text-left text-sm sm:h-10 [&>span]:min-w-0 [&>span]:flex-1">
+                              {selectedClient ? (
+                                <span className="flex min-w-0 flex-col leading-tight sm:block">
+                                  <span className="truncate font-medium">
+                                    {selectedClient.name}
+                                  </span>
+                                  <span className="truncate text-[11px] text-muted-foreground sm:hidden">
+                                    {selectedClient.phone} - ultima visita:{" "}
+                                    {selectedClient.lastVisit}
+                                  </span>
+                                </span>
+                              ) : (
+                                <SelectValue placeholder="Selecionar cliente" />
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              {clients.map((item) => (
+                                <SelectItem key={item.id} value={item.name}>
+                                  <span className="flex min-w-0 flex-col gap-0.5">
+                                    <span className="truncate font-medium">
+                                      {item.name}
+                                    </span>
+                                    <span className="truncate text-xs text-muted-foreground">
+                                      {item.phone} - ultima visita:{" "}
+                                      {item.lastVisit}
+                                    </span>
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="mt-5 size-9 sm:mt-0 sm:h-9 sm:w-auto sm:px-3"
+                          aria-label="Novo cliente"
+                          onClick={openNewClientRegistration}
+                        >
+                          <HugeiconsIcon icon={UserAdd01Icon} size={16} />
+                          <span className="hidden sm:inline">Novo cliente</span>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                        Defina data, horario e profissional para aplicar esta
+                        regra na agenda.
+                      </div>
+                    )}
+                  </div>
 
-              {!isRestrictionType ? (
-                <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                  <div className="grid gap-1 sm:gap-1.5">
-                    <FieldLabel required icon={UserSearch01Icon}>
-                      Cliente
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+                    <div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
+                      <FieldLabel required icon={Calendar03Icon}>
+                        Data
+                      </FieldLabel>
+                      <CalendarDatePicker
+                        value={selectedDate}
+                        onChange={onDateChange}
+                      />
+                    </div>
+                    <div className="grid gap-1 sm:gap-1.5">
+                      <FieldLabel required icon={Clock01Icon}>
+                        Inicio
+                      </FieldLabel>
+                      <Select value={start} onValueChange={onStartChange}>
+                        <SelectTrigger className="h-9 text-sm sm:h-10">
+                          <SelectValue placeholder="Inicio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeSlots.map((slot) => (
+                            <SelectItem key={slot} value={slot}>
+                              {slot}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-1 sm:gap-1.5">
+                      <FieldLabel required icon={Clock01Icon}>
+                        Fim
+                      </FieldLabel>
+                      <Select value={end} onValueChange={onEndChange}>
+                        <SelectTrigger className="h-9 text-sm sm:h-10">
+                          <SelectValue placeholder="Fim" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeSlots.map((slot) => (
+                            <SelectItem key={slot} value={slot}>
+                              {slot}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="19:10">19:10</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
+                      <FieldLabel required icon={Store01Icon}>
+                        Filial
+                      </FieldLabel>
+                      <Select value={branch} onValueChange={onBranchChange}>
+                        <SelectTrigger className="h-9 text-sm sm:h-10">
+                          <SelectValue placeholder="Filial" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branches.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2.5 sm:gap-3">
+                    <div className="grid gap-1 sm:gap-1.5">
+                      <FieldLabel required icon={UserSearch01Icon}>
+                        Profissional
+                      </FieldLabel>
+                      <Select
+                        value={barber}
+                        onValueChange={(value) =>
+                          onBarberChange(value as Barber)
+                        }
+                        disabled={noPreference}
+                      >
+                        <SelectTrigger className="h-9 text-sm sm:h-10">
+                          <SelectValue placeholder="Profissional" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {barbers.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <label className="flex items-center gap-2 text-[11px] text-muted-foreground sm:text-xs">
+                      <input
+                        type="checkbox"
+                        checked={noPreference}
+                        onChange={(event) =>
+                          onNoPreferenceChange(event.target.checked)
+                        }
+                        className="size-4 rounded border accent-primary"
+                      />
+                      Sem preferencia por profissional
+                    </label>
+                  </div>
+                </>
+              ) : null}
+
+              {step === 2 && isRestrictionType ? (
+                <div className="grid gap-3">
+                  {isBlockType ? (
+                    <div className="grid gap-1 sm:gap-1.5">
+                      <FieldLabel required icon={AlertCircleIcon}>
+                        Motivo do bloqueio
+                      </FieldLabel>
+                      <Input
+                        className="h-9 scroll-mt-28 text-sm sm:h-10"
+                        value={blockReason}
+                        onChange={(event) =>
+                          onBlockReasonChange(event.target.value)
+                        }
+                        placeholder="Compromisso, manutencao, fechamento..."
+                        inputMode="text"
+                        enterKeyHint="done"
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-md border bg-sky-500/10 p-3 text-sm text-sky-950">
+                      O intervalo sera exibido como <strong>Intervalo</strong>{" "}
+                      na agenda.
+                    </div>
+                  )}
+
+                  <div className="grid gap-1.5">
+                    <FieldLabel required icon={Clock01Icon}>
+                      Aplicacao
                     </FieldLabel>
-                    <Select value={client} onValueChange={onClientChange}>
-                      <SelectTrigger className="h-12 scroll-mt-28 items-center text-left text-sm sm:h-10 [&>span]:min-w-0 [&>span]:flex-1">
-                        {selectedClient ? (
-                          <span className="flex min-w-0 flex-col leading-tight sm:block">
-                            <span className="truncate font-medium">
-                              {selectedClient.name}
-                            </span>
-                            <span className="truncate text-[11px] text-muted-foreground sm:hidden">
-                              {selectedClient.phone} - ultima visita:{" "}
-                              {selectedClient.lastVisit}
-                            </span>
-                          </span>
-                        ) : (
-                          <SelectValue placeholder="Selecionar cliente" />
-                        )}
+                    <Select
+                      value={repeatMode}
+                      onValueChange={(value) =>
+                        onRepeatModeChange(value as RepeatMode)
+                      }
+                      disabled={isIntervalType}
+                    >
+                      <SelectTrigger className="h-9 text-sm sm:h-10">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map((item) => (
-                          <SelectItem key={item.id} value={item.name}>
-                            <span className="flex min-w-0 flex-col gap-0.5">
-                              <span className="truncate font-medium">
-                                {item.name}
+                        <SelectItem value="today">Somente neste dia</SelectItem>
+                        <SelectItem value="automatic">
+                          Automatico por dias da semana
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {repeatMode === "automatic" ? (
+                    <div className="grid gap-1.5">
+                      <FieldLabel required icon={Calendar03Icon}>
+                        Dias da semana
+                      </FieldLabel>
+                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                        {weekdays.map((day) => {
+                          const selected = repeatDays.includes(day.value)
+
+                          return (
+                            <button
+                              key={day.value}
+                              type="button"
+                              onClick={() =>
+                                onRepeatDaysChange(
+                                  selected
+                                    ? repeatDays.filter(
+                                        (value) => value !== day.value
+                                      )
+                                    : [...repeatDays, day.value].sort()
+                                )
+                              }
+                              className={cn(
+                                "h-9 rounded-md border text-xs font-medium transition-colors",
+                                selected
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "bg-background text-muted-foreground hover:bg-muted"
+                              )}
+                            >
+                              {day.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        O sistema cria a recorrencia para as proximas 8 semanas.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {step === 1 ? (
+                <>
+                  {isRestrictionType ? (
+                    <div className="grid gap-3">
+                      <div className="rounded-md border bg-muted/30 p-3">
+                        <p className="text-sm font-semibold">
+                          {isIntervalType
+                            ? "Intervalo automatico"
+                            : "Bloqueio de horario"}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {formatShortDate(selectedDate)} das {start} ate {end},
+                          com {noPreference ? "qualquer profissional" : barber}.
+                        </p>
+                      </div>
+                      <div className="rounded-md border bg-background p-3 text-sm text-muted-foreground">
+                        No proximo passo voce escolhe se a regra vale so neste
+                        dia ou se repete por dias da semana.
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <InfoBlock
+                        title="Ultimos 3 agendamentos"
+                        icon={InformationCircleIcon}
+                      >
+                        {client.trim() ? (
+                          <div className="grid gap-2">
+                            {recentAppointments.map((item) => (
+                              <div
+                                key={`${item.date}-${item.service}`}
+                                className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-xs"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block font-medium">
+                                    {item.service}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {item.date} com {item.professional}
+                                  </span>
+                                </span>
+                                <HugeiconsIcon
+                                  icon={Calendar03Icon}
+                                  size={16}
+                                  className="shrink-0 text-muted-foreground"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <EmptyState text="Selecione ou digite um cliente para ver os registros." />
+                        )}
+                      </InfoBlock>
+
+                      <InfoBlock
+                        title="Itens para recompra"
+                        icon={InformationCircleIcon}
+                      >
+                        {client.trim() ? (
+                          <div className="flex flex-wrap gap-2">
+                            {repurchaseItems.map((item) => (
+                              <span
+                                key={item.id}
+                                className="rounded-full border bg-background px-3 py-1 text-xs font-medium"
+                              >
+                                {item.label} em {item.days} dias
                               </span>
-                              <span className="truncate text-xs text-muted-foreground">
-                                {item.phone} - ultima visita: {item.lastVisit}
-                              </span>
-                            </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <EmptyState text="Cliente nao possui itens para recompra." />
+                        )}
+                      </InfoBlock>
+                    </>
+                  )}
+                </>
+              ) : null}
+
+              {step === 2 && !isRestrictionType ? (
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-semibold">Servicos</h3>
+                  <div className="mt-3 grid grid-cols-[minmax(0,1fr)_2.25rem] gap-2 sm:grid-cols-[minmax(0,1fr)_2.5rem]">
+                    <div className="grid gap-1 sm:gap-1.5">
+                      <FieldLabel required>Adicionar servico</FieldLabel>
+                      <Select value={service} onValueChange={onServiceChange}>
+                        <SelectTrigger className="h-9 text-sm sm:h-10">
+                          <SelectValue placeholder="Selecionar servico" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {services.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      className="mt-5 size-9 sm:mt-6 sm:w-10"
+                      aria-label="Adicionar servico"
+                      onClick={onAddService}
+                    >
+                      <HugeiconsIcon icon={Add01Icon} size={18} />
+                    </Button>
+                  </div>
+
+                  <div className="mt-3 min-h-14 rounded-md border border-dashed bg-muted/30 p-2">
+                    {addedServices.length ? (
+                      <div className="grid gap-2">
+                        {addedServices.map((item) => (
+                          <div
+                            key={item}
+                            className="flex items-center justify-between gap-3 rounded-md bg-background px-3 py-2 text-sm"
+                          >
+                            <span>{item}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              aria-label={`Remover ${item}`}
+                              onClick={() => onRemoveService(item)}
+                            >
+                              <HugeiconsIcon icon={Delete02Icon} size={15} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState text="Nenhum servico adicionado." compact />
+                    )}
+                  </div>
+
+                  <div className="mt-3 grid gap-1.5 rounded-md border bg-muted/25 p-3">
+                    <FieldLabel icon={Calendar03Icon}>
+                      Recompra/retorno automatico
+                    </FieldLabel>
+                    <Select
+                      value={repurchaseItem}
+                      onValueChange={onRepurchaseItemChange}
+                    >
+                      <SelectTrigger className="h-9 text-sm sm:h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nao gerar retorno</SelectItem>
+                        {repurchaseItems.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.label} - voltar em {item.days} dias
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="mt-5 size-9 sm:mt-0 sm:h-9 sm:w-auto sm:px-3"
-                    aria-label="Novo cliente"
-                    onClick={openNewClientRegistration}
-                  >
-                    <HugeiconsIcon icon={UserAdd01Icon} size={16} />
-                    <span className="hidden sm:inline">Novo cliente</span>
-                  </Button>
-                </div>
-              ) : (
-                <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
-                  Defina data, horario e profissional para aplicar esta regra na agenda.
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
-              <div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
-                <FieldLabel required icon={Calendar03Icon}>
-                  Data
-                </FieldLabel>
-                <CalendarDatePicker
-                  value={selectedDate}
-                  onChange={onDateChange}
-                />
-              </div>
-              <div className="grid gap-1 sm:gap-1.5">
-                <FieldLabel required icon={Clock01Icon}>
-                  Inicio
-                </FieldLabel>
-                <Select value={start} onValueChange={onStartChange}>
-                  <SelectTrigger className="h-9 text-sm sm:h-10">
-                    <SelectValue placeholder="Inicio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map((slot) => (
-                      <SelectItem key={slot} value={slot}>
-                        {slot}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1 sm:gap-1.5">
-                <FieldLabel required icon={Clock01Icon}>
-                  Fim
-                </FieldLabel>
-                <Select value={end} onValueChange={onEndChange}>
-                  <SelectTrigger className="h-9 text-sm sm:h-10">
-                    <SelectValue placeholder="Fim" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map((slot) => (
-                      <SelectItem key={slot} value={slot}>
-                        {slot}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="19:10">19:10</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
-                <FieldLabel required icon={Store01Icon}>
-                  Filial
-                </FieldLabel>
-                <Select value={branch} onValueChange={onBranchChange}>
-                  <SelectTrigger className="h-9 text-sm sm:h-10">
-                    <SelectValue placeholder="Filial" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid gap-2.5 sm:gap-3">
-              <div className="grid gap-1 sm:gap-1.5">
-                <FieldLabel required icon={UserSearch01Icon}>
-                  Profissional
-                </FieldLabel>
-                <Select
-                  value={barber}
-                  onValueChange={(value) => onBarberChange(value as Barber)}
-                  disabled={noPreference}
-                >
-                  <SelectTrigger className="h-9 text-sm sm:h-10">
-                    <SelectValue placeholder="Profissional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {barbers.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <label className="flex items-center gap-2 text-[11px] text-muted-foreground sm:text-xs">
-                <input
-                  type="checkbox"
-                  checked={noPreference}
-                  onChange={(event) => onNoPreferenceChange(event.target.checked)}
-                  className="size-4 rounded border accent-primary"
-                />
-                Sem preferencia por profissional
-              </label>
-            </div>
-              </>
-            ) : null}
-
-            {step === 2 && isRestrictionType ? (
-              <div className="grid gap-3">
-                {isBlockType ? (
-                  <div className="grid gap-1 sm:gap-1.5">
-                    <FieldLabel required icon={AlertCircleIcon}>
-                      Motivo do bloqueio
-                    </FieldLabel>
-                    <Input
-                      className="h-9 scroll-mt-28 text-sm sm:h-10"
-                      value={blockReason}
-                      onChange={(event) => onBlockReasonChange(event.target.value)}
-                      placeholder="Compromisso, manutencao, fechamento..."
-                      inputMode="text"
-                      enterKeyHint="done"
-                    />
-                  </div>
-                ) : (
-                  <div className="rounded-md border bg-sky-500/10 p-3 text-sm text-sky-950">
-                    O intervalo sera exibido como <strong>Intervalo</strong> na agenda.
-                  </div>
-                )}
-
-                <div className="grid gap-1.5">
-                  <FieldLabel required icon={Clock01Icon}>
-                    Aplicacao
-                  </FieldLabel>
-                  <Select
-                    value={repeatMode}
-                    onValueChange={(value) => onRepeatModeChange(value as RepeatMode)}
-                    disabled={isIntervalType}
-                  >
-                    <SelectTrigger className="h-9 text-sm sm:h-10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Somente neste dia</SelectItem>
-                      <SelectItem value="automatic">Automatico por dias da semana</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {repeatMode === "automatic" ? (
-                  <div className="grid gap-1.5">
-                    <FieldLabel required icon={Calendar03Icon}>
-                      Dias da semana
-                    </FieldLabel>
-                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                      {weekdays.map((day) => {
-                        const selected = repeatDays.includes(day.value)
-
-                        return (
-                          <button
-                            key={day.value}
-                            type="button"
-                            onClick={() =>
-                              onRepeatDaysChange(
-                                selected
-                                  ? repeatDays.filter((value) => value !== day.value)
-                                  : [...repeatDays, day.value].sort()
-                              )
-                            }
-                            className={cn(
-                              "h-9 rounded-md border text-xs font-medium transition-colors",
-                              selected
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "bg-background text-muted-foreground hover:bg-muted"
-                            )}
-                          >
-                            {day.label}
-                          </button>
-                        )
-                      })}
-                    </div>
                     <p className="text-xs text-muted-foreground">
-                      O sistema cria a recorrencia para as proximas 8 semanas.
+                      Ao concluir, a agenda recebe um proximo atendimento na
+                      data sugerida.
                     </p>
                   </div>
-                ) : null}
-              </div>
-            ) : null}
+                </div>
+              ) : null}
 
-            {step === 1 ? (
-              <>
-            {isRestrictionType ? (
-              <div className="grid gap-3">
-                <div className="rounded-md border bg-muted/30 p-3">
-                  <p className="text-sm font-semibold">
-                    {isIntervalType ? "Intervalo automatico" : "Bloqueio de horario"}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {formatShortDate(selectedDate)} das {start} ate {end}, com{" "}
-                    {noPreference ? "qualquer profissional" : barber}.
-                  </p>
-                </div>
-                <div className="rounded-md border bg-background p-3 text-sm text-muted-foreground">
-                  No proximo passo voce escolhe se a regra vale so neste dia ou se
-                  repete por dias da semana.
-                </div>
-              </div>
-            ) : (
-              <>
-            <InfoBlock title="Ultimos 3 agendamentos" icon={InformationCircleIcon}>
-              {client.trim() ? (
-                <div className="grid gap-2">
-                  {recentAppointments.map((item) => (
-                    <div
-                      key={`${item.date}-${item.service}`}
-                      className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-xs"
-                    >
-                      <span className="min-w-0">
-                        <span className="block font-medium">{item.service}</span>
-                        <span className="text-muted-foreground">
-                          {item.date} com {item.professional}
-                        </span>
+              {step === 3 ? (
+                <div className="space-y-2.5 sm:space-y-3">
+                  <div className="rounded-lg border bg-card p-2.5 sm:rounded-md sm:bg-muted/30 sm:p-3">
+                    <h3 className="flex items-center gap-2 text-[13px] font-semibold sm:text-sm">
+                      <span className="flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary">
+                        <HugeiconsIcon icon={Calendar03Icon} size={15} />
                       </span>
-                      <HugeiconsIcon
-                        icon={Calendar03Icon}
-                        size={16}
-                        className="shrink-0 text-muted-foreground"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState text="Selecione ou digite um cliente para ver os registros." />
-              )}
-            </InfoBlock>
-
-            <InfoBlock title="Itens para recompra" icon={InformationCircleIcon}>
-              {client.trim() ? (
-                <div className="flex flex-wrap gap-2">
-                  {repurchaseItems.map((item) => (
-                    <span
-                      key={item.id}
-                      className="rounded-full border bg-background px-3 py-1 text-xs font-medium"
-                    >
-                      {item.label} em {item.days} dias
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState text="Cliente nao possui itens para recompra." />
-              )}
-            </InfoBlock>
-              </>
-            )}
-              </>
-            ) : null}
-
-            {step === 2 && !isRestrictionType ? (
-            <div className="border-t pt-4">
-              <h3 className="text-sm font-semibold">Servicos</h3>
-              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_2.25rem] gap-2 sm:grid-cols-[minmax(0,1fr)_2.5rem]">
-                <div className="grid gap-1 sm:gap-1.5">
-                  <FieldLabel required>Adicionar servico</FieldLabel>
-                  <Select value={service} onValueChange={onServiceChange}>
-                    <SelectTrigger className="h-9 text-sm sm:h-10">
-                      <SelectValue placeholder="Selecionar servico" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {services.map((item) => (
-                        <SelectItem key={item} value={item}>
-                          {item}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="mt-5 size-9 sm:mt-6 sm:w-10"
-                  aria-label="Adicionar servico"
-                  onClick={onAddService}
-                >
-                  <HugeiconsIcon icon={Add01Icon} size={18} />
-                </Button>
-              </div>
-
-              <div className="mt-3 min-h-14 rounded-md border border-dashed bg-muted/30 p-2">
-                {addedServices.length ? (
-                  <div className="grid gap-2">
-                    {addedServices.map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-center justify-between gap-3 rounded-md bg-background px-3 py-2 text-sm"
-                      >
-                        <span>{item}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          aria-label={`Remover ${item}`}
-                          onClick={() => onRemoveService(item)}
-                        >
-                          <HugeiconsIcon icon={Delete02Icon} size={15} />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState text="Nenhum servico adicionado." compact />
-                )}
-              </div>
-
-              <div className="mt-3 grid gap-1.5 rounded-md border bg-muted/25 p-3">
-                <FieldLabel icon={Calendar03Icon}>
-                  Recompra/retorno automatico
-                </FieldLabel>
-                <Select value={repurchaseItem} onValueChange={onRepurchaseItemChange}>
-                  <SelectTrigger className="h-9 text-sm sm:h-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nao gerar retorno</SelectItem>
-                    {repurchaseItems.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.label} - voltar em {item.days} dias
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Ao concluir, a agenda recebe um proximo atendimento na data sugerida.
-                </p>
-              </div>
-            </div>
-            ) : null}
-
-            {step === 3 ? (
-              <div className="space-y-2.5 sm:space-y-3">
-                <div className="rounded-lg border bg-card p-2.5 sm:rounded-md sm:bg-muted/30 sm:p-3">
-                  <h3 className="flex items-center gap-2 text-[13px] font-semibold sm:text-sm">
-                    <span className="flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary">
-                      <HugeiconsIcon icon={Calendar03Icon} size={15} />
-                    </span>
-                    Resumo
-                  </h3>
-                  <div className="mt-2 grid gap-1.5 text-sm sm:mt-3 sm:gap-2">
-                    <SummaryRow label="Tipo" value={appointmentType} />
-                    <SummaryRow
-                      label="Cliente"
-                      value={client || "Cliente nao selecionado"}
-                    />
-                    <SummaryRow label="Data" value={formatShortDate(selectedDate)} />
-                    <SummaryRow label="Horario" value={`${start} - ${end}`} />
-                    <SummaryRow label="Filial" value={branch} />
-                    <SummaryRow
-                      label="Profissional"
-                      value={noPreference ? "Sem preferencia" : barber}
-                    />
-                    <SummaryRow
-                      label={isBlockType ? "Motivo" : "Servicos"}
-                      value={
-                        isBlockType
-                          ? blockReason
-                          : isIntervalType
-                            ? "Intervalo automatico"
-                            : addedServices.length
-                              ? addedServices.join(", ")
-                              : service
-                      }
-                    />
-                    {repurchaseItem !== "none" && !isRestrictionType ? (
+                      Resumo
+                    </h3>
+                    <div className="mt-2 grid gap-1.5 text-sm sm:mt-3 sm:gap-2">
+                      <SummaryRow label="Tipo" value={appointmentType} />
                       <SummaryRow
-                        label="Retorno"
+                        label="Cliente"
+                        value={client || "Cliente nao selecionado"}
+                      />
+                      <SummaryRow
+                        label="Data"
+                        value={formatShortDate(selectedDate)}
+                      />
+                      <SummaryRow label="Horario" value={`${start} - ${end}`} />
+                      <SummaryRow label="Filial" value={branch} />
+                      <SummaryRow
+                        label="Profissional"
+                        value={noPreference ? "Sem preferencia" : barber}
+                      />
+                      <SummaryRow
+                        label={isBlockType ? "Motivo" : "Servicos"}
                         value={
-                          repurchaseItems.find(
-                            (item) => item.id === repurchaseItem
-                          )?.label ?? "Recompra"
+                          isBlockType
+                            ? blockReason
+                            : isIntervalType
+                              ? "Intervalo automatico"
+                              : addedServices.length
+                                ? addedServices.join(", ")
+                                : service
                         }
                       />
-                    ) : null}
+                      {repurchaseItem !== "none" && !isRestrictionType ? (
+                        <SummaryRow
+                          label="Retorno"
+                          value={
+                            repurchaseItems.find(
+                              (item) => item.id === repurchaseItem
+                            )?.label ?? "Recompra"
+                          }
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-primary/30 bg-primary/10 p-2.5 text-xs leading-snug text-foreground sm:rounded-md sm:p-3">
+                    Revise os dados antes de concluir. Voce pode voltar e
+                    ajustar qualquer etapa.
                   </div>
                 </div>
-                <div className="rounded-lg border border-primary/30 bg-primary/10 p-2.5 text-xs leading-snug text-foreground sm:rounded-md sm:p-3">
-                  Revise os dados antes de concluir. Voce pode voltar e ajustar
-                  qualquer etapa.
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </ScrollArea>
+              ) : null}
+            </div>
+          </ScrollArea>
 
-        <DialogFooter className="border-t bg-background p-3 sm:justify-between sm:p-4">
-          <div className="w-full sm:w-auto">
-            {editing ? (
-              <Button
-                className="w-full sm:w-auto"
-                variant="outline"
-                onClick={() => {
-                  setStep(0)
-                  onRemove()
-                }}
-              >
-                <HugeiconsIcon icon={Delete02Icon} size={16} />
-                Desbloquear/remover
-              </Button>
-            ) : null}
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <div
-              className={cn(
-                "grid gap-2 sm:contents",
-                step > 0 ? "grid-cols-2" : "grid-cols-1"
-              )}
-            >
-              <DialogClose asChild>
-                <Button className="w-full sm:w-auto" variant="outline">
-                  Cancelar
-                </Button>
-              </DialogClose>
-              {step > 0 ? (
+          <DialogFooter className="border-t bg-background p-3 sm:justify-between sm:p-4">
+            <div className="w-full sm:w-auto">
+              {editing ? (
                 <Button
                   className="w-full sm:w-auto"
                   variant="outline"
-                  onClick={goBack}
+                  onClick={() => {
+                    setStep(0)
+                    onRemove()
+                  }}
                 >
-                  <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
-                  Voltar
+                  <HugeiconsIcon icon={Delete02Icon} size={16} />
+                  Desbloquear/remover
                 </Button>
               ) : null}
             </div>
-            {step < lastStep ? (
-              <Button className="h-10 w-full sm:w-auto" onClick={goNext}>
-                Proximo
-                <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
-              </Button>
-            ) : (
-              <Button className="h-10 w-full sm:w-auto" onClick={finishSchedule}>
-                <HugeiconsIcon
-                  icon={isRestrictionType ? AlertCircleIcon : Calendar03Icon}
-                  size={16}
-                />
-                {isRestrictionType
-                  ? isIntervalType
-                    ? "Concluir intervalo"
-                    : "Concluir bloqueio"
-                  : editing
-                    ? "Salvar agendamento"
-                    : "Concluir agendamento"}
-              </Button>
-            )}
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <div
+                className={cn(
+                  "grid gap-2 sm:contents",
+                  step > 0 ? "grid-cols-2" : "grid-cols-1"
+                )}
+              >
+                <DialogClose asChild>
+                  <Button className="w-full sm:w-auto" variant="outline">
+                    Cancelar
+                  </Button>
+                </DialogClose>
+                {step > 0 ? (
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant="outline"
+                    onClick={goBack}
+                  >
+                    <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
+                    Voltar
+                  </Button>
+                ) : null}
+              </div>
+              {step < lastStep ? (
+                <Button className="h-10 w-full sm:w-auto" onClick={goNext}>
+                  Proximo
+                  <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
+                </Button>
+              ) : (
+                <Button
+                  className="h-10 w-full sm:w-auto"
+                  onClick={finishSchedule}
+                >
+                  <HugeiconsIcon
+                    icon={isRestrictionType ? AlertCircleIcon : Calendar03Icon}
+                    size={16}
+                  />
+                  {isRestrictionType
+                    ? isIntervalType
+                      ? "Concluir intervalo"
+                      : "Concluir bloqueio"
+                    : editing
+                      ? "Salvar agendamento"
+                      : "Concluir agendamento"}
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={newClientOpen}
@@ -1637,8 +1609,7 @@ function ScheduleModal({
           returnToScheduleModal()
         }}
       >
-        <DialogContent className="bottom-0 left-0 top-auto grid h-[90dvh] w-full max-w-none translate-x-0 translate-y-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] rounded-b-none rounded-t-xl border-x-0 border-b-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[min(34rem,calc(100dvh-1rem))] sm:w-[calc(100vw-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:border">
-          <div className="mx-auto mt-2 h-1 w-12 rounded-full bg-border sm:hidden" />
+        <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:h-[min(34rem,calc(100dvh-1rem))] sm:max-w-md">
           <DialogHeader className="flex-row items-start justify-between gap-3 border-b p-3 sm:p-4">
             <div className="min-w-0">
               <DialogTitle className="flex items-center gap-2 text-base">
@@ -1779,7 +1750,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs sm:flex sm:justify-between sm:bg-background sm:px-3 sm:text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 text-right font-medium leading-snug sm:max-w-[65%]">
+      <span className="min-w-0 text-right leading-snug font-medium sm:max-w-[65%]">
         {value}
       </span>
     </div>
@@ -1822,7 +1793,11 @@ function InfoBlock({
   return (
     <section className="border-t pt-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold">
-        <HugeiconsIcon icon={icon} size={16} className="text-muted-foreground" />
+        <HugeiconsIcon
+          icon={icon}
+          size={16}
+          className="text-muted-foreground"
+        />
         {title}
       </h3>
       <div className="mt-3">{children}</div>
@@ -1830,13 +1805,7 @@ function InfoBlock({
   )
 }
 
-function EmptyState({
-  text,
-  compact,
-}: {
-  text: string
-  compact?: boolean
-}) {
+function EmptyState({ text, compact }: { text: string; compact?: boolean }) {
   return (
     <div
       className={cn(
@@ -2062,11 +2031,9 @@ function LegacyScheduleModal({
                 onChange={(event) => onServiceChange(event.target.value)}
                 className="h-10 rounded-md border bg-background px-3 text-sm outline-none"
               >
-                <option>Corte social</option>
-                <option>Degrade</option>
-                <option>Barba completa</option>
-                <option>Corte + barba</option>
-                <option>Corte premium</option>
+                {services.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
               </select>
             </label>
           </div>
@@ -2173,7 +2140,10 @@ function addDays(date: Date, days: number) {
   return nextDate
 }
 
-function buildRecurringEvents(baseEvent: AgendaEvent, selectedWeekdays: number[]) {
+function buildRecurringEvents(
+  baseEvent: AgendaEvent,
+  selectedWeekdays: number[]
+) {
   const startDate = parseLocalDate(baseEvent.date)
   const recurrenceDays = selectedWeekdays.length
     ? selectedWeekdays

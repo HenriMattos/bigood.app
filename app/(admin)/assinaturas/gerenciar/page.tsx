@@ -4,12 +4,18 @@ import { useMemo, useState } from "react"
 import { Invoice03Icon, PlusSignCircleIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { database, type Subscription } from "@/components/admin/database"
+import {
+  formatDateForDisplay,
+  toDateInputValue,
+} from "@/components/admin/date-utils"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -26,43 +32,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-type SubscriptionStatus = "Ativa" | "Renovação próxima" | "Pausada"
+const initialSubscriptions: Subscription[] = database.subscriptions
 
-type Subscription = {
-  id: number
-  client: string
-  plan: string
-  value: number
-  nextCharge: string
-  status: SubscriptionStatus
-}
-
-const initialSubscriptions: Subscription[] = [
-  {
-    id: 1,
-    client: "João Silva",
-    plan: "Corte Mensal",
-    value: 79.9,
-    nextCharge: "28/05/2026",
-    status: "Ativa",
-  },
-  {
-    id: 2,
-    client: "Maria Oliveira",
-    plan: "Premium",
-    value: 249.9,
-    nextCharge: "02/06/2026",
-    status: "Renovação próxima",
-  },
-  {
-    id: 3,
-    client: "Rafael Lima",
-    plan: "Barba Club",
-    value: 119.9,
-    nextCharge: "31/05/2026",
-    status: "Ativa",
-  },
-]
+const subscriptionClientOptions = Array.from(
+  new Set([
+    ...database.clients.map((client) => client.name),
+    ...initialSubscriptions.map((subscription) => subscription.client),
+  ])
+)
 
 export default function GerenciarAssinaturasPage() {
   const [items, setItems] = useState(initialSubscriptions)
@@ -80,8 +57,9 @@ export default function GerenciarAssinaturasPage() {
       const matchesFilter =
         filter === "todas" ||
         (filter === "ativas" && item.status === "Ativa") ||
-        (filter === "proximas" && item.status === "Renovação próxima") ||
-        (filter === "pausadas" && item.status === "Pausada")
+        (filter === "proximas" && item.status === "Renovacao proxima") ||
+        (filter === "pausadas" && item.status === "Pausada") ||
+        (filter === "atrasadas" && item.status === "Em atraso")
       const matchesQuery =
         !normalizedQuery ||
         item.client.toLowerCase().includes(normalizedQuery) ||
@@ -92,7 +70,10 @@ export default function GerenciarAssinaturasPage() {
     })
   }, [filter, items, query])
 
-  const recurringTotal = filteredItems.reduce((sum, item) => sum + item.value, 0)
+  const recurringTotal = filteredItems.reduce(
+    (sum, item) => sum + item.value,
+    0
+  )
 
   function openCreate() {
     setEditing(null)
@@ -102,17 +83,24 @@ export default function GerenciarAssinaturasPage() {
 
   function openEdit(subscription: Subscription) {
     setEditing(subscription)
-    setDraft({ ...subscription })
+    setDraft({
+      ...subscription,
+      nextCharge: toDateInputValue(subscription.nextCharge),
+    })
     setModalOpen(true)
   }
 
   function saveSubscription() {
     if (!draft.client.trim()) return
+    const savedDraft = {
+      ...draft,
+      nextCharge: formatDateForDisplay(draft.nextCharge),
+    }
 
     setItems((current) =>
       editing
-        ? current.map((item) => (item.id === draft.id ? draft : item))
-        : [{ ...draft, id: Date.now() }, ...current]
+        ? current.map((item) => (item.id === draft.id ? savedDraft : item))
+        : [{ ...savedDraft, id: Date.now() }, ...current]
     )
     setFeedback(
       editing
@@ -140,6 +128,27 @@ export default function GerenciarAssinaturasPage() {
     setDraft((current) => ({ ...current, [key]: value }))
   }
 
+  function updateClient(clientName: string) {
+    const client = database.clients.find((item) => item.name === clientName)
+
+    setDraft((current) => ({
+      ...current,
+      client: clientName,
+      clientId: client?.id ?? current.clientId,
+      phone: client?.phone ?? current.phone,
+    }))
+  }
+
+  function updatePlan(planName: string) {
+    const plan = database.plans.find((item) => item.name === planName)
+
+    setDraft((current) => ({
+      ...current,
+      plan: planName,
+      value: plan?.price ?? current.value,
+    }))
+  }
+
   return (
     <>
       <SectionCard
@@ -165,14 +174,22 @@ export default function GerenciarAssinaturasPage() {
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
               <SelectItem value="ativas">Ativas</SelectItem>
-              <SelectItem value="proximas">Renovação próxima</SelectItem>
+              <SelectItem value="proximas">Renovacao proxima</SelectItem>
               <SelectItem value="pausadas">Pausadas</SelectItem>
+              <SelectItem value="atrasadas">Em atraso</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <SimpleTable
-          columns={["Cliente", "Plano", "Valor", "Próxima cobrança", "Status", "Ações"]}
+          columns={[
+            "Cliente",
+            "Plano",
+            "Valor",
+            "Próxima cobrança",
+            "Status",
+            "Ações",
+          ]}
           rows={filteredItems.map((subscription) => [
             subscription.client,
             subscription.plan,
@@ -182,10 +199,18 @@ export default function GerenciarAssinaturasPage() {
               {subscription.status}
             </StatusBadge>,
             <div key="actions" className="flex flex-wrap gap-2">
-              <Button size="xs" variant="outline" onClick={() => openEdit(subscription)}>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => openEdit(subscription)}
+              >
                 Editar
               </Button>
-              <Button size="xs" variant="outline" onClick={() => togglePause(subscription)}>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => togglePause(subscription)}
+              >
                 {subscription.status === "Pausada" ? "Reativar" : "Pausar"}
               </Button>
             </div>,
@@ -212,26 +237,32 @@ export default function GerenciarAssinaturasPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 p-4 md:grid-cols-2">
+          <DialogBody className="grid gap-4 md:grid-cols-2">
             <Field label="Cliente">
-              <Input
-                value={draft.client}
-                onChange={(event) => updateDraft("client", event.target.value)}
-              />
+              <Select value={draft.client} onValueChange={updateClient}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subscriptionClientOptions.map((clientName) => (
+                    <SelectItem key={clientName} value={clientName}>
+                      {clientName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <Field label="Plano">
-              <Select
-                value={draft.plan}
-                onValueChange={(value) => updateDraft("plan", value)}
-              >
+              <Select value={draft.plan} onValueChange={updatePlan}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Corte Mensal">Corte Mensal</SelectItem>
-                  <SelectItem value="Barba Club">Barba Club</SelectItem>
-                  <SelectItem value="Premium">Premium</SelectItem>
-                  <SelectItem value="Kids">Kids</SelectItem>
+                  {database.plans.map((plan) => (
+                    <SelectItem key={plan.name} value={plan.name}>
+                      {plan.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
@@ -246,6 +277,7 @@ export default function GerenciarAssinaturasPage() {
             </Field>
             <Field label="Próxima cobrança">
               <Input
+                type="date"
                 value={draft.nextCharge}
                 onChange={(event) =>
                   updateDraft("nextCharge", event.target.value)
@@ -256,7 +288,7 @@ export default function GerenciarAssinaturasPage() {
               <Select
                 value={draft.status}
                 onValueChange={(value) =>
-                  updateDraft("status", value as SubscriptionStatus)
+                  updateDraft("status", value as Subscription["status"])
                 }
               >
                 <SelectTrigger>
@@ -264,14 +296,15 @@ export default function GerenciarAssinaturasPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Ativa">Ativa</SelectItem>
-                  <SelectItem value="Renovação próxima">
-                    Renovação próxima
+                  <SelectItem value="Renovacao proxima">
+                    Renovacao proxima
                   </SelectItem>
                   <SelectItem value="Pausada">Pausada</SelectItem>
+                  <SelectItem value="Em atraso">Em atraso</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
-          </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
@@ -305,17 +338,21 @@ function Field({
 function createEmptySubscription(): Subscription {
   return {
     id: 0,
-    client: "",
-    plan: "Corte Mensal",
-    value: 79.9,
-    nextCharge: "29/05/2026",
+    clientId: database.clients[0]?.id ?? 0,
+    client: database.clients[0]?.name ?? "",
+    phone: database.clients[0]?.phone ?? "",
+    plan: database.plans[0]?.name ?? "",
+    value: database.plans[0]?.price ?? 0,
+    nextCharge: "2026-05-29",
+    startedAt: "29/04/2026",
     status: "Ativa",
   }
 }
 
-function getStatusTone(status: SubscriptionStatus) {
+function getStatusTone(status: Subscription["status"]) {
   if (status === "Ativa") return "green"
-  if (status === "Renovação próxima") return "amber"
+  if (status === "Renovacao proxima") return "amber"
+  if (status === "Em atraso") return "red"
   return "neutral"
 }
 

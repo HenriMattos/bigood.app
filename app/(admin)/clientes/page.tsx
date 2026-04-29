@@ -9,14 +9,17 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { clients, loyalClients } from "@/components/admin/clientes-data"
+import { database } from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 
 export default function ClientesPage() {
-  const registered = 482
-  const recurring = 214
-  const noReturn = 38
+  const registered = database.analytics.activeClients
+  const recurring = database.analytics.recurringClients
+  const noReturn = database.analytics.clientsWithoutPlan
+  const loyaltyRate = Math.round((recurring / registered) * 100)
+  const riskRate = Math.round((noReturn / registered) * 100)
 
   return (
     <>
@@ -37,26 +40,26 @@ export default function ClientesPage() {
             <CustomerMetric
               title="Cadastrados"
               value={registered}
-              detail="32 novos neste mes"
+              detail={`${database.analytics.newClientsThisMonth} novos neste mes`}
               icon={UserMultipleIcon}
               tone="green"
-              progress={74}
+              progress={100}
             />
             <CustomerMetric
               title="Recorrentes"
               value={recurring}
-              detail="44% da base ativa"
+              detail={`${loyaltyRate}% da base ativa`}
               icon={UserStar01Icon}
               tone="blue"
-              progress={44}
+              progress={loyaltyRate}
             />
             <CustomerMetric
               title="Sem retorno"
               value={noReturn}
-              detail="Mais de 45 dias sem visita"
+              detail="Clientes ativos sem plano"
               icon={Calendar03Icon}
               tone="amber"
-              progress={18}
+              progress={riskRate}
             />
           </div>
         </SectionCard>
@@ -66,9 +69,18 @@ export default function ClientesPage() {
           description="Leitura operacional para priorizar atendimento"
         >
           <div className="grid gap-4">
-            <HealthRow label="Clientes ativos" value="82%" progress={82} />
-            <HealthRow label="Fidelidade" value="44%" progress={44} />
-            <HealthRow label="Risco de perda" value="8%" progress={8} tone="amber" />
+            <HealthRow label="Clientes ativos" value="100%" progress={100} />
+            <HealthRow
+              label="Fidelidade"
+              value={`${loyaltyRate}%`}
+              progress={loyaltyRate}
+            />
+            <HealthRow
+              label="Sem plano"
+              value={`${riskRate}%`}
+              progress={riskRate}
+              tone="amber"
+            />
           </div>
         </SectionCard>
       </div>
@@ -131,7 +143,10 @@ export default function ClientesPage() {
 
               <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                 <Info label="Ultima visita" value={client.lastVisit} />
-                <Info label="Ticket medio" value={`R$ ${client.averageTicket}`} />
+                <Info
+                  label="Ticket medio"
+                  value={`R$ ${client.averageTicket}`}
+                />
               </div>
 
               <div className="mt-3 border-t pt-3 text-sm">

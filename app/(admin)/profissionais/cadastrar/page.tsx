@@ -89,7 +89,10 @@ export default function CadastrarProfissionalPage() {
           />
         </Field>
         <Field label="Função">
-          <Select value={form.role} onValueChange={(value) => updateForm("role", value)}>
+          <Select
+            value={form.role}
+            onValueChange={(value) => updateForm("role", value)}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -118,7 +121,7 @@ export default function CadastrarProfissionalPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Ativo">Ativo</SelectItem>
-              <SelectItem value="Férias">Férias</SelectItem>
+              <SelectItem value="Ferias">Ferias</SelectItem>
               <SelectItem value="Inativo">Inativo</SelectItem>
             </SelectContent>
           </Select>

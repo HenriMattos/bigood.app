@@ -1,119 +1,33 @@
-import { StatusBadge } from "@/components/admin/status-badge"
+import { database, type Client, type ClientStatus } from "./database"
 
-export type ClientStatus = "ativo" | "novo" | "recorrente" | "sem-plano"
+export type { Client, ClientStatus }
 
-export type Client = {
-  id: number
-  name: string
-  phone: string
-  email: string
-  visits: number
-  averageTicket: number
-  status: ClientStatus
-  lastVisit: string
-  favoriteService: string
-}
-
-export const clients: Client[] = [
-  {
-    id: 1,
-    name: "Rafael Lima",
-    phone: "(11) 98888-1020",
-    email: "rafael@email.com",
-    visits: 12,
-    averageTicket: 86,
-    status: "ativo",
-    lastVisit: "27/04/2026",
-    favoriteService: "Corte + barba",
-  },
-  {
-    id: 2,
-    name: "Mateus Alves",
-    phone: "(11) 97777-3344",
-    email: "mateus@email.com",
-    visits: 4,
-    averageTicket: 64,
-    status: "novo",
-    lastVisit: "24/04/2026",
-    favoriteService: "Degrade",
-  },
-  {
-    id: 3,
-    name: "Pedro Santos",
-    phone: "(11) 96666-7788",
-    email: "pedro@email.com",
-    visits: 19,
-    averageTicket: 92,
-    status: "recorrente",
-    lastVisit: "25/04/2026",
-    favoriteService: "Barba",
-  },
-  {
-    id: 4,
-    name: "Lucas Rocha",
-    phone: "(11) 95555-9012",
-    email: "lucas@email.com",
-    visits: 2,
-    averageTicket: 110,
-    status: "sem-plano",
-    lastVisit: "08/04/2026",
-    favoriteService: "Corte premium",
-  },
-  {
-    id: 5,
-    name: "Thiago Martins",
-    phone: "(11) 94444-4512",
-    email: "thiago@email.com",
-    visits: 16,
-    averageTicket: 95,
-    status: "recorrente",
-    lastVisit: "28/04/2026",
-    favoriteService: "Corte + barba",
-  },
-]
+export const clients: Client[] = database.clients
 
 export const loyalClients = clients
-  .filter((client) => client.visits >= 10)
+  .filter((client) => client.active && client.visits >= 10)
   .sort((a, b) => b.visits - a.visits)
+  .slice(0, 6)
 
-export const clientRows = [
-  [
-    "Rafael Lima",
-    "(11) 98888-1020",
-    "12 visitas",
-    "R$ 86",
-    <StatusBadge key="active" tone="green">
-      Ativo
-    </StatusBadge>,
-  ],
-  [
-    "Mateus Alves",
-    "(11) 97777-3344",
-    "4 visitas",
-    "R$ 64",
-    <StatusBadge key="new" tone="blue">
-      Novo
-    </StatusBadge>,
-  ],
-  [
-    "Pedro Santos",
-    "(11) 96666-7788",
-    "19 visitas",
-    "R$ 92",
-    <StatusBadge key="vip" tone="amber">
-      Recorrente
-    </StatusBadge>,
-  ],
-  [
-    "Lucas Rocha",
-    "(11) 95555-9012",
-    "2 visitas",
-    "R$ 110",
-    <StatusBadge key="risk" tone="neutral">
-      Sem plano
-    </StatusBadge>,
-  ],
-]
+export const repurchaseClients = clients
+  .filter((client) => client.active)
+  .slice(0, 12)
+  .map((client) => {
+    const service = database.services.find(
+      (item) => item.name === client.favoriteService
+    )
+    const interval = service?.repurchaseDays ?? 30
+
+    return {
+      client: client.name,
+      phone: client.phone,
+      lastPurchase: client.favoriteService,
+      lastDate: client.lastVisit,
+      recommended: client.favoriteService,
+      dueDate: getDueDate(client.lastVisit, interval),
+      reason: `${interval} dias desde o ultimo atendimento ou ciclo de recompra do servico.`,
+    }
+  })
 
 export function getClientStatusLabel(status: ClientStatus) {
   const labels = {
@@ -137,41 +51,10 @@ export function getClientStatusTone(status: ClientStatus) {
   return tones[status]
 }
 
-export const repurchaseClients = [
-  {
-    client: "Rafael Lima",
-    phone: "(11) 98888-1020",
-    lastPurchase: "Selagem capilar",
-    lastDate: "18/03/2026",
-    recommended: "Refazer selagem",
-    dueDate: "02/05/2026",
-    reason: "45 dias desde o ultimo procedimento",
-  },
-  {
-    client: "Pedro Santos",
-    phone: "(11) 96666-7788",
-    lastPurchase: "Oleo para barba",
-    lastDate: "28/03/2026",
-    recommended: "Repor oleo para barba",
-    dueDate: "28/04/2026",
-    reason: "Estimativa de recompra mensal",
-  },
-  {
-    client: "Lucas Rocha",
-    phone: "(11) 95555-9012",
-    lastPurchase: "Corte premium",
-    lastDate: "08/04/2026",
-    recommended: "Agendar manutencao do corte",
-    dueDate: "30/04/2026",
-    reason: "22 dias desde o ultimo corte",
-  },
-  {
-    client: "Mateus Alves",
-    phone: "(11) 97777-3344",
-    lastPurchase: "Pomada modeladora",
-    lastDate: "10/04/2026",
-    recommended: "Oferecer pomada modeladora",
-    dueDate: "10/05/2026",
-    reason: "Produto com ciclo medio de 30 dias",
-  },
-]
+function getDueDate(displayDate: string, days: number) {
+  const [day, month, year] = displayDate.split("/").map(Number)
+  const date = new Date(year, month - 1, day)
+  date.setDate(date.getDate() + days)
+
+  return new Intl.DateTimeFormat("pt-BR").format(date)
+}

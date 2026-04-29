@@ -11,6 +11,8 @@ import {
   getClientStatusLabel,
   getClientStatusTone,
 } from "@/components/admin/clientes-data"
+import { serviceNames } from "@/components/admin/catalog-data"
+import { FormField, FormGrid } from "@/components/admin/responsive-form"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +24,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
@@ -85,12 +86,19 @@ export function ClientesListManager() {
               </p>
               <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
                 <Info label="Historico" value={`${client.visits} visitas`} />
-                <Info label="Ticket medio" value={`R$ ${client.averageTicket}`} />
+                <Info
+                  label="Ticket medio"
+                  value={`R$ ${client.averageTicket}`}
+                />
                 <Info label="Ultima visita" value={client.lastVisit} />
               </div>
             </div>
 
-            <Button variant="outline" size="sm" onClick={() => openEditor(client)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openEditor(client)}
+            >
               <HugeiconsIcon icon={UserSearch01Icon} size={16} />
               Editar
             </Button>
@@ -98,100 +106,126 @@ export function ClientesListManager() {
         ))}
       </div>
 
-      <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && closeEditor()}>
-        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar cliente</DialogTitle>
-            <DialogDescription>
-              Ajuste os dados principais ou remova o cliente da listagem.
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog
+        open={Boolean(selected)}
+        onOpenChange={(open) => !open && closeEditor()}
+      >
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] max-w-2xl flex-col">
+          <form
+            className="flex min-h-0 flex-1 flex-col"
+            onSubmit={(event) => {
+              event.preventDefault()
+              saveClient()
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>Editar cliente</DialogTitle>
+              <DialogDescription>
+                Ajuste os dados principais ou remova o cliente da listagem.
+              </DialogDescription>
+            </DialogHeader>
 
-          {draft ? (
-            <ScrollArea className="h-[min(26rem,calc(100dvh-12rem))]">
-              <div className="grid gap-4 p-4 md:grid-cols-2">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="edit-name">Nome completo</Label>
-                  <Input
-                    id="edit-name"
-                    value={draft.name}
-                    onChange={(event) => updateDraft("name", event.target.value)}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="edit-phone">Telefone</Label>
-                  <Input
-                    id="edit-phone"
-                    value={draft.phone}
-                    inputMode="tel"
-                    onChange={(event) => updateDraft("phone", event.target.value)}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="edit-email">E-mail</Label>
-                  <Input
-                    id="edit-email"
-                    value={draft.email}
-                    type="email"
-                    onChange={(event) => updateDraft("email", event.target.value)}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Status</Label>
-                  <Select
-                    value={draft.status}
-                    onValueChange={(value) =>
-                      updateDraft("status", value as ClientStatus)
-                    }
+            {draft ? (
+              <ScrollArea className="min-h-0 flex-1">
+                <FormGrid className="p-4">
+                  <FormField label="Nome completo">
+                    <Input
+                      id="edit-name"
+                      value={draft.name}
+                      onChange={(event) =>
+                        updateDraft("name", event.target.value)
+                      }
+                    />
+                  </FormField>
+                  <FormField label="Telefone">
+                    <Input
+                      id="edit-phone"
+                      value={draft.phone}
+                      inputMode="tel"
+                      onChange={(event) =>
+                        updateDraft("phone", event.target.value)
+                      }
+                    />
+                  </FormField>
+                  <FormField label="E-mail">
+                    <Input
+                      id="edit-email"
+                      value={draft.email}
+                      type="email"
+                      onChange={(event) =>
+                        updateDraft("email", event.target.value)
+                      }
+                    />
+                  </FormField>
+                  <FormField label="Status">
+                    <Select
+                      value={draft.status}
+                      onValueChange={(value) =>
+                        updateDraft("status", value as ClientStatus)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ativo">Ativo</SelectItem>
+                        <SelectItem value="novo">Novo</SelectItem>
+                        <SelectItem value="recorrente">Recorrente</SelectItem>
+                        <SelectItem value="sem-plano">Sem plano</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                  <FormField
+                    label="Servico preferido"
+                    className="sm:col-span-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ativo">Ativo</SelectItem>
-                      <SelectItem value="novo">Novo</SelectItem>
-                      <SelectItem value="recorrente">Recorrente</SelectItem>
-                      <SelectItem value="sem-plano">Sem plano</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="edit-service">Servico preferido</Label>
-                  <Input
-                    id="edit-service"
-                    value={draft.favoriteService}
-                    onChange={(event) =>
-                      updateDraft("favoriteService", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="edit-ticket">Ticket medio</Label>
-                  <Input
-                    id="edit-ticket"
-                    value={String(draft.averageTicket)}
-                    inputMode="numeric"
-                    onChange={(event) =>
-                      updateDraft("averageTicket", Number(event.target.value) || 0)
-                    }
-                  />
-                </div>
-              </div>
-            </ScrollArea>
-          ) : null}
+                    <Select
+                      value={draft.favoriteService}
+                      onValueChange={(value) =>
+                        updateDraft("favoriteService", value)
+                      }
+                    >
+                      <SelectTrigger id="edit-service">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serviceNames.map((service) => (
+                          <SelectItem key={service} value={service}>
+                            {service}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                </FormGrid>
+              </ScrollArea>
+            ) : null}
 
-          <DialogFooter className="sm:justify-between">
-            <Button variant="destructive" onClick={removeClient}>
-              <HugeiconsIcon icon={Delete02Icon} size={16} />
-              Remover cliente
-            </Button>
-            <div className="flex flex-col-reverse gap-2 sm:flex-row">
-              <Button variant="outline" onClick={closeEditor}>
-                Cancelar
+            <DialogFooter className="shrink-0 gap-2 sm:justify-between">
+              <Button
+                type="button"
+                variant="destructive"
+                className="w-full sm:w-auto"
+                onClick={removeClient}
+              >
+                <HugeiconsIcon icon={Delete02Icon} size={16} />
+                Remover cliente
               </Button>
-              <Button onClick={saveClient}>Salvar alteracoes</Button>
-            </div>
-          </DialogFooter>
+              <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={closeEditor}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" className="w-full sm:w-auto">
+                  Salvar alteracoes
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>

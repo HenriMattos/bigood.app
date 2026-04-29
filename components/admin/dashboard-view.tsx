@@ -11,175 +11,198 @@ import {
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 
+import { database } from "@/components/admin/database"
 import { MetricCard } from "@/components/admin/metric-card"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 type DashboardMode = "operacional" | "estrategica"
+type GoalKind = "currency" | "number"
+type Goal = {
+  id: string
+  label: string
+  current: number
+  target: number
+  kind: GoalKind
+}
 
+const todayAppointments = database.agendaEvents.filter(
+  (event) => event.date === "2026-04-29" && event.type === "appointment"
+)
+const todayRevenue = database.comandas
+  .filter((comanda) => comanda.status === "paga")
+  .reduce((sum, comanda) => sum + getComandaTotal(comanda), 0)
+const averageTicket = Math.round(
+  database.clients.reduce((sum, client) => sum + client.averageTicket, 0) /
+    database.clients.length
+)
 const operationalMetrics = [
   {
     title: "Faturamento hoje",
-    value: "R$ 1.840",
-    change: "+18% em relacao a ontem",
+    value: formatCurrency(todayRevenue),
+    change: "Comandas pagas no caixa",
     icon: MoneyReceiveCircleIcon,
     tone: "green" as const,
   },
   {
     title: "Agendamentos",
-    value: "26",
-    change: "9 ainda aguardando confirmacao",
+    value: String(todayAppointments.length),
+    change: "Agenda de 29/04/2026",
     icon: Calendar03Icon,
     tone: "blue" as const,
   },
   {
     title: "Clientes ativos",
-    value: "482",
-    change: "32 novos neste mes",
+    value: String(database.analytics.activeClients),
+    change: `${database.analytics.newClientsThisMonth} novos neste mes`,
     icon: UserMultipleIcon,
     tone: "amber" as const,
   },
   {
     title: "Ticket medio",
-    value: "R$ 71",
-    change: "+R$ 6 nos ultimos 7 dias",
+    value: formatCurrency(averageTicket),
+    change: "Media da base ativa",
     icon: ChartIncreaseIcon,
     tone: "green" as const,
   },
 ]
 
-const strategicMetrics = [
-  {
-    title: "Receita mensal",
-    value: "R$ 36.740",
-    change: "Meta do mes em 72%",
-    icon: ChartIncreaseIcon,
-    tone: "green" as const,
-  },
-  {
-    title: "Assinantes",
-    value: "154",
-    change: "+18 novos no mes",
-    icon: CrownIcon,
-    tone: "blue" as const,
-  },
-  {
-    title: "Retencao",
-    value: "86%",
-    change: "+4 p.p. nos ultimos 30 dias",
-    icon: UserMultipleIcon,
-    tone: "amber" as const,
-  },
-  {
-    title: "Margem estimada",
-    value: "38,6%",
-    change: "+2,1 p.p. vs mes anterior",
-    icon: Wallet02Icon,
-    tone: "green" as const,
-  },
-]
+const appointmentRows = todayAppointments.slice(0, 4).map((event, index) => [
+  event.start,
+  event.title,
+  event.detail,
+  event.barber,
+  <StatusBadge
+    key={event.id}
+    tone={index === 0 ? "green" : index === 1 ? "amber" : "blue"}
+  >
+    {index === 0 ? "Confirmado" : index === 1 ? "Aguardando" : "Agendado"}
+  </StatusBadge>,
+])
 
-const appointments = [
-  [
-    "09:00",
-    "Rafael Lima",
-    "Corte + barba",
-    "Bruno",
-    <StatusBadge key="confirmed" tone="green">
-      Confirmado
-    </StatusBadge>,
-  ],
-  [
-    "10:30",
-    "Mateus Alves",
-    "Degrade",
-    "Caio",
-    <StatusBadge key="waiting" tone="amber">
-      Aguardando
-    </StatusBadge>,
-  ],
-  [
-    "13:00",
-    "Pedro Santos",
-    "Barba",
-    "Bruno",
-    <StatusBadge key="paid" tone="blue">
-      Pago online
-    </StatusBadge>,
-  ],
-  [
-    "15:30",
-    "Lucas Rocha",
-    "Corte premium",
-    "Diego",
-    <StatusBadge key="late" tone="red">
-      Atrasado
-    </StatusBadge>,
-  ],
+const revenue = database.analytics.revenueWeek
+const revenuePeriod = database.analytics.revenuePeriod
+const paymentTones = [
+  "bg-primary",
+  "bg-sky-500",
+  "bg-amber-500",
+  "bg-zinc-400",
+  "bg-emerald-500",
 ]
-
-const revenue = [
-  { day: "22/04", weekday: "Qua", gross: 1120, net: 952, previous: 980 },
-  { day: "23/04", weekday: "Qui", gross: 1810, net: 1539, previous: 1490 },
-  { day: "24/04", weekday: "Sex", gross: 1980, net: 1683, previous: 1720 },
-  { day: "25/04", weekday: "Sab", gross: 2140, net: 1819, previous: 1870 },
-  { day: "26/04", weekday: "Dom", gross: 760, net: 646, previous: 680 },
-  { day: "27/04", weekday: "Seg", gross: 1280, net: 1088, previous: 1100 },
-  { day: "28/04", weekday: "Ter", gross: 1640, net: 1394, previous: 1420 },
-]
-
-const revenuePeriod = {
-  label: "22/04/2026 a 28/04/2026",
-  comparison: "15/04/2026 a 21/04/2026",
-}
-
-const paymentMix = [
-  { label: "Pix", value: 4520, tone: "bg-primary" },
-  { label: "Credito", value: 3180, tone: "bg-sky-500" },
-  { label: "Debito", value: 1850, tone: "bg-amber-500" },
-  { label: "Dinheiro", value: 1180, tone: "bg-zinc-400" },
-]
+const paymentMix = database.paymentMethods.map((method, index) => ({
+  label: method.name,
+  value: method.amount,
+  tone: paymentTones[index % paymentTones.length],
+}))
 
 const financeSummary = {
-  services: 132,
-  fees: 1610,
-  averageTicket: 81,
-  margin: 85,
+  services: todayAppointments.length,
+  fees: Math.round(database.analytics.monthlyGrossRevenue * 0.0349),
+  averageTicket,
+  margin: Math.round(
+    ((database.analytics.monthlyGrossRevenue -
+      database.analytics.monthlyExpenses) /
+      database.analytics.monthlyNetRevenue) *
+      100
+  ),
 }
 
-const goals = [
-  { label: "Meta de faturamento", current: "R$ 36.740", target: "R$ 51.000", progress: 72 },
-  { label: "Novos clientes", current: "32", target: "45", progress: 71 },
-  { label: "Assinaturas", current: "154", target: "180", progress: 86 },
+const dashboardGoalsStorageKey = "mydashbarber.dashboard.goals"
+
+const initialGoals: Goal[] = [
+  {
+    id: "revenue",
+    label: "Meta de faturamento",
+    current: database.analytics.monthlyGrossRevenue,
+    target: 51000,
+    kind: "currency",
+  },
+  {
+    id: "new-clients",
+    label: "Novos clientes",
+    current: database.analytics.newClientsThisMonth,
+    target: 45,
+    kind: "number",
+  },
+  {
+    id: "subscriptions",
+    label: "Assinaturas",
+    current: database.analytics.activeSubscriptions,
+    target: 180,
+    kind: "number",
+  },
 ]
 
-const peakHours = [
-  { time: "09:00", appointments: 42, revenue: 2980, occupancy: 68 },
-  { time: "10:00", appointments: 58, revenue: 4310, occupancy: 81 },
-  { time: "11:00", appointments: 51, revenue: 3890, occupancy: 76 },
-  { time: "12:00", appointments: 18, revenue: 1210, occupancy: 32 },
-  { time: "13:00", appointments: 29, revenue: 2040, occupancy: 48 },
-  { time: "14:00", appointments: 46, revenue: 3420, occupancy: 71 },
-  { time: "15:00", appointments: 64, revenue: 4920, occupancy: 88 },
-  { time: "16:00", appointments: 72, revenue: 5580, occupancy: 94 },
-  { time: "17:00", appointments: 69, revenue: 5290, occupancy: 91 },
-  { time: "18:00", appointments: 37, revenue: 2760, occupancy: 62 },
-]
+const peakHours = database.analytics.peakHours
 
 export function DashboardView() {
   const [mode, setMode] = useState<DashboardMode>("operacional")
+  const [goals, setGoals] = useState<Goal[]>(readSavedGoals)
 
   const isOperational = mode === "operacional"
+  const revenueGoal =
+    goals.find((goal) => goal.id === "revenue") ?? initialGoals[0]
+  const subscriptionsGoal =
+    goals.find((goal) => goal.id === "subscriptions") ?? initialGoals[2]
+  const revenueProgress = calculateGoalProgress(revenueGoal)
+  const retentionRate = Math.round(
+    (database.analytics.recurringClients / database.analytics.activeClients) *
+      100
+  )
+  const marginRate = Math.round(
+    ((database.analytics.monthlyGrossRevenue -
+      database.analytics.monthlyExpenses) /
+      database.analytics.monthlyNetRevenue) *
+      100
+  )
+  const strategicMetrics = [
+    {
+      title: "Receita mensal",
+      value: formatCurrency(revenueGoal.current),
+      change: `Meta do mes em ${revenueProgress}%`,
+      icon: ChartIncreaseIcon,
+      tone: "green" as const,
+    },
+    {
+      title: "Assinantes",
+      value: String(subscriptionsGoal.current),
+      change: `${calculateGoalProgress(subscriptionsGoal)}% da meta mensal`,
+      icon: CrownIcon,
+      tone: "blue" as const,
+    },
+    {
+      title: "Retencao",
+      value: `${retentionRate}%`,
+      change: "Clientes com plano ativo",
+      icon: UserMultipleIcon,
+      tone: "amber" as const,
+    },
+    {
+      title: "Margem estimada",
+      value: `${marginRate}%`,
+      change: "Receita liquida menos despesas",
+      icon: Wallet02Icon,
+      tone: "green" as const,
+    },
+  ]
   const metrics = isOperational ? operationalMetrics : strategicMetrics
 
   const title = useMemo(
-    () =>
-      isOperational
-        ? "Operacional do dia"
-        : "Estrategia e crescimento",
+    () => (isOperational ? "Operacional do dia" : "Estrategia e crescimento"),
     [isOperational]
   )
 
@@ -231,7 +254,11 @@ export function DashboardView() {
         ))}
       </div>
 
-      {isOperational ? <OperationalDashboard /> : <StrategicDashboard />}
+      {isOperational ? (
+        <OperationalDashboard />
+      ) : (
+        <StrategicDashboard goals={goals} onGoalsChange={setGoals} />
+      )}
     </>
   )
 }
@@ -250,27 +277,71 @@ function OperationalDashboard() {
       >
         <SimpleTable
           columns={["Horario", "Cliente", "Servico", "Barbeiro", "Status"]}
-          rows={appointments}
+          rows={appointmentRows}
         />
       </SectionCard>
 
-      <SectionCard
-        title="Receita"
-        description="22/04 a 28/04"
-      >
+      <SectionCard title="Receita" description="22/04 a 28/04">
         <WeeklyRevenueChart />
       </SectionCard>
     </div>
   )
 }
 
-function StrategicDashboard() {
+function StrategicDashboard({
+  goals,
+  onGoalsChange,
+}: {
+  goals: Goal[]
+  onGoalsChange: (goals: Goal[]) => void
+}) {
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
+  const [draftGoals, setDraftGoals] = useState<Goal[]>(goals)
+
+  function updateDraftGoal(goalId: string, target: number) {
+    setDraftGoals((currentGoals) =>
+      currentGoals.map((goal) =>
+        goal.id === goalId
+          ? {
+              ...goal,
+              target,
+            }
+          : goal
+      )
+    )
+  }
+
+  function saveGoals(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const nextGoals = draftGoals.map((goal) => ({
+      ...goal,
+      target: Math.max(1, Math.round(goal.target)),
+    }))
+
+    onGoalsChange(nextGoals)
+    window.localStorage.setItem(
+      dashboardGoalsStorageKey,
+      JSON.stringify(nextGoals)
+    )
+    setIsReviewOpen(false)
+  }
+
+  function openGoalsReview() {
+    setDraftGoals(goals)
+    setIsReviewOpen(true)
+  }
+
   return (
     <div className="admin-split-grid">
       <SectionCard
         title="Metas do mes"
         description="Acompanhamento dos objetivos principais"
-        action={<Button size="sm">Revisar metas</Button>}
+        action={
+          <Button size="sm" onClick={openGoalsReview}>
+            Revisar metas
+          </Button>
+        }
       >
         <div className="space-y-5">
           {goals.map((goal) => (
@@ -278,24 +349,75 @@ function StrategicDashboard() {
               <div className="mb-2 flex items-center justify-between gap-3 text-sm">
                 <span className="font-medium">{goal.label}</span>
                 <span className="text-muted-foreground">
-                  {goal.current} / {goal.target}
+                  {formatGoalValue(goal.current, goal.kind)} /{" "}
+                  {formatGoalValue(goal.target, goal.kind)}
                 </span>
               </div>
               <div className="h-2 rounded-full bg-muted">
                 <div
                   className="h-2 rounded-full bg-primary"
-                  style={{ width: `${goal.progress}%` }}
+                  style={{
+                    width: `${Math.min(calculateGoalProgress(goal), 100)}%`,
+                  }}
                 />
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {calculateGoalProgress(goal)}% concluido
+              </p>
             </div>
           ))}
         </div>
       </SectionCard>
 
-      <SectionCard
-        title="Horarios de pico"
-        description="Ultimos 30 dias"
-      >
+      <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <DialogContent>
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={saveGoals}>
+            <DialogHeader>
+              <DialogTitle>Revisar metas</DialogTitle>
+              <DialogDescription>
+                Ajuste os objetivos do mes. O realizado atual permanece vindo do
+                painel.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogBody className="space-y-4">
+              {draftGoals.map((goal) => (
+                <div key={goal.id} className="grid gap-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor={`goal-${goal.id}`}>{goal.label}</Label>
+                    <span className="text-xs text-muted-foreground">
+                      Realizado: {formatGoalValue(goal.current, goal.kind)}
+                    </span>
+                  </div>
+                  <Input
+                    id={`goal-${goal.id}`}
+                    min={1}
+                    inputMode="numeric"
+                    type="number"
+                    value={goal.target}
+                    onChange={(event) =>
+                      updateDraftGoal(goal.id, Number(event.target.value))
+                    }
+                  />
+                </div>
+              ))}
+            </DialogBody>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsReviewOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">Salvar metas</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <SectionCard title="Horarios de pico" description="Ultimos 30 dias">
         <PeakHoursChart />
       </SectionCard>
     </div>
@@ -306,8 +428,12 @@ function WeeklyRevenueChart() {
   const totalGross = revenue.reduce((sum, item) => sum + item.gross, 0)
   const totalNet = revenue.reduce((sum, item) => sum + item.net, 0)
   const totalPrevious = revenue.reduce((sum, item) => sum + item.previous, 0)
-  const maxValue = Math.max(...revenue.map((item) => Math.max(item.gross, item.previous)))
-  const weeklyDelta = Math.round(((totalGross - totalPrevious) / totalPrevious) * 100)
+  const maxValue = Math.max(
+    ...revenue.map((item) => Math.max(item.gross, item.previous))
+  )
+  const weeklyDelta = Math.round(
+    ((totalGross - totalPrevious) / totalPrevious) * 100
+  )
   const totalPayments = paymentMix.reduce((sum, item) => sum + item.value, 0)
 
   return (
@@ -324,7 +450,10 @@ function WeeklyRevenueChart() {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <FinanceMiniCard label="Bruta" value={formatCurrency(totalGross)} />
         <FinanceMiniCard label="Liquida" value={formatCurrency(totalNet)} />
-        <FinanceMiniCard label="Anterior" value={formatCurrency(totalPrevious)} />
+        <FinanceMiniCard
+          label="Anterior"
+          value={formatCurrency(totalPrevious)}
+        />
         <FinanceMiniCard
           label="Variacao"
           value={`${weeklyDelta > 0 ? "+" : ""}${weeklyDelta}%`}
@@ -335,7 +464,7 @@ function WeeklyRevenueChart() {
       <div className="rounded-md border bg-muted/25 p-3">
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground uppercase">
               Por dia
             </p>
             <p className="text-sm text-muted-foreground">
@@ -358,7 +487,9 @@ function WeeklyRevenueChart() {
           {revenue.map((item) => {
             const grossHeight = Math.max((item.gross / maxValue) * 100, 8)
             const previousHeight = Math.max((item.previous / maxValue) * 100, 8)
-            const delta = Math.round(((item.gross - item.previous) / item.previous) * 100)
+            const delta = Math.round(
+              ((item.gross - item.previous) / item.previous) * 100
+            )
 
             return (
               <div
@@ -367,7 +498,7 @@ function WeeklyRevenueChart() {
               >
                 <div className="relative flex h-40 w-full items-end rounded-md bg-background shadow-inner sm:h-48">
                   <span
-                    className="absolute bottom-0 left-1 right-1 rounded-md bg-muted-foreground/20"
+                    className="absolute right-1 bottom-0 left-1 rounded-md bg-muted-foreground/20"
                     style={{ height: `${previousHeight}%` }}
                   />
                   <div
@@ -376,7 +507,9 @@ function WeeklyRevenueChart() {
                   />
                 </div>
                 <div className="text-center">
-                  <span className="block text-xs font-semibold">{item.weekday}</span>
+                  <span className="block text-xs font-semibold">
+                    {item.weekday}
+                  </span>
                   <span className="block text-[11px] text-muted-foreground">
                     {item.day}
                   </span>
@@ -474,7 +607,9 @@ function PeakHoursChart() {
   const busiest = peakHours.reduce((best, item) =>
     item.appointments > best.appointments ? item : best
   )
-  const maxAppointments = Math.max(...peakHours.map((item) => item.appointments))
+  const maxAppointments = Math.max(
+    ...peakHours.map((item) => item.appointments)
+  )
   const afternoonAppointments = peakHours
     .filter((item) => Number(item.time.slice(0, 2)) >= 14)
     .reduce((sum, item) => sum + item.appointments, 0)
@@ -500,7 +635,7 @@ function PeakHoursChart() {
       <div className="rounded-md border bg-muted/25 p-3">
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground uppercase">
               Ultimos 30 dias
             </p>
             <p className="text-sm text-muted-foreground">
@@ -551,7 +686,10 @@ function PeakHoursChart() {
           .sort((a, b) => b.appointments - a.appointments)
           .slice(0, 3)
           .map((item, index) => (
-            <div key={item.time} className="rounded-md border bg-background p-3">
+            <div
+              key={item.time}
+              className="rounded-md border bg-background p-3"
+            >
               <p className="text-xs font-medium text-muted-foreground">
                 #{index + 1} pico
               </p>
@@ -601,6 +739,58 @@ function formatCurrency(value: number) {
     currency: "BRL",
     maximumFractionDigits: 0,
   }).format(value)
+}
+
+function getComandaTotal(comanda: (typeof database.comandas)[number]) {
+  return (
+    comanda.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0
+    ) - (comanda.discount ?? 0)
+  )
+}
+
+function readSavedGoals() {
+  if (typeof window === "undefined") {
+    return initialGoals
+  }
+
+  const savedGoals = window.localStorage.getItem(dashboardGoalsStorageKey)
+
+  if (!savedGoals) {
+    return initialGoals
+  }
+
+  try {
+    const parsedGoals = JSON.parse(savedGoals) as Partial<Goal>[]
+
+    return initialGoals.map((goal) => {
+      const savedGoal = parsedGoals.find((item) => item.id === goal.id)
+
+      return {
+        ...goal,
+        target:
+          typeof savedGoal?.target === "number" && savedGoal.target > 0
+            ? savedGoal.target
+            : goal.target,
+      }
+    })
+  } catch {
+    window.localStorage.removeItem(dashboardGoalsStorageKey)
+    return initialGoals
+  }
+}
+
+function formatGoalValue(value: number, kind: GoalKind) {
+  return kind === "currency" ? formatCurrency(value) : String(value)
+}
+
+function calculateGoalProgress(goal: Goal) {
+  if (goal.target <= 0) {
+    return 0
+  }
+
+  return Math.round((goal.current / goal.target) * 100)
 }
 
 function formatCompactCurrency(value: number) {

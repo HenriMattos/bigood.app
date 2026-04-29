@@ -23,6 +23,11 @@ import {
 } from "@hugeicons/core-free-icons"
 
 import { MetricCard } from "@/components/admin/metric-card"
+import {
+  formatDateForDisplay,
+  toDateInputValue,
+} from "@/components/admin/date-utils"
+import { FormGrid, ResponsiveActions } from "@/components/admin/responsive-form"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
@@ -46,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { database } from "@/components/admin/database"
 
 type Tone = "green" | "amber" | "red" | "blue" | "neutral"
 type FinancialType = "Receita" | "Despesa"
@@ -94,217 +100,71 @@ type PaymentMethod = {
 }
 
 const dialogPanelClass =
-  "bottom-0 left-0 top-auto grid h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)_auto] rounded-b-none rounded-t-xl border-x-0 border-b-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[min(40rem,calc(100dvh-1rem))] sm:w-[calc(100vw-2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:border"
+  "grid grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:h-[min(40rem,calc(100dvh-1rem))] sm:max-w-2xl"
 
-const initialMovements: FinancialMovement[] = [
-  {
-    id: 1,
-    date: "28/04/2026",
-    description: "Recebimento - Corte João Silva",
-    category: "Receitas de Serviços",
-    account: "Conta Corrente - Bradesco",
-    amount: 45,
-    type: "Receita",
-  },
-  {
-    id: 2,
-    date: "28/04/2026",
-    description: "Pagamento - Conta de luz",
-    category: "Aluguel e Utilidades",
-    account: "Conta Corrente - Bradesco",
-    amount: 120,
-    type: "Despesa",
-  },
-  {
-    id: 3,
-    date: "27/04/2026",
-    description: "Recebimento - Corte Maria Oliveira",
-    category: "Receitas de Serviços",
-    account: "Pix",
-    amount: 35,
-    type: "Receita",
-  },
-  {
-    id: 4,
-    date: "27/04/2026",
-    description: "Transferência - Conta poupança",
-    category: "Transferências",
-    account: "Conta Poupança - Itaú",
-    amount: 500,
-    type: "Receita",
-  },
+const initialMovements: FinancialMovement[] = database.financialMovements
+const initialAccounts: BankAccount[] = database.bankAccounts
+const accountOptions = [
+  ...initialAccounts.map((account) => account.name),
+  "Pix",
 ]
-
-const initialAccounts: BankAccount[] = [
-  {
-    id: 1,
-    name: "Conta Corrente - Bradesco",
-    agency: "1234-5",
-    account: "98765-0",
-    type: "Conta corrente",
-    balance: 15420,
-    status: "Ativa",
-  },
-  {
-    id: 2,
-    name: "Conta Poupança - Itaú",
-    agency: "6789-0",
-    account: "22334-9",
-    type: "Poupança",
-    balance: 8750.5,
-    status: "Ativa",
-  },
-  {
-    id: 3,
-    name: "Conta Salário - Santander",
-    agency: "3456-2",
-    account: "44221-7",
-    type: "Conta salário",
-    balance: 3210.75,
-    status: "Ativa",
-  },
-  {
-    id: 4,
-    name: "Cartão Corporativo",
-    agency: "0001",
-    account: "****-1234",
-    type: "Cartão de crédito",
-    balance: -1250,
-    status: "Em uso",
-  },
-]
-
-const initialCategories: FinancialCategory[] = [
-  {
-    id: 1,
-    name: "Receitas de Serviços",
-    description: "Cortes, barba, pacotes e recorrências",
-    type: "Receita",
-    monthlyAmount: 32480,
-    trend: 12,
-  },
-  {
-    id: 2,
-    name: "Receitas de Produtos",
-    description: "Pomadas, shampoos e acessórios",
-    type: "Receita",
-    monthlyAmount: 4260,
-    trend: 5,
-  },
-  {
-    id: 3,
-    name: "Folha de Pagamento",
-    description: "Salários, comissões e benefícios",
-    type: "Despesa",
-    monthlyAmount: 14900,
-    trend: 2,
-  },
-  {
-    id: 4,
-    name: "Aluguel e Utilidades",
-    description: "Locação, energia, água e internet",
-    type: "Despesa",
-    monthlyAmount: 3800,
-    trend: 0,
-  },
-  {
-    id: 5,
-    name: "Marketing e Publicidade",
-    description: "Anúncios, redes sociais e materiais",
-    type: "Despesa",
-    monthlyAmount: 1200,
-    trend: 18,
-  },
-  {
-    id: 6,
-    name: "Estoques e Insumos",
-    description: "Produtos para revenda e uso interno",
-    type: "Despesa",
-    monthlyAmount: 1800,
-    trend: -5,
-  },
-]
-
-const initialPaymentMethods: PaymentMethod[] = [
-  {
-    id: 1,
-    name: "Dinheiro",
-    description: "Pagamento em espécie no balcão",
-    status: "Ativo",
-    fee: 0,
-    settlement: "Imediato",
-    amount: 16533,
-    transactions: 120,
-  },
-  {
-    id: 2,
-    name: "Cartão de Débito",
-    description: "Visa, Mastercard e Elo",
-    status: "Ativo",
-    fee: 1.39,
-    settlement: "1 dia útil",
-    amount: 9185,
-    transactions: 65,
-  },
-  {
-    id: 3,
-    name: "Cartão de Crédito",
-    description: "Visa, Mastercard e Elo",
-    status: "Ativo",
-    fee: 3.19,
-    settlement: "30 dias",
-    amount: 7348,
-    transactions: 52,
-  },
-  {
-    id: 4,
-    name: "Pix",
-    description: "Chave: (11) 99999-9999",
-    status: "Ativo",
-    fee: 0.49,
-    settlement: "Imediato",
-    amount: 2939,
-    transactions: 22,
-  },
-  {
-    id: 5,
-    name: "Vale Refeição",
-    description: "VR, Alelo e Sodexo",
-    status: "Ativo",
-    fee: 4.5,
-    settlement: "2 dias úteis",
-    amount: 551,
-    transactions: 8,
-  },
-]
+const initialCategories: FinancialCategory[] = database.financialCategories
+const financialCategoryOptions = initialCategories.map(
+  (category) => category.name
+)
+const initialPaymentMethods: PaymentMethod[] = database.paymentMethods
 
 export function FinanceiroOverview() {
   const [movements, setMovements] = useState(initialMovements)
   const [movementModalType, setMovementModalType] =
     useState<FinancialType | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
-  const [feedback, setFeedback] = useState("Nenhuma ação executada nesta sessão.")
+  const [feedback, setFeedback] = useState(
+    "Nenhuma ação executada nesta sessão."
+  )
 
   const totals = useMemo(() => summarizeMovements(movements), [movements])
-  const grossRevenue = 48200 + totals.income
-  const expenses = 28250 + totals.expense
+  const grossRevenue = database.analytics.monthlyGrossRevenue + totals.income
+  const expenses = database.analytics.monthlyExpenses + totals.expense
   const operatingProfit = grossRevenue - expenses
-  const netRevenue = grossRevenue * 0.888
+  const netRevenue = Math.round(grossRevenue * 0.888)
   const margin = operatingProfit / netRevenue
 
   const overviewRows = [
-    ["Receita Bruta", formatCurrency(grossRevenue), "+12,5% vs mês anterior"],
-    ["Receita Líquida", formatCurrency(netRevenue), "+10,8% vs mês anterior"],
-    ["Despesas Totais", formatCurrency(expenses), "+8,2% vs mês anterior"],
-    ["Lucro Operacional", formatCurrency(operatingProfit), "+8,2% vs mês anterior"],
-    ["Margem Líquida", formatPercent(margin), "+1,2 pp vs mês anterior"],
+    ["Receita Bruta", formatCurrency(grossRevenue), "Base consolidada"],
+    ["Receita Líquida", formatCurrency(netRevenue), "Apos taxas estimadas"],
+    ["Despesas Totais", formatCurrency(expenses), "Custos operacionais"],
+    [
+      "Lucro Operacional",
+      formatCurrency(operatingProfit),
+      "Receitas menos despesas",
+    ],
+    ["Margem Líquida", formatPercent(margin), "Indicador gerencial"],
   ]
 
   const cashFlowRows = [
-    ["Entradas", formatCurrency(42800 + totals.income), <Trend key="income" tone="green" value="+10,8%" />],
-    ["Saídas", formatCurrency(expenses), <Trend key="expense" tone="red" value="+8,2%" />],
-    ["Saldo Inicial", formatCurrency(15600), <Trend key="initial" tone="blue" value="+5,1%" />],
-    ["Saldo Final", formatCurrency(30150 + totals.income - totals.expense), <Trend key="final" tone="green" value="+93,3%" />],
+    [
+      "Entradas",
+      formatCurrency(grossRevenue),
+      <Trend key="income" tone="green" value="Receita" />,
+    ],
+    [
+      "Saídas",
+      formatCurrency(expenses),
+      <Trend key="expense" tone="red" value="Despesa" />,
+    ],
+    [
+      "Saldo Inicial",
+      formatCurrency(
+        database.bankAccounts.reduce((sum, account) => sum + account.balance, 0)
+      ),
+      <Trend key="initial" tone="blue" value="Contas" />,
+    ],
+    [
+      "Saldo Final",
+      formatCurrency(grossRevenue - expenses),
+      <Trend key="final" tone="green" value="Projetado" />,
+    ],
   ]
 
   function addMovement(draft: MovementDraft) {
@@ -324,7 +184,7 @@ export function FinanceiroOverview() {
   }
 
   function exportReport() {
-    setFeedback("Relatório financeiro de abril/2026 preparado para exportação.")
+    setFeedback("Relatorio financeiro de abril/2026 preparado para exportacao.")
     setReportOpen(false)
   }
 
@@ -334,28 +194,28 @@ export function FinanceiroOverview() {
         <MetricCard
           title="Receita Bruta"
           value={formatCurrency(grossRevenue)}
-          change="+12,5% vs mês anterior"
+          change="Clientes, assinaturas e caixa"
           icon={TrendingUp}
           tone="green"
         />
         <MetricCard
           title="Receita Líquida"
           value={formatCurrency(netRevenue)}
-          change="+10,8% vs mês anterior"
+          change="Apos taxas estimadas"
           icon={DollarCircleIcon}
           tone="green"
         />
         <MetricCard
           title="Despesas Totais"
           value={formatCurrency(expenses)}
-          change="+8,2% vs mês anterior"
+          change="Categorias operacionais"
           icon={ChartDecreaseIcon}
           tone="red"
         />
         <MetricCard
           title="Lucro Operacional"
           value={formatCurrency(operatingProfit)}
-          change="+8,2% vs mês anterior"
+          change="Margem sobre a operacao"
           icon={ShieldCheck}
           tone="blue"
         />
@@ -471,15 +331,20 @@ export function ContasBancariasView() {
   const [movements, setMovements] = useState(initialMovements)
   const [modalMode, setModalMode] = useState<ModalMode | null>(null)
   const [draft, setDraft] = useState<BankAccount | null>(null)
-  const [movementAccount, setMovementAccount] = useState<BankAccount | null>(null)
+  const [movementAccount, setMovementAccount] = useState<BankAccount | null>(
+    null
+  )
 
-  const activeBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
+  const activeBalance = accounts.reduce(
+    (sum, account) => sum + account.balance,
+    0
+  )
   const monthIncome = movements
     .filter((movement) => movement.type === "Receita")
-    .reduce((sum, movement) => sum + movement.amount, 8450)
+    .reduce((sum, movement) => sum + movement.amount, 0)
   const monthExpense = movements
     .filter((movement) => movement.type === "Despesa")
-    .reduce((sum, movement) => sum + movement.amount, 5230)
+    .reduce((sum, movement) => sum + movement.amount, 0)
 
   function openCreate() {
     setDraft({
@@ -511,7 +376,9 @@ export function ContasBancariasView() {
 
   function removeAccount() {
     if (!draft) return
-    setAccounts((current) => current.filter((account) => account.id !== draft.id))
+    setAccounts((current) =>
+      current.filter((account) => account.id !== draft.id)
+    )
     closeAccountModal()
   }
 
@@ -553,21 +420,21 @@ export function ContasBancariasView() {
         <MetricCard
           title="Saldo Total"
           value={formatCurrency(activeBalance)}
-          change="+12% vs mês anterior"
+          change="Soma das contas cadastradas"
           icon={BankIcon}
           tone="green"
         />
         <MetricCard
           title="Entradas Este Mês"
           value={formatCurrency(monthIncome)}
-          change="+18% vs mês anterior"
+          change="Movimentos de receita"
           icon={MoneyReceiveCircleIcon}
           tone="green"
         />
         <MetricCard
           title="Saídas Este Mês"
           value={formatCurrency(monthExpense)}
-          change="+5% vs mês anterior"
+          change="Movimentos de despesa"
           icon={MoneySendCircleIcon}
           tone="red"
         />
@@ -586,30 +453,33 @@ export function ContasBancariasView() {
         <div className="grid gap-3 lg:grid-cols-2">
           {accounts.map((account) => (
             <FinanceCard key={account.id}>
-                <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="min-w-0 break-words font-semibold">
-                        {account.name}
-                      </h3>
-                      <StatusBadge tone={getAccountTone(account.status)}>
-                        {account.status}
-                      </StatusBadge>
-                    </div>
-                    <p className="mt-1 break-words text-sm text-muted-foreground">
-                      Agência {account.agency} · Conta {account.account}
-                    </p>
+              <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="min-w-0 font-semibold break-words">
+                      {account.name}
+                    </h3>
+                    <StatusBadge tone={getAccountTone(account.status)}>
+                      {account.status}
+                    </StatusBadge>
                   </div>
-                  <strong className="text-lg sm:text-right">
-                    {formatCurrency(account.balance)}
-                  </strong>
+                  <p className="mt-1 text-sm break-words text-muted-foreground">
+                    Agência {account.agency} · Conta {account.account}
+                  </p>
                 </div>
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  <InfoPill label="Tipo" value={account.type} />
-                <InfoPill label="Saldo" value={formatCurrency(account.balance)} />
+                <strong className="text-lg sm:text-right">
+                  {formatCurrency(account.balance)}
+                </strong>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <InfoPill label="Tipo" value={account.type} />
+                <InfoPill
+                  label="Saldo"
+                  value={formatCurrency(account.balance)}
+                />
                 <InfoPill label="Status" value={account.status} />
               </div>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
+              <ResponsiveActions className="mt-4">
                 <Button
                   variant="outline"
                   size="sm"
@@ -622,7 +492,7 @@ export function ContasBancariasView() {
                   <HugeiconsIcon icon={File01Icon} size={16} />
                   Editar
                 </Button>
-              </div>
+              </ResponsiveActions>
             </FinanceCard>
           ))}
         </div>
@@ -638,7 +508,10 @@ export function ContasBancariasView() {
             movement.date,
             movement.description,
             formatCurrency(movement.amount),
-            <StatusBadge key={movement.id} tone={movement.type === "Receita" ? "green" : "red"}>
+            <StatusBadge
+              key={movement.id}
+              tone={movement.type === "Receita" ? "green" : "red"}
+            >
               {movement.type === "Receita" ? "Entrada" : "Saída"}
             </StatusBadge>,
           ])}
@@ -717,7 +590,9 @@ export function CategoriasFinanceirasView() {
     setCategories((current) =>
       modalMode === "create"
         ? [draft, ...current]
-        : current.map((category) => (category.id === draft.id ? draft : category))
+        : current.map((category) =>
+            category.id === draft.id ? draft : category
+          )
     )
     closeModal()
   }
@@ -778,14 +653,16 @@ export function CategoriasFinanceirasView() {
                 <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="min-w-0 break-words font-semibold">
+                      <h3 className="min-w-0 font-semibold break-words">
                         {category.name}
                       </h3>
-                      <StatusBadge tone={category.type === "Receita" ? "green" : "red"}>
+                      <StatusBadge
+                        tone={category.type === "Receita" ? "green" : "red"}
+                      >
                         {category.type}
                       </StatusBadge>
                     </div>
-                    <p className="mt-1 break-words text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm break-words text-muted-foreground">
                       {category.description}
                     </p>
                   </div>
@@ -793,7 +670,7 @@ export function CategoriasFinanceirasView() {
                     {formatCurrency(category.monthlyAmount)}
                   </strong>
                 </div>
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
+                <ResponsiveActions className="mt-4">
                   <Button
                     variant="outline"
                     size="sm"
@@ -805,7 +682,7 @@ export function CategoriasFinanceirasView() {
                     <HugeiconsIcon icon={File01Icon} size={16} />
                     Editar
                   </Button>
-                </div>
+                </ResponsiveActions>
               </FinanceCard>
             ))}
           </div>
@@ -819,9 +696,21 @@ export function CategoriasFinanceirasView() {
             columns={["Categoria", "Mensal", "Trimestral", "Semestral"]}
             rows={categories.map((category) => [
               category.name,
-              <Trend key="m" tone={category.trend >= 0 ? "green" : "red"} value={`${category.trend}%`} />,
-              <Trend key="t" tone={category.trend >= 0 ? "green" : "red"} value={`${category.trend + 2}%`} />,
-              <Trend key="s" tone={category.trend >= 0 ? "green" : "red"} value={`${category.trend + 5}%`} />,
+              <Trend
+                key="m"
+                tone={category.trend >= 0 ? "green" : "red"}
+                value={`${category.trend}%`}
+              />,
+              <Trend
+                key="t"
+                tone={category.trend >= 0 ? "green" : "red"}
+                value={`${category.trend + 2}%`}
+              />,
+              <Trend
+                key="s"
+                tone={category.trend >= 0 ? "green" : "red"}
+                value={`${category.trend + 5}%`}
+              />,
             ])}
           />
         </SectionCard>
@@ -853,7 +742,8 @@ export function FormasPagamentoView() {
     (sum, method) => sum + method.transactions,
     0
   )
-  const averageTicket = totalTransactions > 0 ? totalAmount / totalTransactions : 0
+  const averageTicket =
+    totalTransactions > 0 ? totalAmount / totalTransactions : 0
   const activeMethods = methods.filter((method) => method.status === "Ativo")
 
   function openCreate() {
@@ -958,14 +848,16 @@ export function FormasPagamentoView() {
                 <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="min-w-0 break-words font-semibold">
+                      <h3 className="min-w-0 font-semibold break-words">
                         {method.name}
                       </h3>
-                      <StatusBadge tone={method.status === "Ativo" ? "green" : "neutral"}>
+                      <StatusBadge
+                        tone={method.status === "Ativo" ? "green" : "neutral"}
+                      >
                         {method.status}
                       </StatusBadge>
                     </div>
-                    <p className="mt-1 break-words text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm break-words text-muted-foreground">
                       {method.description}
                     </p>
                   </div>
@@ -981,7 +873,7 @@ export function FormasPagamentoView() {
                     value={String(method.transactions)}
                   />
                 </div>
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
+                <ResponsiveActions className="mt-4">
                   <Button
                     variant="outline"
                     size="sm"
@@ -1001,7 +893,7 @@ export function FormasPagamentoView() {
                     <HugeiconsIcon icon={File01Icon} size={16} />
                     Editar
                   </Button>
-                </div>
+                </ResponsiveActions>
               </FinanceCard>
             ))}
           </div>
@@ -1068,9 +960,10 @@ function MovementModal({
 }) {
   const [draft, setDraft] = useState<MovementDraft>(() => ({
     type,
-    date: "28/04/2026",
+    date: "2026-04-28",
     description: "",
-    category: type === "Receita" ? "Receitas de Serviços" : "Aluguel e Utilidades",
+    category:
+      type === "Receita" ? "Receitas de Serviços" : "Aluguel e Utilidades",
     account: account ?? "Conta Corrente - Bradesco",
     amount: "",
   }))
@@ -1084,7 +977,12 @@ function MovementModal({
 
   function submit() {
     if (!draft.description.trim() || !draft.amount.trim()) return
-    onSubmit({ ...draft, type, account: account ?? draft.account })
+    onSubmit({
+      ...draft,
+      type,
+      date: formatDateForDisplay(draft.date),
+      account: account ?? draft.account,
+    })
   }
 
   return (
@@ -1102,8 +1000,11 @@ function MovementModal({
           <div className="grid gap-4 p-4 sm:grid-cols-2">
             <Field label="Data">
               <Input
+                type="date"
                 value={draft.date}
-                onChange={(event) => update("date", event.target.value)}
+                onChange={(event) =>
+                  update("date", toDateInputValue(event.target.value))
+                }
               />
             </Field>
             <Field label="Valor">
@@ -1134,21 +1035,11 @@ function MovementModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Receitas de Serviços">
-                    Receitas de Serviços
-                  </SelectItem>
-                  <SelectItem value="Receitas de Produtos">
-                    Receitas de Produtos
-                  </SelectItem>
-                  <SelectItem value="Folha de Pagamento">
-                    Folha de Pagamento
-                  </SelectItem>
-                  <SelectItem value="Aluguel e Utilidades">
-                    Aluguel e Utilidades
-                  </SelectItem>
-                  <SelectItem value="Marketing e Publicidade">
-                    Marketing e Publicidade
-                  </SelectItem>
+                  {financialCategoryOptions.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
                   <SelectItem value="Transferências">Transferências</SelectItem>
                 </SelectContent>
               </Select>
@@ -1163,16 +1054,11 @@ function MovementModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Conta Corrente - Bradesco">
-                    Conta Corrente - Bradesco
-                  </SelectItem>
-                  <SelectItem value="Conta Poupança - Itaú">
-                    Conta Poupança - Itaú
-                  </SelectItem>
-                  <SelectItem value="Pix">Pix</SelectItem>
-                  <SelectItem value="Cartão Corporativo">
-                    Cartão Corporativo
-                  </SelectItem>
+                  {accountOptions.map((accountName) => (
+                    <SelectItem key={accountName} value={accountName}>
+                      {accountName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
@@ -1210,7 +1096,7 @@ function ReportModal({
             Configure o período e o formato do resumo.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid content-start gap-4 p-4 sm:grid-cols-2">
+        <FormGrid className="content-start p-4">
           <Field label="Período">
             <Select defaultValue="abril-2026">
               <SelectTrigger>
@@ -1239,7 +1125,7 @@ function ReportModal({
             O fluxo atual prepara o relatório na interface. A integração real de
             download pode ser conectada ao backend depois.
           </div>
-        </div>
+        </FormGrid>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
@@ -1268,7 +1154,10 @@ function AccountModal({
   onSave: () => void
   onRemove?: () => void
 }) {
-  function update<Key extends keyof BankAccount>(key: Key, value: BankAccount[Key]) {
+  function update<Key extends keyof BankAccount>(
+    key: Key,
+    value: BankAccount[Key]
+  ) {
     onChange(draft ? { ...draft, [key]: value } : draft)
   }
 
@@ -1277,7 +1166,9 @@ function AccountModal({
       <DialogContent className={dialogPanelClass}>
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Nova conta bancária" : "Editar conta bancária"}
+            {mode === "create"
+              ? "Nova conta bancária"
+              : "Editar conta bancária"}
           </DialogTitle>
           <DialogDescription>
             Mantenha os saldos e contas do financeiro organizados.
@@ -1314,7 +1205,9 @@ function AccountModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Conta corrente">Conta corrente</SelectItem>
+                    <SelectItem value="Conta corrente">
+                      Conta corrente
+                    </SelectItem>
                     <SelectItem value="Poupança">Poupança</SelectItem>
                     <SelectItem value="Conta salário">Conta salário</SelectItem>
                     <SelectItem value="Cartão de crédito">
@@ -1335,7 +1228,9 @@ function AccountModal({
               <Field label="Status">
                 <Select
                   value={draft.status}
-                  onValueChange={(value) => update("status", value as AccountStatus)}
+                  onValueChange={(value) =>
+                    update("status", value as AccountStatus)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1420,14 +1315,18 @@ function CategoryModal({
                 <textarea
                   value={draft.description}
                   rows={3}
-                  className="min-h-24 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
-                  onChange={(event) => update("description", event.target.value)}
+                  className="min-h-24 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+                  onChange={(event) =>
+                    update("description", event.target.value)
+                  }
                 />
               </Field>
               <Field label="Tipo">
                 <Select
                   value={draft.type}
-                  onValueChange={(value) => update("type", value as FinancialType)}
+                  onValueChange={(value) =>
+                    update("type", value as FinancialType)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1519,7 +1418,9 @@ function PaymentMethodModal({
               <Field className="sm:col-span-2" label="Descrição">
                 <Input
                   value={draft.description}
-                  onChange={(event) => update("description", event.target.value)}
+                  onChange={(event) =>
+                    update("description", event.target.value)
+                  }
                 />
               </Field>
               <Field label="Status">
@@ -1644,7 +1545,7 @@ function FeeSimulationModal({
             />
           </Field>
           <div className="rounded-md border bg-background p-4 sm:col-span-2">
-            <p className="text-xs font-medium uppercase text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground uppercase">
               Resultado
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -1712,20 +1613,22 @@ function ResponsiveFinancialRows({
       <div className="grid gap-2 md:hidden">
         {rows.map((row, index) => (
           <div key={index} className="rounded-md border bg-background p-3">
-            <p className="text-xs font-medium uppercase text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground uppercase">
               {primaryLabel}
             </p>
-            <p className="mt-1 break-words text-sm font-semibold">{row[0]}</p>
+            <p className="mt-1 text-sm font-semibold break-words">{row[0]}</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="min-w-0 rounded-md bg-muted/50 px-3 py-2">
-                <p className="text-xs text-muted-foreground">{secondaryLabel}</p>
-                <div className="mt-1 break-words text-sm font-semibold">
+                <p className="text-xs text-muted-foreground">
+                  {secondaryLabel}
+                </p>
+                <div className="mt-1 text-sm font-semibold break-words">
                   {row[1]}
                 </div>
               </div>
               <div className="min-w-0 rounded-md bg-muted/50 px-3 py-2">
                 <p className="text-xs text-muted-foreground">{tertiaryLabel}</p>
-                <div className="mt-1 break-words text-sm font-semibold">
+                <div className="mt-1 text-sm font-semibold break-words">
                   {row[2]}
                 </div>
               </div>
@@ -1740,7 +1643,7 @@ function ResponsiveFinancialRows({
 
 function FinanceCard({ children }: { children: ReactNode }) {
   return (
-    <article className="min-w-0 overflow-hidden rounded-md border bg-background p-3 shadow-sm sm:p-4">
+    <article className="w-full max-w-full min-w-0 overflow-hidden rounded-md border bg-background p-3 shadow-sm sm:p-4">
       {children}
     </article>
   )
@@ -1767,7 +1670,7 @@ function InfoPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md bg-muted/50 px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 break-words text-sm font-semibold">{value}</p>
+      <p className="mt-1 text-sm font-semibold break-words">{value}</p>
     </div>
   )
 }

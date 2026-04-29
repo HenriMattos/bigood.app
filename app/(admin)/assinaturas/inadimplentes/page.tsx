@@ -4,12 +4,14 @@ import { useState } from "react"
 import { CancelCircleIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { database, type OverdueSubscription } from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -19,36 +21,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type OverdueSubscription = {
-  id: number
-  client: string
-  plan: string
-  value: number
-  delay: string
-  status: "Em atraso" | "Crítico" | "Cobrança enviada"
-  phone: string
-}
-
-const initialOverdue: OverdueSubscription[] = [
-  {
-    id: 1,
-    client: "Carlos Mendes",
-    plan: "Corte Mensal",
-    value: 79.9,
-    delay: "5 dias",
-    status: "Em atraso",
-    phone: "(11) 98888-1000",
-  },
-  {
-    id: 2,
-    client: "Bruno Rocha",
-    plan: "Premium",
-    value: 249.9,
-    delay: "12 dias",
-    status: "Crítico",
-    phone: "(11) 97777-2000",
-  },
-]
+const initialOverdue: OverdueSubscription[] = database.overdueSubscriptions
 
 export default function InadimplentesPage() {
   const [items, setItems] = useState(initialOverdue)
@@ -59,7 +32,7 @@ export default function InadimplentesPage() {
   function openCharge(item: OverdueSubscription) {
     setSelected(item)
     setMessage(
-      `Olá, ${item.client}. Identificamos uma pendência de ${formatCurrency(item.value)} no plano ${item.plan}. Podemos regularizar hoje?`
+      `Ola, ${item.client}. Identificamos uma pendencia de ${formatCurrency(item.value)} no plano ${item.plan}. Podemos regularizar hoje?`
     )
   }
 
@@ -68,7 +41,7 @@ export default function InadimplentesPage() {
 
     setItems((current) =>
       current.map((item) =>
-        item.id === selected.id ? { ...item, status: "Cobrança enviada" } : item
+        item.id === selected.id ? { ...item, status: "Cobranca enviada" } : item
       )
     )
     setFeedback(`Cobrança enviada para ${selected.client}.`)
@@ -76,7 +49,9 @@ export default function InadimplentesPage() {
   }
 
   function markAsPaid(item: OverdueSubscription) {
-    setItems((current) => current.filter((currentItem) => currentItem.id !== item.id))
+    setItems((current) =>
+      current.filter((currentItem) => currentItem.id !== item.id)
+    )
     setFeedback(`${item.client} foi marcado como regularizado.`)
   }
 
@@ -103,11 +78,18 @@ export default function InadimplentesPage() {
             item.plan,
             formatCurrency(item.value),
             item.delay,
-            <StatusBadge key="status" tone={item.status === "Cobrança enviada" ? "amber" : "red"}>
+            <StatusBadge
+              key="status"
+              tone={item.status === "Cobranca enviada" ? "amber" : "red"}
+            >
               {item.status}
             </StatusBadge>,
             <div key="actions" className="flex flex-wrap gap-2">
-              <Button size="xs" variant="outline" onClick={() => openCharge(item)}>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => openCharge(item)}
+              >
                 Cobrar
               </Button>
               <Button size="xs" onClick={() => markAsPaid(item)}>
@@ -121,7 +103,10 @@ export default function InadimplentesPage() {
         </p>
       </SectionCard>
 
-      <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
+      <Dialog
+        open={Boolean(selected)}
+        onOpenChange={(open) => !open && setSelected(null)}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Enviar cobrança</DialogTitle>
@@ -130,7 +115,7 @@ export default function InadimplentesPage() {
             </DialogDescription>
           </DialogHeader>
           {selected ? (
-            <div className="grid gap-4 p-4">
+            <DialogBody className="grid gap-4">
               <div className="rounded-md border bg-muted/35 px-3 py-2 text-sm">
                 {selected.client} - {selected.phone}
               </div>
@@ -147,7 +132,7 @@ export default function InadimplentesPage() {
                 <Label>Valor pendente</Label>
                 <Input value={formatCurrency(selected.value)} readOnly />
               </div>
-            </div>
+            </DialogBody>
           ) : null}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelected(null)}>

@@ -34,7 +34,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         if (!(shineTarget instanceof HTMLElement)) return
 
         shineTarget.classList.remove("shine-run")
-        window.requestAnimationFrame(() => shineTarget.classList.add("shine-run"))
+        window.requestAnimationFrame(() =>
+          shineTarget.classList.add("shine-run")
+        )
       }}
       onAnimationEnd={(event) => {
         const target = event.target as HTMLElement
@@ -114,8 +116,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <ScrollArea className="min-h-0 flex-1">
-            <main className="admin-container flex min-w-0 flex-col gap-2 py-2 sm:gap-5 sm:py-5 lg:gap-6 lg:py-6">
+          <ScrollArea className="min-h-0 flex-1 overflow-x-hidden">
+            <main className="admin-container flex min-w-0 flex-col gap-2 overflow-x-hidden py-2 sm:gap-5 sm:py-5 lg:gap-6 lg:py-6">
               {children}
             </main>
           </ScrollArea>
@@ -133,7 +135,8 @@ function SidebarContent({
   onNavigate?: () => void
 }) {
   const activeParentHref = navItems.find(
-    (item) => "children" in item && item.children && pathname.startsWith(item.href)
+    (item) =>
+      "children" in item && item.children && pathname.startsWith(item.href)
   )?.href
   const [openItems, setOpenItems] = useState<string[]>(
     activeParentHref ? [activeParentHref] : []
@@ -194,12 +197,15 @@ function SidebarContent({
                   {hasChildren ? (
                     <button
                       type="button"
-                      aria-label={isOpen ? "Fechar subopcoes" : "Abrir subopcoes"}
+                      aria-label={
+                        isOpen ? "Fechar subopcoes" : "Abrir subopcoes"
+                      }
                       onClick={() => toggleItem(item.href)}
                       className={cn(
                         "mr-2 flex size-6 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground/70 transition-all duration-200 hover:bg-background/80",
                         isOpen && "rotate-180",
-                        isActive && isOpen &&
+                        isActive &&
+                          isOpen &&
                           "rotate-180 bg-background/65 text-sidebar-primary-foreground"
                       )}
                     >
@@ -212,7 +218,9 @@ function SidebarContent({
                   <div
                     className={cn(
                       "submenu-panel ml-5 grid gap-1 border-l border-sidebar-border pl-3",
-                      isOpen ? "submenu-panel-open mt-1" : "submenu-panel-closed"
+                      isOpen
+                        ? "submenu-panel-open mt-1"
+                        : "submenu-panel-closed"
                     )}
                   >
                     {item.children.map((child) => {

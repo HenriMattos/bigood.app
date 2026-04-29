@@ -13,6 +13,10 @@ import {
   Search01Icon,
 } from "@hugeicons/core-free-icons"
 
+import {
+  database,
+  type Plan as DatabasePlan,
+} from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,66 +37,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-type PlanStatus = "Ativo" | "Destaque" | "Rascunho" | "Inativo"
+type Plan = DatabasePlan & { subscribers: number }
 
-type Plan = {
-  id: number
-  name: string
-  benefit: string
-  price: number
-  subscribers: number
-  status: PlanStatus
-  recurrence: string
-  servicesLimit: number
-  churnRisk: "Baixo" | "Médio" | "Alto"
-}
-
-const initialPlans: Plan[] = [
-  {
-    id: 1,
-    name: "Corte Mensal",
-    benefit: "1 corte por mês",
-    price: 79.9,
-    subscribers: 84,
-    status: "Ativo",
-    recurrence: "Mensal",
-    servicesLimit: 1,
-    churnRisk: "Baixo",
-  },
-  {
-    id: 2,
-    name: "Barba Club",
-    benefit: "4 barbas por mês",
-    price: 119.9,
-    subscribers: 37,
-    status: "Ativo",
-    recurrence: "Mensal",
-    servicesLimit: 4,
-    churnRisk: "Médio",
-  },
-  {
-    id: 3,
-    name: "Premium",
-    benefit: "Corte + barba semanal",
-    price: 249.9,
-    subscribers: 21,
-    status: "Destaque",
-    recurrence: "Mensal",
-    servicesLimit: 8,
-    churnRisk: "Baixo",
-  },
-  {
-    id: 4,
-    name: "Kids",
-    benefit: "2 cortes infantis",
-    price: 99.9,
-    subscribers: 12,
-    status: "Rascunho",
-    recurrence: "Mensal",
-    servicesLimit: 2,
-    churnRisk: "Alto",
-  },
-]
+const initialPlans: Plan[] = database.plans.map((plan) => ({
+  ...plan,
+  subscribers: database.subscriptions.filter(
+    (subscription) => subscription.plan === plan.name
+  ).length,
+}))
 
 const statusOptions = ["Todos", "Ativo", "Destaque", "Rascunho", "Inativo"]
 
@@ -209,20 +161,20 @@ export default function GerenciarPlanosPage() {
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/35 text-foreground shadow-sm">
                       <HugeiconsIcon icon={CrownIcon} size={19} />
                     </span>
-                    <span className="rounded-full border border-white/45 bg-white/32 px-3 py-1 text-xs font-semibold uppercase text-foreground shadow-sm">
+                    <span className="rounded-full border border-white/45 bg-white/32 px-3 py-1 text-xs font-semibold text-foreground uppercase shadow-sm">
                       {plan.status}
                     </span>
                   </div>
-                  <h3 className="mt-4 break-words text-2xl font-semibold leading-tight">
+                  <h3 className="mt-4 text-2xl leading-tight font-semibold break-words">
                     {plan.name}
                   </h3>
-                  <p className="mt-2 break-words text-sm font-medium text-foreground/72">
+                  <p className="mt-2 text-sm font-medium break-words text-foreground/72">
                     {plan.benefit}
                   </p>
                 </div>
 
                 <div className="shrink-0 text-right">
-                  <p className="text-xs font-semibold uppercase text-foreground/62">
+                  <p className="text-xs font-semibold text-foreground/62 uppercase">
                     Mensal
                   </p>
                   <p className="mt-1 text-2xl font-bold">
@@ -232,12 +184,18 @@ export default function GerenciarPlanosPage() {
               </div>
 
               <div className="grid gap-2 sm:grid-cols-3">
-                <PremiumInfo label="Assinantes" value={String(plan.subscribers)} />
+                <PremiumInfo
+                  label="Assinantes"
+                  value={String(plan.subscribers)}
+                />
                 <PremiumInfo
                   label="MRR"
                   value={formatCurrency(plan.price * plan.subscribers)}
                 />
-                <PremiumInfo label="Uso" value={`${plan.servicesLimit} serviços`} />
+                <PremiumInfo
+                  label="Uso"
+                  value={`${plan.servicesLimit} serviços`}
+                />
               </div>
 
               <div className="flex flex-col gap-2 border-t border-white/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -285,8 +243,11 @@ export default function GerenciarPlanosPage() {
         </div>
       </SectionCard>
 
-      <Dialog open={Boolean(editingPlan)} onOpenChange={(open) => !open && closeEditor()}>
-        <DialogContent className="bottom-0 left-0 top-auto grid h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)_auto] rounded-b-none rounded-t-xl border-x-0 border-b-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[min(36rem,calc(100dvh-1rem))] sm:w-[calc(100vw-2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:border">
+      <Dialog
+        open={Boolean(editingPlan)}
+        onOpenChange={(open) => !open && closeEditor()}
+      >
+        <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:h-[min(36rem,calc(100dvh-1rem))] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar plano</DialogTitle>
             <DialogDescription>
@@ -332,7 +293,7 @@ export default function GerenciarPlanosPage() {
                 <Select
                   value={draft.status}
                   onValueChange={(value) =>
-                    updateDraft("status", value as PlanStatus)
+                    updateDraft("status", value as Plan["status"])
                   }
                 >
                   <SelectTrigger>
@@ -351,7 +312,10 @@ export default function GerenciarPlanosPage() {
                   value={String(draft.servicesLimit)}
                   inputMode="numeric"
                   onChange={(event) =>
-                    updateDraft("servicesLimit", Number(event.target.value) || 0)
+                    updateDraft(
+                      "servicesLimit",
+                      Number(event.target.value) || 0
+                    )
                   }
                 />
               </Field>
@@ -367,7 +331,7 @@ export default function GerenciarPlanosPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Baixo">Baixo</SelectItem>
-                    <SelectItem value="Médio">Médio</SelectItem>
+                    <SelectItem value="Medio">Medio</SelectItem>
                     <SelectItem value="Alto">Alto</SelectItem>
                   </SelectContent>
                 </Select>
@@ -413,8 +377,10 @@ function Field({
 function PremiumInfo({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md border border-white/35 bg-white/25 px-3 py-2 shadow-sm backdrop-blur">
-      <p className="text-xs font-semibold uppercase text-foreground/58">{label}</p>
-      <p className="mt-1 break-words text-sm font-bold">{value}</p>
+      <p className="text-xs font-semibold text-foreground/58 uppercase">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-bold break-words">{value}</p>
     </div>
   )
 }
