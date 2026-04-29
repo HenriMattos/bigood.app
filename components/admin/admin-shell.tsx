@@ -29,7 +29,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       className="h-svh overflow-hidden bg-muted/40 text-foreground"
       onPointerDown={(event) => {
         const target = event.target as HTMLElement
-        const shineTarget = target.closest(".green-shine, .premium-card")
+        const shineTarget = target.closest(".green-shine")
 
         if (!(shineTarget instanceof HTMLElement)) return
 
@@ -38,7 +38,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       }}
       onAnimationEnd={(event) => {
         const target = event.target as HTMLElement
-        if (target.classList.contains("green-shine") || target.classList.contains("premium-card")) {
+        if (target.classList.contains("green-shine")) {
           target.classList.remove("shine-run")
         }
       }}
@@ -180,7 +180,7 @@ function SidebarContent({
                   className={cn(
                     "group flex items-center rounded-md text-sm font-medium text-sidebar-foreground/75 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     isActive &&
-                      "green-shine bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                      "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                   )}
                 >
                   <Link
@@ -226,7 +226,7 @@ function SidebarContent({
                           className={cn(
                             "flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-sidebar-foreground/65 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                             isChildActive &&
-                              "green-shine bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                              "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                           )}
                         >
                           <HugeiconsIcon icon={child.icon} size={16} />

@@ -1,4 +1,5 @@
 import { CrownIcon } from "@hugeicons/core-free-icons"
+import Link from "next/link"
 
 import { MetricCard } from "@/components/admin/metric-card"
 import { SectionCard } from "@/components/admin/section-card"
@@ -43,7 +44,11 @@ export default function PlanosPage() {
       <SectionCard
         title="Planos de assinatura"
         description="Produtos recorrentes da barbearia"
-        action={<Button size="sm">Novo plano</Button>}
+        action={
+          <Button size="sm" asChild>
+            <Link href="/planos/criar">Novo plano</Link>
+          </Button>
+        }
       >
         <SimpleTable
           columns={["Plano", "Beneficio", "Preco", "Base", "Status"]}

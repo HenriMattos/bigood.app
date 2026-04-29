@@ -11,9 +11,12 @@ import {
   UserMultipleIcon,
   UserStar01Icon,
   Wallet02Icon,
-  Bank02Icon,
+  BankIcon,
   File01Icon,
-  CreditCard02Icon,
+  CreditCardIcon,
+  PlusSignCircleIcon,
+  CancelCircleIcon,
+  CheckmarkCircle01Icon,
 } from "@hugeicons/core-free-icons"
 
 export const navItems = [
@@ -67,17 +70,17 @@ export const navItems = [
       {
         title: "Contas bancárias",
         href: "/financeiro/contas-bancarias",
-        icon: Bank02Icon,
+        icon: BankIcon,
       },
       {
-        title: "Categorias Financeiras",
+        title: "Categorias financeiras",
         href: "/financeiro/categorias",
         icon: File01Icon,
       },
       {
         title: "Formas de pagamento",
         href: "/financeiro/formas-pagamento",
-        icon: CreditCard02Icon,
+        icon: CreditCardIcon,
       },
     ],
   },
@@ -86,6 +89,54 @@ export const navItems = [
     href: "/planos",
     icon: CrownIcon,
     description: "Assinaturas e beneficios",
+    children: [
+      {
+        title: "Criar planos",
+        href: "/planos/criar",
+        icon: PlusSignCircleIcon,
+      },
+      {
+        title: "Gerenciar planos",
+        href: "/planos/gerenciar",
+        icon: File01Icon,
+      },
+    ],
+  },
+  {
+    title: "Assinaturas",
+    href: "/assinaturas",
+    icon: Invoice03Icon,
+    description: "Contratos, cobrancas e inadimplencia",
+    children: [
+      {
+        title: "Gerenciar assinaturas",
+        href: "/assinaturas/gerenciar",
+        icon: CheckmarkCircle01Icon,
+      },
+      {
+        title: "Inadimplentes",
+        href: "/assinaturas/inadimplentes",
+        icon: CancelCircleIcon,
+      },
+    ],
+  },
+  {
+    title: "Profissionais",
+    href: "/profissionais",
+    icon: UserMultipleIcon,
+    description: "Equipe, agenda e comissoes",
+    children: [
+      {
+        title: "Cadastrar profissional",
+        href: "/profissionais/cadastrar",
+        icon: UserAdd01Icon,
+      },
+      {
+        title: "Gerenciar profissional",
+        href: "/profissionais/gerenciar",
+        icon: UserListIcon,
+      },
+    ],
   },
   {
     title: "Servicos",

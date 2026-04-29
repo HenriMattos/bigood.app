@@ -2,8 +2,6 @@
 
 import * as React from "react"
 import { Select as SelectPrimitive } from "radix-ui"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowDown01Icon } from "@hugeicons/core-free-icons"
 
 import { cn } from "@/lib/utils"
 
@@ -35,11 +33,20 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <HugeiconsIcon
-          icon={ArrowDown01Icon}
-          size={16}
-          className="text-muted-foreground"
-        />
+        <svg
+          viewBox="0 0 16 16"
+          className="size-4 text-muted-foreground"
+          aria-hidden="true"
+          fill="none"
+        >
+          <path
+            d="m4 6 4 4 4-4"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.8"
+          />
+        </svg>
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
