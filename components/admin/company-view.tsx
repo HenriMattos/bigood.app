@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ChangeEvent, type ReactNode } from "react"
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react"
 import {
   Building02Icon,
   CheckmarkCircle01Icon,
@@ -14,6 +14,13 @@ import {
   COMPANY_ICON_STORAGE_KEY,
   COMPANY_LOGO_STORAGE_KEY,
 } from "@/components/company/company-assets"
+import {
+  clientPortalThemes,
+  CLIENT_PORTAL_SYNC_EVENT,
+  createDefaultClientPortalSettings,
+  getStoredClientPortalSettings,
+  saveClientPortalSettings,
+} from "@/components/company/client-portal-config"
 import { MetricCard } from "@/components/admin/metric-card"
 import {
   FormField,
@@ -65,11 +72,10 @@ const initialCompanyForm = {
   timezone: database.company.timezone,
   phone: database.company.phone,
   slug: database.company.slug,
-  primaryR: String(database.company.primaryColor.r),
-  primaryG: String(database.company.primaryColor.g),
-  primaryB: String(database.company.primaryColor.b),
   logoUrl: database.company.logoUrl,
   iconUrl: database.company.iconUrl,
+  clientThemeId: clientPortalThemes[0].id,
+  clientMode: clientPortalThemes[0].mode,
   pixWithdrawal: database.company.cnpj,
   fixedTransactionFee: "R$ 0,69",
   variableTransactionFee: "3,49%",
@@ -89,10 +95,44 @@ const initialCompanyForm = {
 }
 
 export function EmpresaView() {
-  const [form, setForm] = useState(initialCompanyForm)
+  const [form, setForm] = useState(() => {
+    const settings = getStoredClientPortalSettings(
+      createDefaultClientPortalSettings(database.company)
+    )
+
+    return {
+      ...initialCompanyForm,
+      tradeName: settings.tradeName,
+      slug: settings.slug,
+      logoUrl: settings.logoUrl ?? initialCompanyForm.logoUrl,
+      iconUrl: settings.iconUrl ?? initialCompanyForm.iconUrl,
+      clientThemeId: settings.themeId,
+      clientMode: settings.mode,
+    }
+  })
   const [feedback, setFeedback] = useState(
     "Preencha todos os campos obrigatórios."
   )
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const settings = getStoredClientPortalSettings(
+        createDefaultClientPortalSettings(database.company)
+      )
+
+      setForm((current) => ({
+        ...current,
+        tradeName: settings.tradeName,
+        slug: settings.slug,
+        logoUrl: settings.logoUrl ?? current.logoUrl,
+        iconUrl: settings.iconUrl ?? current.iconUrl,
+        clientThemeId: settings.themeId,
+        clientMode: settings.mode,
+      }))
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const requiredFilled =
     form.corporateName.trim().length > 0 &&
@@ -101,14 +141,7 @@ export function EmpresaView() {
     form.email.trim().length > 0 &&
     form.timezone.trim().length > 0 &&
     form.phone.trim().length > 0 &&
-    form.slug.trim().length > 0 &&
-    form.primaryR.trim().length > 0 &&
-    form.primaryG.trim().length > 0 &&
-    form.primaryB.trim().length > 0
-
-  const primaryColor = `rgb(${form.primaryR || 0}, ${form.primaryG || 0}, ${
-    form.primaryB || 0
-  })`
+    form.slug.trim().length > 0
 
   function update<Key extends keyof typeof form>(
     key: Key,
@@ -117,13 +150,46 @@ export function EmpresaView() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
+  function persistPortalSettings(nextForm = form) {
+    const logoUrl =
+      window.localStorage.getItem(COMPANY_LOGO_STORAGE_KEY) || nextForm.logoUrl
+    const iconUrl =
+      window.localStorage.getItem(COMPANY_ICON_STORAGE_KEY) || nextForm.iconUrl
+
+    saveClientPortalSettings({
+      tradeName: nextForm.tradeName,
+      slug: nextForm.slug,
+      logoUrl,
+      iconUrl,
+      themeId: nextForm.clientThemeId,
+      mode: nextForm.clientMode,
+    })
+  }
+
+  function updatePortalTheme(themeId: string) {
+    const selectedTheme =
+      clientPortalThemes.find((theme) => theme.id === themeId) ??
+      clientPortalThemes[0]
+
+    setForm((current) => {
+      const nextForm = {
+        ...current,
+        clientThemeId: selectedTheme.id,
+        clientMode: selectedTheme.mode,
+      }
+      persistPortalSettings(nextForm)
+      return nextForm
+    })
+  }
+
   function saveCompany() {
     if (!requiredFilled) {
       setFeedback("Revise os campos obrigatórios antes de salvar.")
       return
     }
 
-    setFeedback("Dados da empresa preparados para atualização.")
+    persistPortalSettings()
+    setFeedback("Dados salvos e portal do cliente atualizado.")
   }
 
   return (
@@ -229,37 +295,11 @@ export function EmpresaView() {
               * Alterações de Slug levam até 24h para serem processadas
             </p>
           </FormField>
-          <FormField label="Cor Primária (R,G,B) *">
-            <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3">
-              <span
-                className="h-10 rounded-md border"
-                style={{ backgroundColor: primaryColor }}
-                aria-hidden="true"
-              />
-              <div className="grid grid-cols-3 gap-2">
-                <Input
-                  value={form.primaryR}
-                  inputMode="numeric"
-                  maxLength={3}
-                  aria-label="Vermelho"
-                  onChange={(event) => update("primaryR", event.target.value)}
-                />
-                <Input
-                  value={form.primaryG}
-                  inputMode="numeric"
-                  maxLength={3}
-                  aria-label="Verde"
-                  onChange={(event) => update("primaryG", event.target.value)}
-                />
-                <Input
-                  value={form.primaryB}
-                  inputMode="numeric"
-                  maxLength={3}
-                  aria-label="Azul"
-                  onChange={(event) => update("primaryB", event.target.value)}
-                />
-              </div>
-            </div>
+          <FormField label="Tema premium do portal">
+            <ClientThemePicker
+              selectedThemeId={form.clientThemeId}
+              onSelect={updatePortalTheme}
+            />
           </FormField>
         </FormGrid>
       </SectionCard>
@@ -478,6 +518,45 @@ function ReadonlyInfo({ label, value }: { label: string; value: string }) {
   )
 }
 
+function ClientThemePicker({
+  selectedThemeId,
+  onSelect,
+}: {
+  selectedThemeId: string
+  onSelect: (themeId: string) => void
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {clientPortalThemes.map((theme) => {
+        const selected = theme.id === selectedThemeId
+
+        return (
+          <button
+            key={theme.id}
+            type="button"
+            onClick={() => onSelect(theme.id)}
+            className={`min-w-0 rounded-md border p-2 text-left transition ${
+              selected ? "border-primary ring-2 ring-primary/25" : "hover:bg-muted/40"
+            }`}
+          >
+            <span
+              className={`block h-16 rounded ${theme.previewTextClass}`}
+              style={{ background: theme.gradient }}
+            >
+              <span className="flex h-full items-end p-2 text-xs font-black uppercase tracking-widest">
+                {theme.name}
+              </span>
+            </span>
+            <span className="mt-2 block text-xs font-semibold">
+              {theme.description}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function UploadField({
   label,
   description,
@@ -506,6 +585,7 @@ function UploadField({
       const nextPreview = String(reader.result)
       setPreview(nextPreview)
       window.localStorage.setItem(storageKey, nextPreview)
+      window.dispatchEvent(new Event(CLIENT_PORTAL_SYNC_EVENT))
     }
     reader.readAsDataURL(file)
   }

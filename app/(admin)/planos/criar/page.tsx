@@ -4,6 +4,10 @@ import { useMemo, useState, type ReactNode } from "react"
 
 import { serviceCatalog, serviceNames } from "@/components/admin/catalog-data"
 import { database } from "@/components/admin/database"
+import {
+  getStoredClientPlans,
+  saveClientPlans,
+} from "@/components/company/client-portal-config"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -108,8 +112,12 @@ const freeDays = [
 ]
 
 export default function CriarPlanosPage() {
+  const [planName, setPlanName] = useState("")
+  const [planBenefit, setPlanBenefit] = useState("")
   const [planValue, setPlanValue] = useState(0)
+  const [servicesLimit, setServicesLimit] = useState(1)
   const [selectedThemeId, setSelectedThemeId] = useState(planThemes[0].id)
+  const [feedback, setFeedback] = useState("Plano ainda nao criado.")
   const [serviceCategoryDraft, setServiceCategoryDraft] = useState({
     name: "",
     discount: 0,
@@ -138,6 +146,31 @@ export default function CriarPlanosPage() {
   const totalValue = useMemo(() => formatCurrency(planValue), [planValue])
   const selectedTheme =
     planThemes.find((theme) => theme.id === selectedThemeId) ?? planThemes[0]
+
+  function createPlan() {
+    if (!planName.trim() || planValue <= 0) {
+      setFeedback("Informe nome e valor para criar o plano.")
+      return
+    }
+
+    const currentPlans = getStoredClientPlans(database.plans)
+    const nextPlan = {
+      id: Date.now(),
+      name: planName.trim(),
+      benefit:
+        planBenefit.trim() ||
+        `${servicesLimit} atendimento(s) mensal(is) com desconto em extras`,
+      price: planValue,
+      status: "Ativo" as const,
+      recurrence: "Mensal",
+      servicesLimit,
+      churnRisk: "Baixo" as const,
+      subscribers: 0,
+    }
+
+    saveClientPlans([nextPlan, ...currentPlans])
+    setFeedback(`Plano ${nextPlan.name} criado e disponivel no portal do cliente.`)
+  }
 
   function addServiceCategory() {
     if (!serviceCategoryDraft.name) return
@@ -191,7 +224,9 @@ export default function CriarPlanosPage() {
             Configure valores, regras, benefícios e a aparência do card premium.
           </p>
         </div>
-        <Button className="w-full md:w-auto">Criar plano</Button>
+        <Button className="w-full md:w-auto" onClick={createPlan}>
+          Criar plano
+        </Button>
       </div>
 
       <SectionCard
@@ -200,7 +235,11 @@ export default function CriarPlanosPage() {
       >
         <div className="grid min-w-0 gap-4 md:grid-cols-2">
           <Field label="Nome *">
-            <Input placeholder="Nome do plano" />
+            <Input
+              value={planName}
+              placeholder="Nome do plano"
+              onChange={(event) => setPlanName(event.target.value)}
+            />
           </Field>
           <Field label="Valor do plano *">
             <MoneyInput value={planValue} onChange={setPlanValue} />
@@ -215,6 +254,13 @@ export default function CriarPlanosPage() {
           <Field label="Taxa Cashback">
             <NumberInput suffix="%" />
           </Field>
+          <Field label="Beneficio principal">
+            <Input
+              value={planBenefit}
+              placeholder="Ex: 4 atendimentos mensais"
+              onChange={(event) => setPlanBenefit(event.target.value)}
+            />
+          </Field>
           <Field label="Qtde. disponível">
             <NumberInput />
           </Field>
@@ -222,7 +268,11 @@ export default function CriarPlanosPage() {
             <NumberInput />
           </Field>
           <Field label="Quantidade máxima de serviços simultâneos *">
-            <NumberInput placeholder="1" />
+            <NumberInput
+              value={servicesLimit}
+              placeholder="1"
+              onChange={setServicesLimit}
+            />
           </Field>
           <Field label="Periodicidade de atendimento (dias)">
             <NumberInput placeholder="30" />
@@ -230,6 +280,10 @@ export default function CriarPlanosPage() {
           <CheckOption label="Oculto" />
         </div>
       </SectionCard>
+
+      <div className="rounded-lg border bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
+        {feedback}
+      </div>
 
       <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <SectionCard title="Valores" description="Valores do plano">

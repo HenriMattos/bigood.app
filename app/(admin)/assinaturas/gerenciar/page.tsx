@@ -6,6 +6,11 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database, type Subscription } from "@/components/admin/database"
 import {
+  getStoredClientPlans,
+  getStoredClientSubscriptions,
+  saveClientSubscriptions,
+} from "@/components/company/client-portal-config"
+import {
   formatDateForDisplay,
   toDateInputValue,
 } from "@/components/admin/date-utils"
@@ -42,7 +47,10 @@ const subscriptionClientOptions = Array.from(
 )
 
 export default function GerenciarAssinaturasPage() {
-  const [items, setItems] = useState(initialSubscriptions)
+  const [items, setItems] = useState(() =>
+    getStoredClientSubscriptions(initialSubscriptions)
+  )
+  const [plans] = useState(() => getStoredClientPlans(database.plans))
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState("todas")
   const [modalOpen, setModalOpen] = useState(false)
@@ -97,11 +105,13 @@ export default function GerenciarAssinaturasPage() {
       nextCharge: formatDateForDisplay(draft.nextCharge),
     }
 
-    setItems((current) =>
-      editing
+    setItems((current) => {
+      const nextItems = editing
         ? current.map((item) => (item.id === draft.id ? savedDraft : item))
         : [{ ...savedDraft, id: Date.now() }, ...current]
-    )
+      saveClientSubscriptions(nextItems)
+      return nextItems
+    })
     setFeedback(
       editing
         ? `Assinatura de ${draft.client} atualizada.`
@@ -111,13 +121,16 @@ export default function GerenciarAssinaturasPage() {
   }
 
   function togglePause(subscription: Subscription) {
-    const nextStatus = subscription.status === "Pausada" ? "Ativa" : "Pausada"
+    const nextStatus: Subscription["status"] =
+      subscription.status === "Pausada" ? "Ativa" : "Pausada"
 
-    setItems((current) =>
-      current.map((item) =>
+    setItems((current) => {
+      const nextItems = current.map((item) =>
         item.id === subscription.id ? { ...item, status: nextStatus } : item
       )
-    )
+      saveClientSubscriptions(nextItems)
+      return nextItems
+    })
     setFeedback(`${subscription.client}: status alterado para ${nextStatus}.`)
   }
 
@@ -140,7 +153,7 @@ export default function GerenciarAssinaturasPage() {
   }
 
   function updatePlan(planName: string) {
-    const plan = database.plans.find((item) => item.name === planName)
+    const plan = plans.find((item) => item.name === planName)
 
     setDraft((current) => ({
       ...current,
@@ -258,7 +271,7 @@ export default function GerenciarAssinaturasPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {database.plans.map((plan) => (
+                  {plans.map((plan) => (
                     <SelectItem key={plan.name} value={plan.name}>
                       {plan.name}
                     </SelectItem>

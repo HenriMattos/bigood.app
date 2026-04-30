@@ -326,11 +326,35 @@
         #b9e85a 66%,
         #ffd43d 100%
       );
+    background:
+      radial-gradient(
+        circle at 12% 8%,
+        rgb(255 255 255 / 0.64) 0%,
+        rgb(255 255 255 / 0.2) 24%,
+        transparent 42%
+      ),
+      var(
+        --client-plan-gradient,
+        linear-gradient(
+          135deg,
+          #059447 0%,
+          #33c95f 35%,
+          #b9e85a 66%,
+          #ffd43d 100%
+        )
+      );
     color: #082814;
     box-shadow:
       0 22px 48px rgb(5 148 71 / 0.2),
       0 10px 24px rgb(255 212 61 / 0.12),
       0 1px 2px rgb(0 0 0 / 0.08);
+  }
+
+  .client-portal.dark .plan-premium-card {
+    color: #f8fafc;
+    box-shadow:
+      0 24px 54px rgb(0 0 0 / 0.42),
+      0 1px 0 rgb(255 255 255 / 0.18) inset;
   }
 
   .plan-premium-card::before,
@@ -543,6 +567,7 @@
   .client-portal {
     width: 100%;
     min-height: 100dvh;
+    color: var(--foreground);
     background: linear-gradient(
       160deg,
       color-mix(in oklch, var(--background), var(--primary) 8%) 0%,
@@ -600,7 +625,14 @@
 
   /* Melhorando o contraste do texto primário no branco */
   .text-primary-contrast {
-    color: color-mix(in oklch, var(--primary), black 25%);
+    color: var(
+      --client-primary-contrast,
+      color-mix(in oklch, var(--primary), black 25%)
+    );
+  }
+
+  .client-portal.dark .text-primary-contrast {
+    color: var(--client-primary-contrast, #f8fafc);
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -17,6 +17,12 @@ import {
   database,
   type Plan as DatabasePlan,
 } from "@/components/admin/database"
+import {
+  getStoredClientPlans,
+  getStoredClientSubscriptions,
+  saveClientPlans,
+  saveClientSubscriptions,
+} from "@/components/company/client-portal-config"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import {
@@ -49,7 +55,7 @@ const initialPlans: Plan[] = database.plans.map((plan) => ({
 const statusOptions = ["Todos", "Ativo", "Destaque", "Rascunho", "Inativo"]
 
 export default function GerenciarPlanosPage() {
-  const [plans, setPlans] = useState(initialPlans)
+  const [plans, setPlans] = useState(() => getStoredClientPlans(initialPlans))
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("Todos")
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
@@ -87,27 +93,50 @@ export default function GerenciarPlanosPage() {
   function savePlan() {
     if (!draft) return
 
-    setPlans((current) =>
-      current.map((plan) => (plan.id === draft.id ? draft : plan))
-    )
+    setPlans((current) => {
+      const nextPlans = current.map((plan) =>
+        plan.id === draft.id ? draft : plan
+      )
+      saveClientPlans(nextPlans)
+      return nextPlans
+    })
+    if (editingPlan && editingPlan.name !== draft.name) {
+      const nextSubscriptions = getStoredClientSubscriptions(
+        database.subscriptions
+      ).map((subscription) =>
+        subscription.plan === editingPlan.name
+          ? { ...subscription, plan: draft.name, value: draft.price }
+          : subscription
+      )
+      saveClientSubscriptions(nextSubscriptions)
+    }
     closeEditor()
   }
 
   function removePlan() {
     if (!editingPlan) return
 
-    setPlans((current) => current.filter((plan) => plan.id !== editingPlan.id))
+    setPlans((current) => {
+      const nextPlans = current.filter((plan) => plan.id !== editingPlan.id)
+      saveClientPlans(nextPlans)
+      return nextPlans
+    })
     closeEditor()
   }
 
   function togglePlanStatus(plan: Plan) {
-    setPlans((current) =>
-      current.map((item) =>
+    const nextStatus: Plan["status"] =
+      plan.status === "Inativo" ? "Ativo" : "Inativo"
+
+    setPlans((current) => {
+      const nextPlans = current.map((item) =>
         item.id === plan.id
-          ? { ...item, status: item.status === "Inativo" ? "Ativo" : "Inativo" }
+          ? { ...item, status: nextStatus }
           : item
       )
-    )
+      saveClientPlans(nextPlans)
+      return nextPlans
+    })
   }
 
   return (
