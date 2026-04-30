@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useState, type ChangeEvent, type ReactNode } from "react"
 import {
   Building02Icon,
   CheckmarkCircle01Icon,
@@ -10,6 +10,10 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database } from "@/components/admin/database"
+import {
+  COMPANY_ICON_STORAGE_KEY,
+  COMPANY_LOGO_STORAGE_KEY,
+} from "@/components/company/company-assets"
 import { MetricCard } from "@/components/admin/metric-card"
 import {
   FormField,
@@ -64,6 +68,8 @@ const initialCompanyForm = {
   primaryR: String(database.company.primaryColor.r),
   primaryG: String(database.company.primaryColor.g),
   primaryB: String(database.company.primaryColor.b),
+  logoUrl: database.company.logoUrl,
+  iconUrl: database.company.iconUrl,
   pixWithdrawal: database.company.cnpj,
   fixedTransactionFee: "R$ 0,69",
   variableTransactionFee: "3,49%",
@@ -293,10 +299,14 @@ export function EmpresaView() {
           <UploadField
             label="Logo"
             description="A logo deve possuir as dimensões de 1024 x 1024 pixels."
+            previewUrl={form.logoUrl}
+            storageKey={COMPANY_LOGO_STORAGE_KEY}
           />
           <UploadField
             label="Ícone"
             description="O ícone deve possuir as dimensões de 512x512 pixels."
+            previewUrl={form.iconUrl}
+            storageKey={COMPANY_ICON_STORAGE_KEY}
           />
           <UploadField
             label="Imagens do carrossel"
@@ -472,11 +482,34 @@ function UploadField({
   label,
   description,
   multiple,
+  previewUrl,
+  storageKey,
 }: {
   label: string
   description: string
   multiple?: boolean
+  previewUrl?: string
+  storageKey?: string
 }) {
+  const [preview, setPreview] = useState(() => {
+    if (typeof window === "undefined" || !storageKey) return previewUrl
+
+    return window.localStorage.getItem(storageKey) || previewUrl
+  })
+
+  function updatePreview(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file || !storageKey) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const nextPreview = String(reader.result)
+      setPreview(nextPreview)
+      window.localStorage.setItem(storageKey, nextPreview)
+    }
+    reader.readAsDataURL(file)
+  }
+
   return (
     <label className="grid min-w-0 gap-3 rounded-md border bg-muted/30 p-3">
       <span className="flex min-w-0 items-start gap-3">
@@ -490,10 +523,21 @@ function UploadField({
           </span>
         </span>
       </span>
+      {preview && (
+        <span className="grid aspect-square max-h-32 place-items-center rounded-md border bg-background p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={preview}
+            alt={`Prévia de ${label}`}
+            className="h-full w-full object-contain"
+          />
+        </span>
+      )}
       <Input
         type="file"
         accept="image/*"
         multiple={multiple}
+        onChange={updatePreview}
         className="h-auto py-2 file:mr-3 file:rounded-full file:border-0 file:bg-primary/15 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary"
       />
     </label>

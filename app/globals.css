@@ -540,20 +540,88 @@
     }
   }
 
+  .client-portal {
+    width: 100%;
+    min-height: 100dvh;
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklch, var(--background), var(--primary) 8%) 0%,
+      var(--background) 40%,
+      color-mix(in oklch, var(--background), var(--primary) 5%) 100%
+    );
+    background-size: 180% 180%;
+    animation: premium-gradient-flow 20s ease infinite;
+    /* Safe area for iOS */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .client-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      linear-gradient(
+          135deg,
+          color-mix(in oklch, var(--border), white 30%),
+          color-mix(in oklch, var(--border), var(--primary) 20%),
+          var(--border)
+        )
+        border-box;
+    border: 1px solid transparent;
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .client-choice-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1.5px solid var(--border); /* Borda um pouco mais grossa */
+    background: var(--card);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .client-choice-card:hover {
+    border-color: color-mix(in oklch, var(--primary), var(--border) 40%);
+    background: color-mix(in oklch, var(--primary), var(--card) 98%);
+  }
+
+  .client-choice-card[data-selected="true"] {
+    border-color: var(--primary);
+    background: color-mix(in oklch, var(--primary), var(--card) 92%);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+
+  .client-choice-card:active {
+    transform: scale(0.97);
+  }
+
+  /* Melhorando o contraste do texto primário no branco */
+  .text-primary-contrast {
+    color: color-mix(in oklch, var(--primary), black 25%);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .admin-app,
+    .client-portal,
     .motion-rise {
       animation: none;
     }
 
     .premium-card,
+    .client-card,
+    .client-choice-card,
     .plan-premium-card::after,
     .green-shine::after {
       transition: none;
       animation: none;
     }
 
-    .premium-card:hover {
+    .premium-card:hover,
+    .client-card:hover,
+    .client-choice-card:hover {
       transform: none;
     }
   }

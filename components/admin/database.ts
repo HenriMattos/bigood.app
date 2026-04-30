@@ -181,6 +181,15 @@ export type CashMovement = {
 
 const baseDate = new Date(2026, 3, 29)
 
+const companyLogoUrl = `data:image/svg+xml,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" rx="220" fill="#111514"/>
+  <circle cx="512" cy="512" r="310" fill="#94e66d" opacity="0.14"/>
+  <path d="M332 318h360v92H332zM332 466h360v92H332zM332 614h360v92H332z" fill="#f7faf5"/>
+  <path d="M332 318h138v388H332z" fill="#94e66d"/>
+</svg>
+`)}`
+
 const company = {
   corporateName: "Empresa demonstrativa",
   tradeName: "Empresa sem nome definido",
@@ -190,6 +199,10 @@ const company = {
   phone: "00000000000",
   slug: "empresa",
   primaryColor: { r: 145, g: 230, b: 104 },
+  logoUrl: companyLogoUrl,
+  logoAlt: "Logo da empresa",
+  iconUrl: companyLogoUrl,
+  carouselImages: [] as string[],
 }
 
 const professionalNames = ["Profissional 1", "Profissional 2", "Atendimento"]
