@@ -395,6 +395,7 @@ export function ClientPortal() {
                   companyName={companyDisplayName}
                   portalSettings={portalSettings}
                   onSubmit={enterPortal}
+                  onGoogleLogin={() => setIsLoggedIn(true)}
                 />
               )}
 
@@ -546,11 +547,13 @@ function WelcomeScreen({
   companyName,
   portalSettings,
   onSubmit,
+  onGoogleLogin,
 }: {
   logoUrl?: string
   companyName: string
   portalSettings: any
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onGoogleLogin: () => void
 }) {
   const [authMode, setAuthMode] = useState<"login" | "register">("login")
 
@@ -725,7 +728,7 @@ function WelcomeScreen({
             variant="outline"
             type="button"
             className="h-12 w-full rounded-xl border-border/50 bg-background text-xs font-bold uppercase tracking-widest transition-all hover:bg-muted/50"
-            onClick={() => setIsLoggedIn(true)}
+            onClick={onGoogleLogin}
           >
             <GoogleIcon className="mr-2 size-4" />
             Google
