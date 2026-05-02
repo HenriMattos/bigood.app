@@ -1,2 +1,5 @@
 export const COMPANY_LOGO_STORAGE_KEY = "company.logoUrl"
 export const COMPANY_ICON_STORAGE_KEY = "company.iconUrl"
+export const COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY = "company.carouselImage1"
+export const COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY = "company.carouselImage2"
+export const COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY = "company.carouselImage3"

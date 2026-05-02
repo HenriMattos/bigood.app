@@ -117,6 +117,50 @@ const financialCategoryOptions = initialCategories.map(
   (category) => category.name
 )
 const initialPaymentMethods: PaymentMethod[] = database.paymentMethods
+const accountTypeOptions = [
+  "Conta corrente",
+  "Poupança",
+  "Conta salário",
+  "Conta pagamento",
+  "Cartão de crédito",
+  "Caixa interno",
+]
+const accountStatusOptions: AccountStatus[] = ["Ativa", "Em uso", "Inativa"]
+const paymentMethodNameOptions = [
+  "Pix",
+  "Cartão de crédito",
+  "Cartão de débito",
+  "Dinheiro",
+  "Convênio",
+  "Assinatura",
+  "Transferência",
+]
+const paymentSettlementOptions = [
+  "Imediato",
+  "D+1",
+  "D+2",
+  "D+7",
+  "D+14",
+  "D+30",
+]
+const categoryNameOptions: Record<FinancialType, string[]> = {
+  Receita: [
+    "Receitas de Serviços",
+    "Assinaturas",
+    "Produtos",
+    "Receitas de coloração",
+    "Pacotes e combos",
+    "Outras receitas",
+  ],
+  Despesa: [
+    "Aluguel e Utilidades",
+    "Comissões",
+    "Produtos e insumos",
+    "Marketing",
+    "Taxas financeiras",
+    "Outras despesas",
+  ],
+}
 
 export function FinanceiroOverview() {
   const [movements, setMovements] = useState(initialMovements)
@@ -580,7 +624,7 @@ export function CategoriasFinanceirasView() {
   function openCreate() {
     setDraft({
       id: Date.now(),
-      name: "",
+      name: categoryNameOptions.Receita[0],
       description: "",
       type: "Receita",
       monthlyAmount: 0,
@@ -772,7 +816,7 @@ export function FormasPagamentoView() {
   function openCreate() {
     setDraft({
       id: Date.now(),
-      name: "",
+      name: paymentMethodNameOptions[0],
       description: "",
       status: "Ativo",
       fee: 0,
@@ -1025,6 +1069,8 @@ function MovementModal({
               <Input
                 type="date"
                 value={draft.date}
+                min="2026-01-01"
+                max="2026-12-31"
                 onChange={(event) =>
                   update("date", toDateInputValue(event.target.value))
                 }
@@ -1035,7 +1081,10 @@ function MovementModal({
                 value={draft.amount}
                 inputMode="decimal"
                 placeholder="0,00"
-                onChange={(event) => update("amount", event.target.value)}
+                maxLength={14}
+                onChange={(event) =>
+                  update("amount", formatCurrencyInput(event.target.value))
+                }
               />
             </Field>
             <Field className="sm:col-span-2" label="Descrição">
@@ -1046,7 +1095,10 @@ function MovementModal({
                     ? "Ex: Recebimento - corte premium"
                     : "Ex: Pagamento - fornecedor"
                 }
-                onChange={(event) => update("description", event.target.value)}
+                maxLength={80}
+                onChange={(event) =>
+                  update("description", limitText(event.target.value, 80))
+                }
               />
             </Field>
             <Field label="Categoria">
@@ -1204,19 +1256,32 @@ function AccountModal({
                 <Input
                   value={draft.name}
                   placeholder="Ex: Conta Corrente - Banco"
-                  onChange={(event) => update("name", event.target.value)}
+                  maxLength={48}
+                  onChange={(event) =>
+                    update("name", limitText(event.target.value, 48))
+                  }
                 />
               </Field>
               <Field label="Agência">
                 <Input
                   value={draft.agency}
-                  onChange={(event) => update("agency", event.target.value)}
+                  inputMode="numeric"
+                  placeholder="0001"
+                  maxLength={6}
+                  onChange={(event) =>
+                    update("agency", formatAgency(event.target.value))
+                  }
                 />
               </Field>
               <Field label="Conta">
                 <Input
                   value={draft.account}
-                  onChange={(event) => update("account", event.target.value)}
+                  inputMode="numeric"
+                  placeholder="000000-0"
+                  maxLength={13}
+                  onChange={(event) =>
+                    update("account", formatBankAccount(event.target.value))
+                  }
                 />
               </Field>
               <Field label="Tipo">
@@ -1228,23 +1293,27 @@ function AccountModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Conta corrente">
-                      Conta corrente
-                    </SelectItem>
-                    <SelectItem value="Poupança">Poupança</SelectItem>
-                    <SelectItem value="Conta salário">Conta salário</SelectItem>
-                    <SelectItem value="Cartão de crédito">
-                      Cartão de crédito
-                    </SelectItem>
+                    {ensureOption(accountTypeOptions, draft.type).map(
+                      (type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </Field>
               <Field label="Saldo atual">
                 <Input
-                  value={String(draft.balance)}
+                  value={formatCurrencyValue(draft.balance)}
                   inputMode="decimal"
+                  placeholder="0,00"
+                  maxLength={14}
                   onChange={(event) =>
-                    update("balance", parseAmount(event.target.value))
+                    update(
+                      "balance",
+                      parseAmount(formatCurrencyInput(event.target.value))
+                    )
                   }
                 />
               </Field>
@@ -1259,9 +1328,11 @@ function AccountModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Ativa">Ativa</SelectItem>
-                    <SelectItem value="Em uso">Em uso</SelectItem>
-                    <SelectItem value="Inativa">Inativa</SelectItem>
+                    {accountStatusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </Field>
@@ -1328,28 +1399,51 @@ function CategoryModal({
           <ScrollArea className="min-h-0">
             <div className="grid gap-4 p-4 sm:grid-cols-2">
               <Field className="sm:col-span-2" label="Nome da categoria">
-                <Input
+                <Select
                   value={draft.name}
-                  placeholder="Ex: Receitas de coloração"
-                  onChange={(event) => update("name", event.target.value)}
-                />
+                  onValueChange={(value) => update("name", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ensureOption(
+                      categoryNameOptions[draft.type],
+                      draft.name
+                    ).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field className="sm:col-span-2" label="Descrição">
                 <textarea
                   value={draft.description}
                   rows={3}
+                  maxLength={160}
                   className="min-h-24 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
                   onChange={(event) =>
-                    update("description", event.target.value)
+                    update("description", limitText(event.target.value, 160))
                   }
                 />
               </Field>
               <Field label="Tipo">
                 <Select
                   value={draft.type}
-                  onValueChange={(value) =>
-                    update("type", value as FinancialType)
-                  }
+                  onValueChange={(value) => {
+                    const nextType = value as FinancialType
+                    onChange(
+                      draft
+                        ? {
+                            ...draft,
+                            type: nextType,
+                            name: categoryNameOptions[nextType][0],
+                          }
+                        : draft
+                    )
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1362,10 +1456,15 @@ function CategoryModal({
               </Field>
               <Field label="Valor mensal">
                 <Input
-                  value={String(draft.monthlyAmount)}
+                  value={formatCurrencyValue(draft.monthlyAmount)}
                   inputMode="decimal"
+                  placeholder="0,00"
+                  maxLength={14}
                   onChange={(event) =>
-                    update("monthlyAmount", parseAmount(event.target.value))
+                    update(
+                      "monthlyAmount",
+                      parseAmount(formatCurrencyInput(event.target.value))
+                    )
                   }
                 />
               </Field>
@@ -1432,17 +1531,31 @@ function PaymentMethodModal({
           <ScrollArea className="min-h-0">
             <div className="grid gap-4 p-4 sm:grid-cols-2">
               <Field className="sm:col-span-2" label="Nome">
-                <Input
+                <Select
                   value={draft.name}
-                  placeholder="Ex: Pix, cartão, convênio"
-                  onChange={(event) => update("name", event.target.value)}
-                />
+                  onValueChange={(value) => update("name", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a forma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ensureOption(paymentMethodNameOptions, draft.name).map(
+                      (method) => (
+                        <SelectItem key={method} value={method}>
+                          {method}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field className="sm:col-span-2" label="Descrição">
                 <Input
                   value={draft.description}
+                  placeholder="Ex: Liberação em D+1 com taxa da operadora"
+                  maxLength={90}
                   onChange={(event) =>
-                    update("description", event.target.value)
+                    update("description", limitText(event.target.value, 90))
                   }
                 />
               </Field>
@@ -1464,25 +1577,53 @@ function PaymentMethodModal({
               </Field>
               <Field label="Taxa (%)">
                 <Input
-                  value={String(draft.fee)}
+                  value={formatPercentValue(draft.fee)}
                   inputMode="decimal"
+                  placeholder="0,00"
+                  maxLength={6}
                   onChange={(event) =>
-                    update("fee", parseAmount(event.target.value))
+                    update(
+                      "fee",
+                      clampNumber(
+                        parseAmount(formatPercentInput(event.target.value)),
+                        0,
+                        100
+                      )
+                    )
                   }
                 />
               </Field>
               <Field label="Liquidação">
-                <Input
+                <Select
                   value={draft.settlement}
-                  onChange={(event) => update("settlement", event.target.value)}
-                />
+                  onValueChange={(value) => update("settlement", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ensureOption(
+                      paymentSettlementOptions,
+                      draft.settlement
+                    ).map((settlement) => (
+                      <SelectItem key={settlement} value={settlement}>
+                        {settlement}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field label="Valor no mês">
                 <Input
-                  value={String(draft.amount)}
+                  value={formatCurrencyValue(draft.amount)}
                   inputMode="decimal"
+                  placeholder="0,00"
+                  maxLength={14}
                   onChange={(event) =>
-                    update("amount", parseAmount(event.target.value))
+                    update(
+                      "amount",
+                      parseAmount(formatCurrencyInput(event.target.value))
+                    )
                   }
                 />
               </Field>
@@ -1490,8 +1631,12 @@ function PaymentMethodModal({
                 <Input
                   value={String(draft.transactions)}
                   inputMode="numeric"
+                  maxLength={6}
                   onChange={(event) =>
-                    update("transactions", parseAmount(event.target.value))
+                    update(
+                      "transactions",
+                      parseIntegerInput(event.target.value, 999999)
+                    )
                   }
                 />
               </Field>
@@ -1757,4 +1902,77 @@ function parseAmount(value: string) {
     .replace(/[^\d.-]/g, "")
 
   return Number(normalized) || 0
+}
+
+function limitText(value: string, maxLength: number) {
+  return value.replace(/\s{2,}/g, " ").slice(0, maxLength)
+}
+
+function ensureOption(options: string[], value?: string) {
+  if (!value || options.includes(value)) return options
+
+  return [value, ...options]
+}
+
+function onlyDigits(value: string, maxLength: number) {
+  return value.replace(/\D/g, "").slice(0, maxLength)
+}
+
+function formatAgency(value: string) {
+  const digits = onlyDigits(value, 5)
+
+  if (digits.length <= 4) return digits
+
+  return `${digits.slice(0, 4)}-${digits.slice(4)}`
+}
+
+function formatBankAccount(value: string) {
+  const digits = onlyDigits(value, 11)
+
+  if (digits.length <= 1) return digits
+
+  return `${digits.slice(0, -1)}-${digits.slice(-1)}`
+}
+
+function formatCurrencyInput(value: string) {
+  const digits = onlyDigits(value, 11)
+
+  if (!digits) return ""
+
+  const amount = Number(digits) / 100
+
+  return formatCurrencyValue(amount)
+}
+
+function formatCurrencyValue(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function formatPercentInput(value: string) {
+  const digits = onlyDigits(value, 4)
+
+  if (!digits) return ""
+
+  return formatPercentValue(Number(digits) / 100)
+}
+
+function formatPercentValue(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function parseIntegerInput(value: string, maxValue: number) {
+  return Math.min(
+    Number(onlyDigits(value, String(maxValue).length)) || 0,
+    maxValue
+  )
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
 }

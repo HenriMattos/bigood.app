@@ -24,15 +24,6 @@ import {
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
-
-import {
-  database,
-  type AgendaEvent,
-  type Plan,
-  type ServiceCatalogItem,
-  type Subscription,
-} from "@/components/admin/database"
-import { COMPANY_LOGO_STORAGE_KEY } from "@/components/company/company-assets"
 import {
   CLIENT_PORTAL_SYNC_EVENT,
   createDefaultClientPortalSettings,
@@ -42,6 +33,19 @@ import {
   getStoredClientSubscriptions,
   saveClientSubscriptions,
 } from "@/components/company/client-portal-config"
+import {
+  COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY,
+  COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY,
+  COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY,
+  COMPANY_LOGO_STORAGE_KEY,
+} from "@/components/company/company-assets"
+import {
+  database,
+  type AgendaEvent,
+  type Plan,
+  type ServiceCatalogItem,
+  type Subscription,
+} from "@/components/admin/database"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -119,15 +123,12 @@ const timeSlots = [
 ]
 
 export function ClientPortal() {
+  const [mounted, setMounted] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [stage, setStage] = useState<ClientStage>("welcome")
-  const [portalSettings, setPortalSettings] = useState(() =>
-    getStoredClientPortalSettings(defaultClientPortalSettings)
-  )
-  const [plans, setPlans] = useState(() => getStoredClientPlans(database.plans))
-  const [subscriptions, setSubscriptions] = useState(() =>
-    getStoredClientSubscriptions(database.subscriptions)
-  )
+  const [portalSettings, setPortalSettings] = useState(defaultClientPortalSettings)
+  const [plans, setPlans] = useState(database.plans)
+  const [subscriptions, setSubscriptions] = useState(database.subscriptions)
   const [bookingStep, setBookingStep] = useState<BookingStep>("service")
   const subscription = useMemo(
     () =>
@@ -147,9 +148,10 @@ export function ClientPortal() {
   const logoUrl = getStoredCompanyLogo(
     portalSettings.logoUrl || defaultCompanyLogoUrl
   )
-  const portalStyle = getClientPortalCssVariables(
-    portalSettings
-  ) as CSSProperties
+  const portalStyle = useMemo(
+    () => getClientPortalCssVariables(portalSettings) as CSSProperties,
+    [portalSettings]
+  )
   const initialBookingService = getInitialBookingService(activeServices, currentPlan)
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>(
     initialBookingService ? [initialBookingService.id] : []
@@ -255,6 +257,7 @@ export function ClientPortal() {
   )
 
   useEffect(() => {
+    setMounted(true)
     function syncClientPortalData() {
       setPortalSettings(
         getStoredClientPortalSettings(defaultClientPortalSettings)
@@ -270,6 +273,38 @@ export function ClientPortal() {
       window.removeEventListener(CLIENT_PORTAL_SYNC_EVENT, syncClientPortalData)
     }
   }, [])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const previousValues = new Map<string, string>()
+    const previousColorScheme = root.style.colorScheme
+    const hadDarkClass = root.classList.contains("dark")
+
+    Object.entries(portalStyle).forEach(([key, value]) => {
+      if (value === undefined || value === null) return
+
+      if (key.startsWith("--")) {
+        previousValues.set(key, root.style.getPropertyValue(key))
+        root.style.setProperty(key, String(value))
+        return
+      }
+
+      if (key === "colorScheme") {
+        root.style.colorScheme = String(value)
+      }
+    })
+
+    root.classList.toggle("dark", portalSettings.mode === "dark")
+
+    return () => {
+      previousValues.forEach((value, key) => {
+        if (value) root.style.setProperty(key, value)
+        else root.style.removeProperty(key)
+      })
+      root.style.colorScheme = previousColorScheme
+      root.classList.toggle("dark", hadDarkClass)
+    }
+  }, [portalSettings.mode, portalStyle])
 
   function enterPortal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -317,6 +352,8 @@ export function ClientPortal() {
     })
     setStage("appointments")
   }
+  if (!mounted) return null
+
   return (
     <main
       className={cn(
@@ -330,6 +367,7 @@ export function ClientPortal() {
           <PortalTopBar
             isLoggedIn={isLoggedIn}
             companyName={companyDisplayName}
+            logoUrl={logoUrl}
             onHome={() => setStage("menu")}
             onExit={() => {
               setIsLoggedIn(false)
@@ -355,6 +393,7 @@ export function ClientPortal() {
                 <WelcomeScreen
                   logoUrl={logoUrl}
                   companyName={companyDisplayName}
+                  portalSettings={portalSettings}
                   onSubmit={enterPortal}
                 />
               )}
@@ -443,11 +482,13 @@ export function ClientPortal() {
 function PortalTopBar({
   isLoggedIn,
   companyName,
+  logoUrl,
   onHome,
   onExit,
 }: {
   isLoggedIn: boolean
   companyName: string
+  logoUrl?: string
   onHome: () => void
   onExit: () => void
 }) {
@@ -459,9 +500,20 @@ function PortalTopBar({
           onClick={onHome}
           className="min-w-0 flex items-center gap-2.5 transition-opacity hover:opacity-80 sm:gap-3"
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-inner sm:size-10">
-            <HugeiconsIcon icon={ChairBarberIcon} size={16} />
-          </span>
+          {logoUrl ? (
+            <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-background sm:size-10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                alt={companyName}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary sm:size-10">
+              <HugeiconsIcon icon={ChairBarberIcon} size={16} />
+            </span>
+          )}
           <div className="min-w-0 text-left">
             <p className="truncate text-xs font-bold tracking-tight text-foreground uppercase sm:text-sm">
               {companyName}
@@ -492,52 +544,125 @@ function PortalTopBar({
 function WelcomeScreen({
   logoUrl,
   companyName,
+  portalSettings,
   onSubmit,
 }: {
   logoUrl?: string
   companyName: string
+  portalSettings: any
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
-  return (
-    <section className="client-card mx-auto my-0 grid w-full max-w-md min-h-0 overflow-hidden sm:my-6 sm:max-w-6xl lg:min-h-[500px] lg:grid-cols-[minmax(0,1fr)_26rem]">
-      <div className="relative hidden min-h-[300px] items-center justify-center overflow-hidden p-0 sm:flex lg:min-h-[560px]">
-        <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_20%,var(--primary)_0%,transparent_40%)] opacity-[0.05]" />
+  const [authMode, setAuthMode] = useState<"login" | "register">("login")
 
-        <div className="relative z-10 flex h-full min-h-[300px] w-full justify-center lg:min-h-[560px]">
-          <CompanyLogoShowcase logoUrl={logoUrl} companyName={companyName} />
-        </div>
+  const carouselImages = [
+    {
+      url: portalSettings.carouselImage1 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY) || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=1000&auto=format&fit=crop",
+      title: portalSettings.introTitle1 || "Experiência Premium",
+      description: portalSettings.introSubtitle1 || "Transforme seu visual com os melhores profissionais da região."
+    },
+    {
+      url: portalSettings.carouselImage2 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY) || "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1000&auto=format&fit=crop",
+      title: portalSettings.introTitle2 || "Estilo & Conforto",
+      description: portalSettings.introSubtitle2 || "Um ambiente exclusivo pensado para o seu bem-estar."
+    },
+    {
+      url: portalSettings.carouselImage3 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY) || "https://images.unsplash.com/photo-1621605815841-aa88c82b0ad2?q=80&w=1000&auto=format&fit=crop",
+      title: portalSettings.introTitle3 || "Agendamento Simples",
+      description: portalSettings.introSubtitle3 || "Marque seu horário em segundos, de onde estiver."
+    }
+  ].filter(img => img.url)
+
+  return (
+    <section className="client-card mx-auto my-0 grid w-full max-w-md min-h-0 overflow-hidden sm:my-6 sm:max-w-6xl lg:min-h-[600px] lg:grid-cols-[minmax(0,1fr)_28rem]">
+      {/* Coluna do Carrossel */}
+      <div className="relative hidden min-h-[400px] flex-col overflow-hidden sm:flex lg:min-h-[600px]">
+        {carouselImages.length > 0 ? (
+          <Carousel slides={carouselImages} />
+        ) : (
+          <div className="relative flex h-full w-full items-center justify-center bg-muted/20">
+            <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_20%,var(--primary)_0%,transparent_40%)] opacity-[0.05]" />
+            <CompanyLogoShowcase logoUrl={logoUrl} companyName={companyName} />
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col items-center justify-center bg-muted/30 p-4 backdrop-blur-sm sm:border-l sm:p-8 lg:border-l">
-        <form
-          onSubmit={onSubmit}
-          className="w-full max-w-sm space-y-4 sm:space-y-6"
-        >
-          <div className="mx-auto flex size-14 items-center justify-center overflow-hidden rounded-lg border bg-background shadow-sm sm:hidden">
-            {logoUrl ? (
-              <Image
-                src={logoUrl}
-                alt={companyName}
-                width={80}
-                height={80}
-                unoptimized
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <HugeiconsIcon icon={ChairBarberIcon} size={26} className="text-primary" />
-            )}
-          </div>
-
-          <div className="text-center lg:text-left">
-            <h2 className="text-lg font-bold tracking-tight sm:text-2xl">Entrar na conta</h2>
-            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:mt-2 sm:text-sm">
-              Acesse com as credenciais fornecidas pela empresa.
+      {/* Coluna de Login/Cadastro */}
+      <div className="flex flex-col items-center justify-center bg-background p-6 backdrop-blur-sm sm:p-10 lg:p-12">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-6 flex size-16 items-center justify-center overflow-hidden rounded-2xl border bg-background sm:hidden">
+              {logoUrl ? (
+                <Image
+                  src={logoUrl}
+                  alt={companyName}
+                  width={80}
+                  height={80}
+                  unoptimized
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <HugeiconsIcon icon={ChairBarberIcon} size={32} className="text-primary" />
+              )}
+            </div>
+            
+            <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+              {authMode === "login" ? "Bem-vindo de volta" : "Crie sua conta"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {authMode === "login" 
+                ? "Entre para gerenciar seus agendamentos." 
+                : "Cadastre-se para aproveitar nossos serviços."}
             </p>
           </div>
 
-          <div className="space-y-3 sm:space-y-4">
+          <div className="flex w-fit mx-auto rounded-full border bg-muted/40 p-1">
+            <button
+              onClick={() => setAuthMode("login")}
+              className={cn(
+                "px-6 py-2 text-xs font-semibold transition-all rounded-full",
+                authMode === "login" 
+                  ? "bg-background text-foreground shadow-sm border border-border/40" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setAuthMode("register")}
+              className={cn(
+                "px-6 py-2 text-xs font-semibold transition-all rounded-full",
+                authMode === "register" 
+                  ? "bg-background text-foreground shadow-sm border border-border/40" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Cadastro
+            </button>
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            {authMode === "register" && (
+              <div className="space-y-2">
+                <Label htmlFor="client-name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nome Completo</Label>
+                <div className="relative group">
+                  <HugeiconsIcon
+                    icon={UserMultipleIcon}
+                    size={18}
+                    className="absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
+                  />
+                  <Input
+                    id="client-name"
+                    type="text"
+                    className="h-12 rounded-xl border-border/50 bg-muted/20 pl-11 text-sm transition-all focus:bg-background focus:ring-4 focus:ring-primary/10"
+                    placeholder="Seu nome"
+                    required={authMode === "register"}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="client-email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">E-mail</Label>
+              <Label htmlFor="client-email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail</Label>
               <div className="relative group">
                 <HugeiconsIcon
                   icon={Mail01Icon}
@@ -548,7 +673,7 @@ function WelcomeScreen({
                   id="client-email"
                   type="email"
                   defaultValue={customer.email}
-                  className="h-11 rounded-lg border-border/50 bg-background/50 pl-11 text-base backdrop-blur-sm transition-all focus:border-primary/50 focus:ring-primary/20 sm:h-12 sm:text-sm"
+                  className="h-12 rounded-xl border-border/50 bg-muted/20 pl-11 text-sm transition-all focus:bg-background focus:ring-4 focus:ring-primary/10"
                   placeholder="seu@email.com"
                   required
                 />
@@ -557,8 +682,10 @@ function WelcomeScreen({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="client-password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Senha</Label>
-                <button type="button" className="text-[10px] font-bold text-primary hover:underline">Esqueci a senha</button>
+                <Label htmlFor="client-password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Senha</Label>
+                {authMode === "login" && (
+                  <button type="button" className="text-[10px] font-bold text-primary hover:underline">Esqueci a senha</button>
+                )}
               </div>
               <div className="relative group">
                 <HugeiconsIcon
@@ -569,33 +696,125 @@ function WelcomeScreen({
                 <Input
                   id="client-password"
                   type="password"
-                  className="h-11 rounded-lg border-border/50 bg-background/50 pl-11 text-base backdrop-blur-sm transition-all focus:border-primary/50 focus:ring-primary/20 sm:h-12 sm:text-sm"
+                  className="h-12 rounded-xl border-border/50 bg-muted/20 pl-11 text-sm transition-all focus:bg-background focus:ring-4 focus:ring-primary/10"
                   placeholder="••••••••"
                   required
                 />
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-3 py-1">
-              <Checkbox className="size-5 rounded" />
-              <span className="text-xs font-medium text-muted-foreground">Lembrar neste dispositivo</span>
-            </label>
-
             <Button
               type="submit"
-              className="green-shine h-11 w-full rounded-lg text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20 sm:h-12 sm:text-sm"
+              className="h-12 w-full rounded-xl text-xs font-bold uppercase tracking-widest"
             >
-              Acessar Portal
+              {authMode === "login" ? "Entrar no Portal" : "Criar Minha Conta"}
               <HugeiconsIcon icon={ArrowRight01Icon} size={18} />
             </Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-widest">
+              <span className="bg-background px-4 text-muted-foreground">Ou continue com</span>
+            </div>
           </div>
 
-          <p className="rounded-lg border bg-background/50 p-2.5 text-center text-[10px] leading-relaxed text-muted-foreground sm:p-3">
-            Acesso restrito. Se você não possui uma conta, entre em contato com o estabelecimento.
+          <Button
+            variant="outline"
+            type="button"
+            className="h-12 w-full rounded-xl border-border/50 bg-background text-xs font-bold uppercase tracking-widest transition-all hover:bg-muted/50"
+            onClick={() => setIsLoggedIn(true)}
+          >
+            <GoogleIcon className="mr-2 size-4" />
+            Google
+          </Button>
+
+          <p className="text-center text-[10px] leading-relaxed text-muted-foreground">
+            Ao continuar, você concorda com nossos{" "}
+            <button className="font-bold text-foreground hover:underline">Termos de Uso</button> e{" "}
+            <button className="font-bold text-foreground hover:underline">Privacidade</button>.
           </p>
-        </form>
+        </div>
       </div>
     </section>
+  )
+}
+
+function Carousel({ slides }: { slides: { url: string; title?: string; description?: string }[] }) {
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % slides.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [slides.length])
+
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      {slides.map((slide, index) => (
+        <div
+          key={index}
+          className={cn(
+            "absolute inset-0 transition-opacity duration-1000 ease-in-out",
+            index === current ? "opacity-100" : "opacity-0"
+          )}
+        >
+          <Image
+            src={slide.url}
+            alt={slide.title || "Slide"}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full p-10 text-white">
+            <h3 className="text-3xl font-black tracking-tight uppercase sm:text-4xl">{slide.title}</h3>
+            <p className="mt-2 max-w-md text-sm font-medium leading-relaxed opacity-90 sm:text-base">
+              {slide.description}
+            </p>
+          </div>
+        </div>
+      ))}
+      
+      <div className="absolute bottom-10 right-10 flex gap-2">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={cn(
+              "h-1.5 transition-all duration-300 rounded-full",
+              index === current ? "w-8 bg-white" : "w-2 bg-white/40"
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" {...props}>
+      <path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
+        fill="#EA4335"
+      />
+    </svg>
   )
 }
 
@@ -693,7 +912,7 @@ function MenuActionButton({
     >
       <span className={cn(
         "flex size-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 sm:size-14",
-        variant === "primary" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-muted text-foreground"
+        variant === "primary" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
       )}>
         <HugeiconsIcon icon={icon} size={24} />
       </span>
@@ -885,7 +1104,7 @@ function ServiceStep({
                 {plan.name}
               </h3>
             </div>
-            <div className="rounded-lg bg-background px-3 py-2 text-right shadow-sm">
+            <div className="rounded-lg bg-background px-3 py-2 text-right border">
               <p className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">
                 Restantes
               </p>
@@ -1016,7 +1235,7 @@ function ExtrasStep({
 
   return (
     <div className="space-y-5 sm:space-y-7">
-      <div className="rounded-lg border border-primary/20 bg-background/70 p-4 shadow-sm">
+      <div className="rounded-lg border border-primary/20 bg-background/70 p-4">
         <p className="text-[9px] font-black uppercase tracking-[0.24em] text-primary-contrast">
           Extras com desconto
         </p>
@@ -1282,7 +1501,7 @@ function CheckoutStep({
   )
 
   return (
-    <div className="client-card overflow-hidden shadow-2xl">
+    <div className="client-card overflow-hidden">
       <div className="border-b bg-muted/50 p-4 sm:p-8">
         <h4 className="text-[9px] font-black tracking-[0.22em] text-primary-contrast uppercase sm:text-[11px] sm:tracking-[0.4em]">Resumo da Reserva</h4>
         <h3 className="mt-2 text-xl font-black leading-tight tracking-tight text-balance uppercase sm:mt-4 sm:text-4xl sm:leading-none sm:tracking-tighter">
@@ -1791,7 +2010,7 @@ function AvailablePlansDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="client-dialog sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {checkoutPlan ? "Checkout seguro" : "Planos disponiveis"}
@@ -1819,7 +2038,7 @@ function AvailablePlansDialog({
                     key={plan.id}
                     type="button"
                     onClick={() => onSelectPlan(plan)}
-                    className="client-card group min-w-0 p-4 text-left transition hover:border-primary/40"
+                    className="client-plan-option-card group min-w-0 p-4 text-left transition"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -2193,7 +2412,7 @@ function AppointmentCard({
   return (
     <div
       className={cn(
-        "client-card overflow-hidden border-primary/20 bg-[linear-gradient(135deg,rgba(148,230,109,0.16),rgba(255,255,255,0.92)_52%,rgba(245,248,244,0.95))] shadow-xl shadow-primary/5 dark:bg-[linear-gradient(135deg,rgba(255,255,255,0.09),rgba(15,15,16,0.97)_52%,rgba(0,0,0,0.98))]",
+        "client-premium-card overflow-hidden",
         isCanceled && "grayscale"
       )}
     >
@@ -2231,19 +2450,17 @@ function AppointmentCard({
       <div className="grid grid-cols-2 gap-2 border-t border-primary/10 p-4 pt-3 sm:grid-cols-3 sm:p-5 sm:pt-4">
         <Button
           type="button"
-          variant="outline"
           onClick={onReschedule}
           disabled={isCanceled}
-          className="h-10 rounded-lg text-[10px] font-black uppercase tracking-widest"
+          className="h-10 rounded-lg bg-muted text-foreground border border-border/40 text-[10px] font-black uppercase tracking-widest hover:bg-muted/80"
         >
           Remarcar
         </Button>
         <Button
           type="button"
-          variant="outline"
           onClick={onCancel}
           disabled={isCanceled || !canCancel}
-          className="h-10 rounded-lg border-red-200 text-[10px] font-black uppercase tracking-widest text-red-700 hover:bg-red-50"
+          className="h-10 rounded-lg bg-red-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700"
         >
           Cancelar
         </Button>
@@ -2302,7 +2519,7 @@ function AppointmentDetailsDialog({
 
   return (
     <Dialog open={Boolean(appointment)} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="client-dialog">
         <DialogHeader>
           <DialogTitle>Detalhes do agendamento</DialogTitle>
           <DialogDescription>
@@ -2372,7 +2589,7 @@ function RescheduleAppointmentDialog({
 }) {
   return (
     <Dialog open={Boolean(appointment)} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="client-dialog">
         <DialogHeader>
           <DialogTitle>Remarcar horario</DialogTitle>
           <DialogDescription>
@@ -2442,7 +2659,7 @@ function RescheduleAppointmentDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button type="button" className="green-shine" onClick={onConfirm}>
+          <Button type="button" onClick={onConfirm}>
             Confirmar remarcacao
           </Button>
         </DialogFooter>
@@ -2465,7 +2682,7 @@ function CancelAppointmentDialog({
 
   return (
     <Dialog open={Boolean(appointment)} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="client-dialog">
         <DialogHeader>
           <DialogTitle>Cancelar agendamento</DialogTitle>
           <DialogDescription>
@@ -2474,14 +2691,14 @@ function CancelAppointmentDialog({
         </DialogHeader>
         {appointment && (
           <DialogBody className="space-y-4">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-950">
-              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-red-700">
+            <div className="rounded-lg border border-destructive/25 bg-destructive/10 p-4 text-foreground">
+              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-destructive">
                 Politica de cancelamento
               </p>
               <h3 className="mt-1 text-xl font-black uppercase tracking-tight">
                 {appointment.detail}
               </h3>
-              <p className="mt-2 text-xs font-semibold leading-relaxed text-red-800/80">
+              <p className="mt-2 text-xs font-semibold leading-relaxed text-muted-foreground">
                 {canCancel
                   ? `Cancelamento disponivel ate ${deadline ? formatDateTime(deadline) : "o prazo limite"}.`
                   : "O prazo de 1 hora para cancelamento ja expirou."}
@@ -2506,7 +2723,7 @@ function CancelAppointmentDialog({
           <Button
             type="button"
             disabled={!canCancel}
-            className="bg-red-600 text-white hover:bg-red-700"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             onClick={onConfirm}
           >
             Confirmar cancelamento
@@ -2546,7 +2763,7 @@ function StepDots({
         <div key={step.id} className="flex-1">
           <div className={cn(
             "h-1.5 rounded transition-all duration-700 sm:h-2",
-            index <= activeIndex ? "bg-primary shadow-[0_0_12px_rgba(var(--primary),0.6)]" : "bg-muted"
+            index <= activeIndex ? "bg-primary" : "bg-muted"
           )} />
         </div>
       ))}
@@ -2557,7 +2774,7 @@ function StepDots({
 function MetricTile({ icon, label, value }: { icon: IconSvgElement, label: string, value: string }) {
   return (
     <div className="flex min-w-0 items-center gap-3 sm:block sm:space-y-4">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-primary-contrast sm:size-12">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground sm:size-12">
         <HugeiconsIcon icon={icon} size={24} />
       </span>
       <div className="min-w-0">
@@ -2767,6 +2984,11 @@ function normalizeText(value: string) {
 function getCompanyDisplayName(value: string) {
   const normalized = value.trim()
   return (!normalized || normalized === "Empresa sem nome definido") ? "Empresa" : normalized
+}
+
+function getStoredCarouselImage(key: string) {
+  if (typeof window === "undefined") return ""
+  return window.localStorage.getItem(key) || ""
 }
 
 function getStoredCompanyLogo(fallback?: string) {

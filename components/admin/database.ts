@@ -181,18 +181,11 @@ export type CashMovement = {
 
 const baseDate = new Date(2026, 3, 29)
 
-const companyLogoUrl = `data:image/svg+xml,${encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="220" fill="#111514"/>
-  <circle cx="512" cy="512" r="310" fill="#94e66d" opacity="0.14"/>
-  <path d="M332 318h360v92H332zM332 466h360v92H332zM332 614h360v92H332z" fill="#f7faf5"/>
-  <path d="M332 318h138v388H332z" fill="#94e66d"/>
-</svg>
-`)}`
+const companyLogoUrl = "https://images.unsplash.com/photo-1621605815841-aa88c82b0ad2?q=80&w=200&auto=format&fit=crop"
 
 const company = {
   corporateName: "Empresa demonstrativa",
-  tradeName: "Empresa sem nome definido",
+  tradeName: "Mydash Barber",
   cnpj: "00.000.000/0000-00",
   email: "contato@example.test",
   timezone: "America/Sao_Paulo",
@@ -202,7 +195,15 @@ const company = {
   logoUrl: companyLogoUrl,
   logoAlt: "Logo da empresa",
   iconUrl: companyLogoUrl,
-  carouselImages: [] as string[],
+  carouselImage1: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=1000&auto=format&fit=crop",
+  carouselImage2: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1000&auto=format&fit=crop",
+  carouselImage3: "https://images.unsplash.com/photo-1621605815841-aa88c82b0ad2?q=80&w=1000&auto=format&fit=crop",
+  introTitle1: "Experiência Premium",
+  introSubtitle1: "Transforme seu visual com os melhores profissionais da região.",
+  introTitle2: "Estilo & Conforto",
+  introSubtitle2: "Um ambiente exclusivo pensado para o seu bem-estar.",
+  introTitle3: "Agendamento Simples",
+  introSubtitle3: "Marque seu horário em segundos, de onde estiver.",
 }
 
 const professionalNames = ["Profissional 1", "Profissional 2", "Atendimento"]

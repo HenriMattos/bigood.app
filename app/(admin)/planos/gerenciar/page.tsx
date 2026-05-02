@@ -289,23 +289,32 @@ export default function GerenciarPlanosPage() {
               <Field label="Nome">
                 <Input
                   value={draft.name}
-                  onChange={(event) => updateDraft("name", event.target.value)}
+                  maxLength={42}
+                  onChange={(event) =>
+                    updateDraft("name", limitText(event.target.value, 42))
+                  }
                 />
               </Field>
               <Field label="Preço">
                 <Input
-                  value={String(draft.price)}
+                  value={formatCurrencyValue(draft.price)}
                   inputMode="decimal"
+                  placeholder="0,00"
+                  maxLength={12}
                   onChange={(event) =>
-                    updateDraft("price", Number(event.target.value) || 0)
+                    updateDraft(
+                      "price",
+                      parseAmount(formatCurrencyInput(event.target.value))
+                    )
                   }
                 />
               </Field>
               <Field className="md:col-span-2" label="Benefício">
                 <Input
                   value={draft.benefit}
+                  maxLength={90}
                   onChange={(event) =>
-                    updateDraft("benefit", event.target.value)
+                    updateDraft("benefit", limitText(event.target.value, 90))
                   }
                 />
               </Field>
@@ -313,8 +322,12 @@ export default function GerenciarPlanosPage() {
                 <Input
                   value={String(draft.subscribers)}
                   inputMode="numeric"
+                  maxLength={5}
                   onChange={(event) =>
-                    updateDraft("subscribers", Number(event.target.value) || 0)
+                    updateDraft(
+                      "subscribers",
+                      parseIntegerInput(event.target.value, 99999)
+                    )
                   }
                 />
               </Field>
@@ -340,10 +353,11 @@ export default function GerenciarPlanosPage() {
                 <Input
                   value={String(draft.servicesLimit)}
                   inputMode="numeric"
+                  maxLength={2}
                   onChange={(event) =>
                     updateDraft(
                       "servicesLimit",
-                      Number(event.target.value) || 0
+                      parseIntegerInput(event.target.value, 99)
                     )
                   }
                 />
@@ -419,4 +433,43 @@ function formatCurrency(value: number) {
     style: "currency",
     currency: "BRL",
   }).format(value)
+}
+
+function limitText(value: string, maxLength: number) {
+  return value.replace(/\s{2,}/g, " ").slice(0, maxLength)
+}
+
+function onlyDigits(value: string, maxLength: number) {
+  return value.replace(/\D/g, "").slice(0, maxLength)
+}
+
+function formatCurrencyInput(value: string) {
+  const digits = onlyDigits(value, 10)
+
+  if (!digits) return ""
+
+  return formatCurrencyValue(Number(digits) / 100)
+}
+
+function formatCurrencyValue(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function parseAmount(value: string) {
+  const normalized = value
+    .replace(/\./g, "")
+    .replace(",", ".")
+    .replace(/[^\d.-]/g, "")
+
+  return Number(normalized) || 0
+}
+
+function parseIntegerInput(value: string, maxValue: number) {
+  return Math.min(
+    Number(onlyDigits(value, String(maxValue).length)) || 0,
+    maxValue
+  )
 }

@@ -1,16 +1,23 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   ArrowDown01Icon,
   DashboardSquare01Icon,
+  Logout03Icon,
   Menu01Icon,
   Notification03Icon,
   Search01Icon,
 } from "@hugeicons/core-free-icons"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { database } from "@/components/admin/database"
+import {
+  createDefaultClientPortalSettings,
+  getStoredClientPortalSettings,
+  CLIENT_PORTAL_SYNC_EVENT,
+} from "@/components/company/client-portal-config"
 
 import { navItems } from "@/components/admin/nav-items"
 import { Button } from "@/components/ui/button"
@@ -19,9 +26,44 @@ import { cn } from "@/lib/utils"
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [companyData, setCompanyData] = useState({
+    tradeName: database.company.tradeName,
+    logoUrl: database.company.logoUrl || "",
+  })
+
+  useEffect(() => {
+    function sync() {
+      const settings = getStoredClientPortalSettings(
+        createDefaultClientPortalSettings(database.company)
+      )
+      setCompanyData({
+        tradeName: settings.tradeName,
+        logoUrl: settings.logoUrl || "",
+      })
+    }
+
+    sync()
+    setMounted(true)
+    window.addEventListener("storage", sync)
+    window.addEventListener(CLIENT_PORTAL_SYNC_EVENT, sync)
+    return () => {
+      window.removeEventListener("storage", sync)
+      window.removeEventListener(CLIENT_PORTAL_SYNC_EVENT, sync)
+    }
+  }, [])
   const activeItem =
     navItems.find((item) => pathname.startsWith(item.href)) ?? navItems[0]
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.replace("/")
+    router.refresh()
+  }
+
+  if (!mounted) return null
 
   return (
     <div
@@ -56,6 +98,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <SidebarContent
               key={pathname}
               pathname={pathname}
+              companyData={companyData}
               onNavigate={() => setMobileOpen(false)}
             />
           </aside>
@@ -64,7 +107,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       <div className="admin-app grid h-svh min-w-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside className="z-30 hidden h-full min-h-0 border-r border-sidebar-border bg-sidebar px-4 py-5 lg:flex lg:flex-col">
-          <SidebarContent key={pathname} pathname={pathname} />
+          <SidebarContent
+            key={pathname}
+            pathname={pathname}
+            companyData={companyData}
+          />
         </aside>
 
         <div className="flex h-full min-h-0 min-w-0 flex-col">
@@ -110,6 +157,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <span className="hidden size-9 items-center justify-center rounded-full border bg-muted text-muted-foreground sm:flex">
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={18} />
               </span>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Sair do painel"
+                onClick={logout}
+              >
+                <HugeiconsIcon icon={Logout03Icon} size={19} />
+              </Button>
             </div>
           </header>
 
@@ -126,9 +182,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
 function SidebarContent({
   pathname,
+  companyData,
   onNavigate,
 }: {
   pathname: string
+  companyData: { tradeName: string; logoUrl: string }
   onNavigate?: () => void
 }) {
   const activeParentHref = getParentHref(pathname)
@@ -150,15 +208,26 @@ function SidebarContent({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Link href="/dashboard" className="mb-6 flex items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
-          <HugeiconsIcon icon={DashboardSquare01Icon} size={20} />
-        </span>
+        {companyData.logoUrl ? (
+          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={companyData.logoUrl}
+              alt={companyData.tradeName}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
+            <HugeiconsIcon icon={DashboardSquare01Icon} size={20} />
+          </span>
+        )}
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">
-            Painel administrativo
+            {companyData.tradeName}
           </span>
           <span className="block truncate text-xs text-sidebar-foreground/60">
-            Sistema sem marca configurada
+            Painel Administrativo
           </span>
         </span>
       </Link>

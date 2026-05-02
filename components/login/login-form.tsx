@@ -1,6 +1,7 @@
 "use client"
 
 import type { FormEvent } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowRight01Icon,
@@ -15,10 +16,39 @@ import { Label } from "@/components/ui/label"
 
 export function LoginForm() {
   const router = useRouter()
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  function submitLogin(event: FormEvent<HTMLFormElement>) {
+  async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    router.push("/dashboard")
+    setError("")
+    setLoading(true)
+
+    const formData = new FormData(event.currentTarget)
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: formData.get("email"),
+        password: formData.get("password"),
+      }),
+    })
+
+    setLoading(false)
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        message?: string
+      } | null
+
+      setError(payload?.message ?? "Não foi possível entrar no painel.")
+      return
+    }
+
+    const nextUrl = new URLSearchParams(window.location.search).get("next")
+
+    router.replace(nextUrl ?? "/dashboard")
+    router.refresh()
   }
 
   return (
@@ -46,6 +76,7 @@ export function LoginForm() {
               type="email"
               autoComplete="email"
               placeholder="admin@empresa.com"
+              maxLength={80}
               className="h-11 rounded-xl pl-10"
               required
             />
@@ -74,6 +105,8 @@ export function LoginForm() {
               type="password"
               autoComplete="current-password"
               placeholder="Digite sua senha"
+              minLength={6}
+              maxLength={72}
               className="h-11 rounded-xl pl-10"
               required
             />
@@ -89,8 +122,14 @@ export function LoginForm() {
           <span>Manter conectado neste dispositivo</span>
         </label>
 
-        <Button type="submit" size="lg" className="h-11 w-full">
-          Entrar agora
+        {error ? (
+          <p className="rounded-xl border border-destructive/25 bg-destructive/10 p-3 text-sm font-medium text-destructive">
+            {error}
+          </p>
+        ) : null}
+
+        <Button type="submit" size="lg" className="h-11 w-full" disabled={loading}>
+          {loading ? "Validando..." : "Entrar agora"}
           <HugeiconsIcon icon={ArrowRight01Icon} size={18} />
         </Button>
       </div>

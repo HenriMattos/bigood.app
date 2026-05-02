@@ -350,7 +350,8 @@
       0 1px 2px rgb(0 0 0 / 0.08);
   }
 
-  .client-portal.dark .plan-premium-card {
+  .client-portal.dark .plan-premium-card,
+  .dark .plan-premium-card {
     color: #f8fafc;
     box-shadow:
       0 24px 54px rgb(0 0 0 / 0.42),
@@ -583,19 +584,137 @@
   .client-card {
     position: relative;
     overflow: hidden;
-    border-radius: 14px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .client-card:hover {
+    border-color: var(--primary);
+  }
+
+  .client-premium-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklch, var(--primary), var(--border) 45%);
+    background:
+      radial-gradient(
+        circle at 12% 0%,
+        color-mix(in oklch, white, var(--primary) 16%) 0%,
+        transparent 28%
+      ),
+      linear-gradient(
+        135deg,
+        color-mix(in oklch, var(--primary), var(--card) 82%) 0%,
+        var(--card) 46%,
+        color-mix(in oklch, var(--background), var(--card) 52%) 100%
+      );
+    box-shadow:
+      0 24px 60px rgb(0 0 0 / 0.12),
+      0 1px 0 rgb(255 255 255 / 0.5) inset;
+  }
+
+  .client-premium-card::before {
+    position: absolute;
+    inset: 0;
+    content: "";
+    background:
+      linear-gradient(
+        112deg,
+        transparent 0%,
+        rgb(255 255 255 / 0.24) 42%,
+        transparent 58%
+      );
+    opacity: 0.8;
+    pointer-events: none;
+  }
+
+  .client-premium-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .client-portal.dark .client-premium-card,
+  .dark .client-premium-card {
+    border-color: color-mix(in oklch, var(--primary), var(--border) 34%);
+    background:
+      radial-gradient(circle at 14% 0%, rgb(255 255 255 / 0.16), transparent 30%),
+      linear-gradient(
+        135deg,
+        #0a0a0b 0%,
+        #1b1c1f 36%,
+        #52565d 68%,
+        #c4c9d1 100%
+      );
+    box-shadow:
+      0 26px 70px rgb(0 0 0 / 0.48),
+      0 1px 0 rgb(255 255 255 / 0.22) inset;
+  }
+
+  .client-plan-option-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklch, var(--border), var(--primary) 16%);
     background:
       linear-gradient(var(--card), var(--card)) padding-box,
       linear-gradient(
           135deg,
-          color-mix(in oklch, var(--border), white 30%),
-          color-mix(in oklch, var(--border), var(--primary) 20%),
+          color-mix(in oklch, var(--border), white 28%),
+          color-mix(in oklch, var(--border), var(--primary) 18%),
           var(--border)
         )
         border-box;
-    border: 1px solid transparent;
-    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 16px 38px rgb(0 0 0 / 0.08);
+  }
+
+  .client-plan-option-card:hover {
+    border-color: color-mix(in oklch, var(--primary), var(--border) 36%);
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in oklch, var(--card), var(--primary) 5%),
+        var(--card)
+      )
+      padding-box,
+      linear-gradient(135deg, var(--primary), var(--border)) border-box;
+    box-shadow: 0 22px 48px rgb(0 0 0 / 0.12);
+  }
+
+  .client-dialog {
+    color: var(--foreground);
+    border-color: color-mix(in oklch, var(--border), var(--primary) 16%);
+    background:
+      radial-gradient(
+        circle at 18% 0%,
+        color-mix(in oklch, var(--primary), transparent 78%) 0%,
+        transparent 34%
+      ),
+      linear-gradient(
+        160deg,
+        color-mix(in oklch, var(--background), var(--card) 38%) 0%,
+        var(--background) 52%,
+        color-mix(in oklch, var(--card), var(--background) 40%) 100%
+      );
+    box-shadow:
+      0 30px 80px rgb(0 0 0 / 0.28),
+      0 1px 0 rgb(255 255 255 / 0.18) inset;
+  }
+
+  .client-dialog [data-slot="dialog-header"],
+  .client-dialog [data-slot="dialog-footer"] {
+    border-color: color-mix(in oklch, var(--border), var(--primary) 12%);
+    background: color-mix(in oklch, var(--background), var(--card) 42%);
+  }
+
+  .client-dialog [data-slot="dialog-title"] {
+    color: var(--foreground);
+  }
+
+  .client-dialog [data-slot="button"] {
+    border-radius: 10px;
   }
 
   .client-choice-card {

@@ -11,6 +11,9 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database } from "@/components/admin/database"
 import {
+  COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY,
+  COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY,
+  COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY,
   COMPANY_ICON_STORAGE_KEY,
   COMPANY_LOGO_STORAGE_KEY,
 } from "@/components/company/company-assets"
@@ -74,6 +77,9 @@ const initialCompanyForm = {
   slug: database.company.slug,
   logoUrl: database.company.logoUrl,
   iconUrl: database.company.iconUrl,
+  carouselImage1: "",
+  carouselImage2: "",
+  carouselImage3: "",
   clientThemeId: clientPortalThemes[0].id,
   clientMode: clientPortalThemes[0].mode,
   pixWithdrawal: database.company.cnpj,
@@ -95,26 +101,20 @@ const initialCompanyForm = {
 }
 
 export function EmpresaView() {
-  const [form, setForm] = useState(() => {
-    const settings = getStoredClientPortalSettings(
-      createDefaultClientPortalSettings(database.company)
-    )
-
-    return {
-      ...initialCompanyForm,
-      tradeName: settings.tradeName,
-      slug: settings.slug,
-      logoUrl: settings.logoUrl ?? initialCompanyForm.logoUrl,
-      iconUrl: settings.iconUrl ?? initialCompanyForm.iconUrl,
-      clientThemeId: settings.themeId,
-      clientMode: settings.mode,
-    }
+  const [mounted, setMounted] = useState(false)
+  const [form, setForm] = useState({
+    ...initialCompanyForm,
+    tradeName: database.company.tradeName,
+    slug: database.company.slug,
+    logoUrl: database.company.logoUrl,
+    iconUrl: database.company.iconUrl,
   })
   const [feedback, setFeedback] = useState(
     "Preencha todos os campos obrigatórios."
   )
 
   useEffect(() => {
+    setMounted(true)
     const timer = window.setTimeout(() => {
       const settings = getStoredClientPortalSettings(
         createDefaultClientPortalSettings(database.company)
@@ -126,6 +126,15 @@ export function EmpresaView() {
         slug: settings.slug,
         logoUrl: settings.logoUrl ?? current.logoUrl,
         iconUrl: settings.iconUrl ?? current.iconUrl,
+        carouselImage1: settings.carouselImage1 ?? current.carouselImage1,
+        carouselImage2: settings.carouselImage2 ?? current.carouselImage2,
+        carouselImage3: settings.carouselImage3 ?? current.carouselImage3,
+        introTitle1: settings.introTitle1 ?? current.introTitle1,
+        introSubtitle1: settings.introSubtitle1 ?? current.introSubtitle1,
+        introTitle2: settings.introTitle2 ?? current.introTitle2,
+        introSubtitle2: settings.introSubtitle2 ?? current.introSubtitle2,
+        introTitle3: settings.introTitle3 ?? current.introTitle3,
+        introSubtitle3: settings.introSubtitle3 ?? current.introSubtitle3,
         clientThemeId: settings.themeId,
         clientMode: settings.mode,
       }))
@@ -133,6 +142,8 @@ export function EmpresaView() {
 
     return () => window.clearTimeout(timer)
   }, [])
+
+  if (!mounted) return null
 
   const requiredFilled =
     form.corporateName.trim().length > 0 &&
@@ -161,6 +172,15 @@ export function EmpresaView() {
       slug: nextForm.slug,
       logoUrl,
       iconUrl,
+      carouselImage1: window.localStorage.getItem(COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY) || nextForm.carouselImage1,
+      carouselImage2: window.localStorage.getItem(COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY) || nextForm.carouselImage2,
+      carouselImage3: window.localStorage.getItem(COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY) || nextForm.carouselImage3,
+      introTitle1: nextForm.introTitle1,
+      introSubtitle1: nextForm.introSubtitle1,
+      introTitle2: nextForm.introTitle2,
+      introSubtitle2: nextForm.introSubtitle2,
+      introTitle3: nextForm.introTitle3,
+      introSubtitle3: nextForm.introSubtitle3,
       themeId: nextForm.clientThemeId,
       mode: nextForm.clientMode,
     })
@@ -287,10 +307,28 @@ export function EmpresaView() {
       <SectionCard title="Personalização">
         <FormGrid>
           <FormField label="Slug de Url *">
-            <Input
-              value={form.slug}
-              onChange={(event) => update("slug", event.target.value)}
-            />
+            <div className="flex items-center gap-3">
+              <Input
+                value={form.slug}
+                onChange={(event) => update("slug", event.target.value)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="shrink-0 h-10 px-4"
+              >
+                <a
+                  href={`/cliente?slug=${form.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <HugeiconsIcon icon={File01Icon} size={16} />
+                  Acessar Portal
+                </a>
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               * Alterações de Slug levam até 24h para serem processadas
             </p>
@@ -349,9 +387,22 @@ export function EmpresaView() {
             storageKey={COMPANY_ICON_STORAGE_KEY}
           />
           <UploadField
-            label="Imagens do carrossel"
+            label="Carrossel 1"
             description="As imagens devem possuir as dimensões de 512 x 590 pixels."
-            multiple
+            previewUrl={form.carouselImage1}
+            storageKey={COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY}
+          />
+          <UploadField
+            label="Carrossel 2"
+            description="As imagens devem possuir as dimensões de 512 x 590 pixels."
+            previewUrl={form.carouselImage2}
+            storageKey={COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY}
+          />
+          <UploadField
+            label="Carrossel 3"
+            description="As imagens devem possuir as dimensões de 512 x 590 pixels."
+            previewUrl={form.carouselImage3}
+            storageKey={COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY}
           />
         </div>
       </SectionCard>

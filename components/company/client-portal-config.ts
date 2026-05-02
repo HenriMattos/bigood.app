@@ -9,6 +9,15 @@ export type ClientPortalSettings = {
   slug: string
   logoUrl?: string
   iconUrl?: string
+  carouselImage1?: string
+  carouselImage2?: string
+  carouselImage3?: string
+  introTitle1?: string
+  introSubtitle1?: string
+  introTitle2?: string
+  introSubtitle2?: string
+  introTitle3?: string
+  introSubtitle3?: string
   themeId: string
   mode: ClientPortalMode
 }
@@ -33,26 +42,37 @@ export const CLIENT_PORTAL_SYNC_EVENT = "clientPortal:sync"
 
 export const clientPortalThemes: ClientPortalTheme[] = [
   {
-    id: "claro-verde",
-    name: "Claro verde",
-    description: "Portal claro com verde principal",
+    id: "claro-premium",
+    name: "Claro Premium",
+    description: "Design limpo, moderno e sofisticado",
     mode: "light",
-    gradient: "linear-gradient(135deg, #059447 0%, #37d367 42%, #ffd43d 100%)",
-    primary: "#94e66d",
-    primaryForeground: "#082814",
-    accent: "#ffd43d",
-    previewTextClass: "text-[#082814]",
+    gradient: "linear-gradient(135deg, #059447 0%, #10b981 42%, #34d399 100%)",
+    primary: "#10b981",
+    primaryForeground: "#ffffff",
+    accent: "#34d399",
+    previewTextClass: "text-[#064e3b]",
   },
   {
-    id: "escuro-prata",
-    name: "Escuro prata",
-    description: "Preto, branco e prata premium",
+    id: "escuro-premium",
+    name: "Escuro Premium",
+    description: "Elegância absoluta em tons de cinza e preto",
     mode: "dark",
-    gradient: "linear-gradient(135deg, #030303 0%, #191919 36%, #777b82 68%, #f8fafc 100%)",
-    primary: "#d1d5db",
-    primaryForeground: "#050505",
+    gradient: "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+    primary: "#94a3b8",
+    primaryForeground: "#0f172a",
     accent: "#f8fafc",
     previewTextClass: "text-white",
+  },
+  {
+    id: "gold-luxury",
+    name: "Luxury Gold",
+    description: "O máximo do luxo com toques dourados",
+    mode: "dark",
+    gradient: "linear-gradient(135deg, #1a1a1a 0%, #262626 50%, #d4af37 100%)",
+    primary: "#d4af37",
+    primaryForeground: "#1a1a1a",
+    accent: "#fdfc00",
+    previewTextClass: "text-[#d4af37]",
   },
 ]
 
@@ -61,12 +81,30 @@ export function createDefaultClientPortalSettings(company: {
   slug: string
   logoUrl?: string
   iconUrl?: string
+  introTitle1?: string
+  introSubtitle1?: string
+  introTitle2?: string
+  introSubtitle2?: string
+  introTitle3?: string
+  introSubtitle3?: string
+  carouselImage1?: string
+  carouselImage2?: string
+  carouselImage3?: string
 }): ClientPortalSettings {
   return {
     tradeName: company.tradeName,
     slug: company.slug,
     logoUrl: company.logoUrl,
     iconUrl: company.iconUrl,
+    introTitle1: company.introTitle1,
+    introSubtitle1: company.introSubtitle1,
+    introTitle2: company.introTitle2,
+    introSubtitle2: company.introSubtitle2,
+    introTitle3: company.introTitle3,
+    introSubtitle3: company.introSubtitle3,
+    carouselImage1: company.carouselImage1,
+    carouselImage2: company.carouselImage2,
+    carouselImage3: company.carouselImage3,
     themeId: clientPortalThemes[0].id,
     mode: clientPortalThemes[0].mode,
   }
@@ -107,6 +145,9 @@ export function getStoredClientPortalSettings(
 
 export function saveClientPortalSettings(settings: ClientPortalSettings) {
   writeStorage(CLIENT_PORTAL_SETTINGS_STORAGE_KEY, settings)
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(CLIENT_PORTAL_SYNC_EVENT))
+  }
 }
 
 export function getStoredClientPlans<T extends Plan>(fallback: T[]) {
@@ -175,7 +216,8 @@ export function getClientPortalCssVariables(
     "--color-border": border,
     "--input": border,
     "--color-input": border,
-    "--client-primary-contrast": dark ? "#f8fafc" : "#4f7f3d",
+    "--client-primary-contrast": dark ? "#ffffff" : theme.primary,
+    "--radius": "1rem",
     colorScheme: dark ? "dark" : "light",
   } as CSSProperties
 }
