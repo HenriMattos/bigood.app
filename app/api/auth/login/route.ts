@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const password = typeof body?.password === "string" ? body.password : ""
   const credentials = getAdminCredentials()
 
-  if (email !== credentials.email || password !== credentials.password) {
+  if (email !== credentials.email || password.trim() !== credentials.password) {
     return NextResponse.json(
       { message: "Credenciais administrativas inválidas." },
       { status: 401 }
