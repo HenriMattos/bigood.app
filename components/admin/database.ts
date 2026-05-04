@@ -205,6 +205,22 @@ const company = {
   serviceCategories: ["Cabelo", "Barba", "Combo"],
 }
 
+export type RevenueDay = {
+  day: string
+  weekday: string
+  gross: number
+  net: number
+  previous: number
+  appointments: number
+}
+
+export type PeakHour = {
+  time: string
+  appointments: number
+  revenue: number
+  occupancy: number
+}
+
 const services: ServiceCatalogItem[] = [
   {
     id: 1,

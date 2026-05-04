@@ -161,14 +161,16 @@ export function saveClientPortalSettings(settings: ClientPortalSettings) {
 export function getStoredClientPlans<T extends Plan>(fallback: T[]) {
   const stored = readStorage<T[] | null>(CLIENT_PORTAL_PLANS_STORAGE_KEY, null)
 
-  // Se o primeiro plano salvo for diferente do banco atual, ignoramos
-  if (stored && stored.length > 0 && fallback.length > 0) {
-    if (stored[0].name !== fallback[0].name) {
-      return fallback
-    }
+  if (!stored || stored.length === 0) {
+    return fallback
   }
 
-  return stored || fallback
+  // Se o primeiro plano salvo for diferente do banco atual, ignoramos
+  if (fallback.length > 0 && stored[0].name !== fallback[0].name) {
+    return fallback
+  }
+
+  return stored
 }
 
 export function saveClientPlans<T extends Plan>(plans: T[]) {
@@ -183,14 +185,16 @@ export function getStoredClientSubscriptions<T extends Subscription>(
     null
   )
 
-  // Se o primeiro assinante for diferente, ignoramos
-  if (stored && stored.length > 0 && fallback.length > 0) {
-    if (stored[0].client !== fallback[0].client) {
-      return fallback
-    }
+  if (!stored || stored.length === 0) {
+    return fallback
   }
 
-  return stored || fallback
+  // Se o primeiro assinante for diferente, ignoramos
+  if (fallback.length > 0 && stored[0].client !== fallback[0].client) {
+    return fallback
+  }
+
+  return stored
 }
 
 export function saveClientSubscriptions<T extends Subscription>(
