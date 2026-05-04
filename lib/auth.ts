@@ -3,8 +3,6 @@ const decoder = new TextDecoder()
 
 export const AUTH_COOKIE_NAME = "mydashbarber.session"
 export const AUTH_SESSION_MAX_AGE = 60 * 60 * 8
-export const DEFAULT_ADMIN_EMAIL = "admin@empresa.com"
-export const DEFAULT_ADMIN_PASSWORD = "admin123"
 
 type SessionPayload = {
   sub: string
@@ -12,12 +10,12 @@ type SessionPayload = {
 }
 
 export function getAdminCredentials() {
-  // Em produção, as variáveis devem ser definidas no dashboard, 
-  // mas usaremos os padrões como fallback para evitar crash.
+  // Em produção, as variáveis devem ser definidas no dashboard.
+  // Retornamos valores padrão de desenvolvimento se não existirem.
 
   return {
-    email: process.env.ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL,
-    password: process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD,
+    email: process.env.ADMIN_EMAIL ?? "admin@empresa.com",
+    password: process.env.ADMIN_PASSWORD ?? "admin123",
   }
 }
 

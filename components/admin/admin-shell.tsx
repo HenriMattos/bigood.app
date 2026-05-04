@@ -45,8 +45,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       })
     }
 
-    sync()
-    setMounted(true)
+    window.requestAnimationFrame(() => {
+      sync()
+      setMounted(true)
+    })
     window.addEventListener("storage", sync)
     window.addEventListener(CLIENT_PORTAL_SYNC_EVENT, sync)
     return () => {

@@ -8,17 +8,30 @@ import {
   EyeIcon,
   File01Icon,
   PlusSignCircleIcon,
+  PlusSignIcon,
   ScissorIcon,
   Search01Icon,
   StarIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 
+import { database } from "@/components/admin/database"
+import { EmptyState } from "@/components/admin/empty-state"
 import {
   serviceCatalog,
   type ServiceCatalogItem,
   type ServiceStatus,
 } from "@/components/admin/catalog-data"
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { MetricCard } from "@/components/admin/metric-card"
 import {
   FormField,
@@ -39,17 +52,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const serviceCategories = Array.from(
-  new Set(serviceCatalog.map((service) => service.category))
-)
-
 const initialCreateForm = {
   name: "",
   durationMinutes: "",
   price: "",
   credits: "",
   repurchaseDays: "",
-  category: serviceCategories[0] ?? "Cabelo",
+  category: "",
   startingFrom: false,
   hidden: false,
   fitIn: false,
@@ -75,7 +84,7 @@ export function ServicosOverview() {
         <MetricCard
           title="Servicos ativos"
           value={String(activeServices.length)}
-          change={`${serviceCategories.length} categorias cadastradas`}
+          change={`${database.company.serviceCategories.length} categorias cadastradas`}
           icon={ScissorIcon}
           tone="green"
         />
@@ -154,6 +163,11 @@ export function ServicosOverview() {
 
 export function CriarServicoView() {
   const [form, setForm] = useState(initialCreateForm)
+  const [categories, setCategories] = useState<string[]>(
+    database.company.serviceCategories
+  )
+  const [newCategoryModalOpen, setNewCategoryModalOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
   const [feedback, setFeedback] = useState(
     "Preencha todos os campos obrigatorios."
   )
@@ -168,6 +182,19 @@ export function CriarServicoView() {
     value: (typeof form)[Key]
   ) {
     setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  function addCategory() {
+    if (!newCategoryName.trim()) return
+    const category = newCategoryName.trim()
+    if (!categories.includes(category)) {
+      const nextCategories = [...categories, category]
+      setCategories(nextCategories)
+      database.company.serviceCategories = nextCategories
+    }
+    update("category", category)
+    setNewCategoryName("")
+    setNewCategoryModalOpen(false)
   }
 
   function createService() {
@@ -200,21 +227,39 @@ export function CriarServicoView() {
           />
         </FormField>
         <FormField label="Categoria *">
-          <Select
-            value={form.category}
-            onValueChange={(value) => update("category", value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {serviceCategories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex-1 min-w-0">
+              <Select
+                value={form.category}
+                onValueChange={(value) => update("category", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.length === 0 ? (
+                    <div className="p-2 text-xs text-muted-foreground text-center">
+                      Nenhuma categoria cadastrada
+                    </div>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto shrink-0"
+              onClick={() => setNewCategoryModalOpen(true)}
+            >
+              <HugeiconsIcon icon={PlusSignIcon} size={16} />
+              Nova categoria
+            </Button>
+          </div>
         </FormField>
         <FormField label="Duracao (minutos) *">
           <Input
@@ -280,6 +325,40 @@ export function CriarServicoView() {
       <div className="mt-5 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
         {feedback}
       </div>
+
+      <Dialog open={newCategoryModalOpen} onOpenChange={setNewCategoryModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova categoria</DialogTitle>
+            <DialogDescription>
+              Cadastre uma nova categoria para organizar seus servicos.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <div className="grid gap-2">
+              <Label htmlFor="category-name">Nome da categoria</Label>
+              <Input
+                id="category-name"
+                value={newCategoryName}
+                placeholder="Ex: Corte de Cabelo"
+                onChange={(event) => setNewCategoryName(event.target.value)}
+                onKeyDown={(event) =>
+                  event.key === "Enter" && addCategory()
+                }
+              />
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setNewCategoryModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={addCategory}>Adicionar categoria</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SectionCard>
   )
 }
@@ -339,7 +418,15 @@ export function ExibicaoServicosView() {
           <span className="text-right">Opcoes</span>
         </div>
 
-        {activeItems.map((service, index) => (
+        {activeItems.length === 0 ? (
+          <EmptyState
+            icon={ScissorIcon}
+            title="Nenhum serviço ativo"
+            description="Seu cardápio de serviços está vazio. Comece cadastrando um serviço acima."
+            className="mt-2"
+          />
+        ) : (
+          activeItems.map((service, index) => (
           <article
             key={service.id}
             className="grid min-w-0 gap-3 rounded-md border bg-background p-3 md:grid-cols-[4rem_minmax(0,1fr)_7rem_7rem_16rem] md:items-center md:px-4"
@@ -409,7 +496,7 @@ export function ExibicaoServicosView() {
               </Button>
             </div>
           </article>
-        ))}
+        )))}
       </div>
     </SectionCard>
   )

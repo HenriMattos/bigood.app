@@ -82,22 +82,22 @@ const initialCompanyForm = {
   carouselImage3: "",
   clientThemeId: clientPortalThemes[0].id,
   clientMode: clientPortalThemes[0].mode,
-  pixWithdrawal: database.company.cnpj,
-  fixedTransactionFee: "R$ 0,69",
-  variableTransactionFee: "3,49%",
-  cashbackFee: "R$ 5,00",
+  pixWithdrawal: "",
+  fixedTransactionFee: "R$ 0,00",
+  variableTransactionFee: "0,00%",
+  cashbackFee: "R$ 0,00",
   advancePayments: false,
-  introTitle1: "Titulo de introducao 1",
-  introSubtitle1: "Subtitulo de introducao 1.",
-  introTitle2: "Titulo de introducao 2",
-  introSubtitle2: "Subtitulo de introducao 2.",
-  introTitle3: "Titulo de introducao 3",
-  introSubtitle3: "Subtitulo de introducao 3.",
-  cancellationTolerance: "30 minutos",
-  penaltyDuration: "7 dias",
-  beardClubName: "Clube recorrente",
-  dpoteCommission: "40",
-  voucherDiscountFrom: "Comissão do profissional",
+  introTitle1: "",
+  introSubtitle1: "",
+  introTitle2: "",
+  introSubtitle2: "",
+  introTitle3: "",
+  introSubtitle3: "",
+  cancellationTolerance: toleranceOptions[0],
+  penaltyDuration: penaltyOptions[0],
+  beardClubName: "",
+  dpoteCommission: "0",
+  voucherDiscountFrom: voucherDiscountOptions[0],
 }
 
 export function EmpresaView() {
@@ -114,7 +114,7 @@ export function EmpresaView() {
   )
 
   useEffect(() => {
-    setMounted(true)
+    window.requestAnimationFrame(() => setMounted(true))
     const timer = window.setTimeout(() => {
       const settings = getStoredClientPortalSettings(
         createDefaultClientPortalSettings(database.company)
@@ -191,15 +191,13 @@ export function EmpresaView() {
       clientPortalThemes.find((theme) => theme.id === themeId) ??
       clientPortalThemes[0]
 
-    setForm((current) => {
-      const nextForm = {
-        ...current,
-        clientThemeId: selectedTheme.id,
-        clientMode: selectedTheme.mode,
-      }
-      persistPortalSettings(nextForm)
-      return nextForm
-    })
+    const nextForm = {
+      ...form,
+      clientThemeId: selectedTheme.id,
+      clientMode: selectedTheme.mode,
+    }
+    setForm(nextForm)
+    persistPortalSettings(nextForm)
   }
 
   function saveCompany() {

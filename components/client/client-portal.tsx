@@ -20,10 +20,12 @@ import {
   Logout03Icon,
   Mail01Icon,
   Scissor01Icon,
+  SparklesIcon,
   UserMultipleIcon,
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
+import { EmptyState } from "@/components/admin/empty-state"
 import {
   CLIENT_PORTAL_SYNC_EVENT,
   createDefaultClientPortalSettings,
@@ -32,6 +34,7 @@ import {
   getStoredClientPortalSettings,
   getStoredClientSubscriptions,
   saveClientSubscriptions,
+  type ClientPortalSettings,
 } from "@/components/company/client-portal-config"
 import {
   COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY,
@@ -47,7 +50,6 @@ import {
   type Subscription,
 } from "@/components/admin/database"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogBody,
@@ -76,13 +78,13 @@ type AppointmentReschedule = {
   end: string
 }
 
-const customer = database.clients[0]
+const customer = database.clients[0] as (typeof database.clients)[number] | undefined
 const company = database.company
 const defaultCompanyLogoUrl = company.logoUrl?.trim()
 const defaultClientPortalSettings = createDefaultClientPortalSettings(company)
-const fallbackSubscription = database.subscriptions.find(
-  (item) => item.clientId === customer.id
-)
+const fallbackSubscription = customer 
+  ? database.subscriptions.find((item) => item.clientId === customer.id)
+  : undefined
 const fallbackCurrentPlan = database.plans.find(
   (item) => item.name === fallbackSubscription?.plan
 )
@@ -132,12 +134,14 @@ export function ClientPortal() {
   const [bookingStep, setBookingStep] = useState<BookingStep>("service")
   const subscription = useMemo(
     () =>
-      subscriptions.find(
-        (item) =>
-          item.clientId === customer.id &&
-          item.status !== "Pausada" &&
-          item.status !== "Em atraso"
-      ),
+      customer 
+        ? subscriptions.find(
+            (item) =>
+              item.clientId === customer.id &&
+              item.status !== "Pausada" &&
+              item.status !== "Em atraso"
+          )
+        : undefined,
     [subscriptions]
   )
   const currentPlan = useMemo(
@@ -156,8 +160,8 @@ export function ClientPortal() {
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>(
     initialBookingService ? [initialBookingService.id] : []
   )
-  const [professionalId, setProfessionalId] = useState(professionals[0]?.id)
-  const [dateId, setDateId] = useState(dateOptions[0].id)
+  const [professionalId, setProfessionalId] = useState(professionals[0]?.id ?? 0)
+  const [dateId, setDateId] = useState(dateOptions[0]?.id ?? 0)
   const [time, setTime] = useState("10:00")
   const [confirmedAppointment, setConfirmedAppointment] =
     useState<AgendaEvent | null>(null)
@@ -257,7 +261,7 @@ export function ClientPortal() {
   )
 
   useEffect(() => {
-    setMounted(true)
+    window.requestAnimationFrame(() => setMounted(true))
     function syncClientPortalData() {
       setPortalSettings(
         getStoredClientPortalSettings(defaultClientPortalSettings)
@@ -344,7 +348,7 @@ export function ClientPortal() {
           0
         ) || 30
       ),
-      title: customer.name,
+      title: customer?.name ?? "",
       detail:
         selectedServices.map((service) => service.name).join(" + ") ||
         "Atendimento",
@@ -551,7 +555,7 @@ function WelcomeScreen({
 }: {
   logoUrl?: string
   companyName: string
-  portalSettings: any
+  portalSettings: ClientPortalSettings
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onGoogleLogin: () => void
 }) {
@@ -559,19 +563,19 @@ function WelcomeScreen({
 
   const carouselImages = [
     {
-      url: portalSettings.carouselImage1 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY) || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=1000&auto=format&fit=crop",
-      title: portalSettings.introTitle1 || "Experiência Premium",
-      description: portalSettings.introSubtitle1 || "Transforme seu visual com os melhores profissionais da região."
+      url: portalSettings.carouselImage1 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY) || "",
+      title: portalSettings.introTitle1 || "",
+      description: portalSettings.introSubtitle1 || ""
     },
     {
-      url: portalSettings.carouselImage2 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY) || "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1000&auto=format&fit=crop",
-      title: portalSettings.introTitle2 || "Estilo & Conforto",
-      description: portalSettings.introSubtitle2 || "Um ambiente exclusivo pensado para o seu bem-estar."
+      url: portalSettings.carouselImage2 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY) || "",
+      title: portalSettings.introTitle2 || "",
+      description: portalSettings.introSubtitle2 || ""
     },
     {
-      url: portalSettings.carouselImage3 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY) || "https://images.unsplash.com/photo-1621605815841-aa88c82b0ad2?q=80&w=1000&auto=format&fit=crop",
-      title: portalSettings.introTitle3 || "Agendamento Simples",
-      description: portalSettings.introSubtitle3 || "Marque seu horário em segundos, de onde estiver."
+      url: portalSettings.carouselImage3 || getStoredCarouselImage(COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY) || "",
+      title: portalSettings.introTitle3 || "",
+      description: portalSettings.introSubtitle3 || ""
     }
   ].filter(img => img.url)
 
@@ -675,7 +679,7 @@ function WelcomeScreen({
                 <Input
                   id="client-email"
                   type="email"
-                  defaultValue={customer.email}
+                  defaultValue={customer?.email ?? ""}
                   className="h-12 rounded-xl border-border/50 bg-muted/20 pl-11 text-sm transition-all focus:bg-background focus:ring-4 focus:ring-primary/10"
                   placeholder="seu@email.com"
                   required
@@ -1096,68 +1100,79 @@ function ServiceStep({
 
   return (
     <div className="space-y-5 sm:space-y-7">
-      {subscription && plan && (
-        <div className="rounded-lg border border-primary/25 bg-primary/5 p-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[9px] font-black tracking-[0.24em] text-primary uppercase">
-                Agendar com plano
-              </p>
-              <h3 className="mt-1 truncate text-base font-black uppercase">
-                {plan.name}
-              </h3>
-            </div>
-            <div className="rounded-lg bg-background px-3 py-2 text-right border">
-              <p className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">
-                Restantes
-              </p>
-              <p className="text-sm font-black text-primary-contrast">
-                {remainingCredits}/{plan.servicesLimit}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {availablePlanServices.length > 0 && (
-        <ServiceSection
-          eyebrow="Incluídos no plano"
-          description="Selecionar aqui usa seus créditos mensais."
-          services={availablePlanServices}
-          selectedServiceIds={selectedServiceIds}
-          planServiceIds={planServiceIds}
-          hasSubscription
-          planOnly
-          remainingPlanCredits={remainingCredits}
-          onServiceToggle={onServiceToggle}
+      {activeServices.length === 0 ? (
+        <EmptyState
+          icon={Scissor01Icon}
+          title="Nenhum serviço disponível"
+          description="Nossa barbearia ainda não possui serviços cadastrados para agendamento online."
+          className="client-card"
         />
-      )}
+      ) : (
+        <>
+          {subscription && plan && (
+            <div className="rounded-lg border border-primary/25 bg-primary/5 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black tracking-[0.24em] text-primary uppercase">
+                    Agendar com plano
+                  </p>
+                  <h3 className="mt-1 truncate text-base font-black uppercase">
+                    {plan.name}
+                  </h3>
+                </div>
+                <div className="rounded-lg bg-background px-3 py-2 text-right border">
+                  <p className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">
+                    Restantes
+                  </p>
+                  <p className="text-sm font-black text-primary-contrast">
+                    {remainingCredits}/{plan.servicesLimit}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
-      {subscription && plan && availablePlanServices.length === 0 && (
-        <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4">
-          <p className="text-sm font-black uppercase tracking-tight">
-            Seus creditos do plano ja foram usados.
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Avance para escolher servicos extras com o desconto da assinatura.
-          </p>
-        </div>
-      )}
+          {availablePlanServices.length > 0 && (
+            <ServiceSection
+              eyebrow="Incluídos no plano"
+              description="Selecionar aqui usa seus créditos mensais."
+              services={availablePlanServices}
+              selectedServiceIds={selectedServiceIds}
+              planServiceIds={planServiceIds}
+              hasSubscription
+              planOnly
+              remainingPlanCredits={remainingCredits}
+              onServiceToggle={onServiceToggle}
+            />
+          )}
 
-      {!subscription && (
-      <ServiceSection
-        eyebrow={subscription ? "Serviços extras" : "Escolha seu serviço"}
-        description={
-          subscription
-            ? "Extras têm preço menor para assinantes."
-            : "Você paga o valor integral no atendimento."
-        }
-        services={activeServices}
-        selectedServiceIds={selectedServiceIds}
-        planServiceIds={planServiceIds}
-        hasSubscription={Boolean(subscription)}
-        onServiceToggle={onServiceToggle}
-      />
+          {subscription && plan && availablePlanServices.length === 0 && (
+            <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4">
+              <p className="text-sm font-black uppercase tracking-tight">
+                Seus creditos do plano ja foram usados.
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Avance para escolher servicos extras com o desconto da assinatura.
+              </p>
+            </div>
+          )}
+
+          {!subscription && (
+            <ServiceSection
+              eyebrow={subscription ? "Serviços extras" : "Escolha seu serviço"}
+              description={
+                subscription
+                  ? "Extras têm preço menor para assinantes."
+                  : "Você paga o valor integral no atendimento."
+              }
+              services={activeServices}
+              selectedServiceIds={selectedServiceIds}
+              planServiceIds={planServiceIds}
+              hasSubscription={Boolean(subscription)}
+              onServiceToggle={onServiceToggle}
+            />
+          )}
+        </>
       )}
     </div>
   )
@@ -1592,7 +1607,7 @@ function AppointmentsScreen({
 
   const appointments = useMemo(() => {
     const base = database.agendaEvents.filter(
-      (event) => event.title === customer.name && event.type === "appointment"
+      (event) => event.title === customer?.name && event.type === "appointment"
     )
     const schedule = confirmedAppointment ? [confirmedAppointment, ...base] : base
 
@@ -1698,13 +1713,14 @@ function AppointmentsScreen({
             />
           ))
         ) : (
-          <div className="client-card flex flex-col items-center justify-center px-5 py-10 text-center sm:py-16">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground/30 sm:size-16">
-              <HugeiconsIcon icon={Calendar03Icon} size={26} />
-            </div>
-            <h4 className="mt-6 text-xl font-bold">Nenhum agendamento</h4>
-            <p className="mt-2 text-sm text-muted-foreground">Você ainda não possui horários marcados.</p>
-          </div>
+          <EmptyState
+            icon={Calendar03Icon}
+            title="Nenhum agendamento"
+            description="Você ainda não possui horários marcados. Que tal agendar seu próximo corte agora?"
+            actionLabel="Marcar Novo Horário"
+            onAction={onBooking}
+            className="client-card"
+          />
         )}
       </div>
 
@@ -1829,9 +1845,9 @@ function PlanScreen({
     window.setTimeout(() => {
       const nextSubscription: Subscription = {
         id: Date.now(),
-        clientId: customer.id,
-        client: customer.name,
-        phone: customer.phone,
+        clientId: customer?.id ?? 0,
+        client: customer?.name ?? "",
+        phone: customer?.phone ?? "",
         plan: checkoutPlan.name,
         value: checkoutPlan.price,
         nextCharge: formatSubscriptionDate(addMonths(new Date(), 1)),
@@ -1843,7 +1859,7 @@ function PlanScreen({
       )
       const nextSubscriptions = [
         nextSubscription,
-        ...currentSubscriptions.filter((item) => item.clientId !== customer.id),
+        ...currentSubscriptions.filter((item) => item.clientId !== customer?.id),
       ]
 
       saveClientSubscriptions(nextSubscriptions)
@@ -1859,67 +1875,78 @@ function PlanScreen({
         description="Gerencie sua assinatura, acompanhe limites e veja todos os beneficios ativos."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <div className="plan-premium-card relative min-h-[250px] overflow-hidden rounded-lg p-5 text-white shadow-2xl sm:p-7">
-          <div className="plan-card-ray" />
-          <div className="relative z-10 flex h-full min-h-[220px] flex-col justify-between">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.32em] text-white/75">
-                  Cartao do plano
-                </p>
-                <h3 className="mt-3 text-3xl font-black uppercase tracking-tight sm:text-5xl">
-                  {plan?.name ?? "Cliente"}
-                </h3>
-                <p className="mt-2 max-w-md text-sm font-semibold leading-relaxed text-white/75">
-                  {plan?.benefit ?? "Escolha um plano para liberar beneficios mensais."}
-                </p>
+      {!subscription ? (
+        <EmptyState
+          icon={SparklesIcon}
+          title="Sem plano ativo"
+          description="Assine um plano agora para liberar agendamentos ilimitados e descontos exclusivos na nossa barbearia."
+          actionLabel="Ver planos disponíveis"
+          onAction={openPlansDialog}
+          className="client-card border-primary/20 bg-primary/5"
+        />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div className="plan-premium-card relative min-h-[250px] overflow-hidden rounded-lg p-5 text-white shadow-2xl sm:p-7">
+            <div className="plan-card-ray" />
+            <div className="relative z-10 flex h-full min-h-[220px] flex-col justify-between">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.32em] text-white/75">
+                    Cartao do plano
+                  </p>
+                  <h3 className="mt-3 text-3xl font-black uppercase tracking-tight sm:text-5xl">
+                    {plan?.name ?? "Cliente"}
+                  </h3>
+                  <p className="mt-2 max-w-md text-sm font-semibold leading-relaxed text-white/75">
+                    {plan?.benefit ?? "Escolha um plano para liberar beneficios mensais."}
+                  </p>
+                </div>
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white shadow-lg backdrop-blur">
+                  <HugeiconsIcon icon={CrownIcon} size={24} />
+                </span>
               </div>
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white shadow-lg backdrop-blur">
-                <HugeiconsIcon icon={CrownIcon} size={24} />
+
+              <div className="grid gap-3 pt-8 sm:grid-cols-3">
+                <PlanCardMetric label="Mensalidade" value={subscription ? formatCurrency(subscription.value) : "R$ 0,00"} />
+                <PlanCardMetric label="Renova em" value={subscription?.nextCharge ?? "Sem data"} />
+                <PlanCardMetric label="Limite mensal" value={`${plan?.servicesLimit ?? 0} servicos`} />
+              </div>
+            </div>
+          </div>
+
+          <div className="client-card min-w-0 p-4 shadow-xl sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.24em] text-primary-contrast">
+                  Gerenciar
+                </p>
+                <h3 className="mt-1 text-xl font-black uppercase tracking-tight">
+                  Minha assinatura
+                </h3>
+              </div>
+              <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-primary-contrast">
+                {subscription?.status ?? "Ativo"}
               </span>
             </div>
 
-            <div className="grid gap-3 pt-8 sm:grid-cols-3">
-              <PlanCardMetric label="Mensalidade" value={subscription ? formatCurrency(subscription.value) : "R$ 0,00"} />
-              <PlanCardMetric label="Renova em" value={subscription?.nextCharge ?? "Sem data"} />
-              <PlanCardMetric label="Limite mensal" value={`${plan?.servicesLimit ?? 0} servicos`} />
+            <div className="mt-4 grid gap-2">
+              <Button onClick={onBooking} className="green-shine h-11 rounded-lg text-[11px] font-black uppercase tracking-widest">
+                Agendar com plano
+              </Button>
+              <Button
+                variant="outline"
+                onClick={openPlansDialog}
+                className="h-11 rounded-lg text-[11px] font-black uppercase tracking-widest"
+              >
+                Trocar plano
+              </Button>
+              <Button variant="outline" className="h-11 rounded-lg text-[11px] font-black uppercase tracking-widest">
+                Ver cobrancas
+              </Button>
             </div>
           </div>
         </div>
-
-        <div className="client-card min-w-0 p-4 shadow-xl sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-primary-contrast">
-                Gerenciar
-              </p>
-              <h3 className="mt-1 text-xl font-black uppercase tracking-tight">
-                Minha assinatura
-              </h3>
-            </div>
-            <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-primary-contrast">
-              {subscription?.status ?? "Ativo"}
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-2">
-            <Button onClick={onBooking} className="green-shine h-11 rounded-lg text-[11px] font-black uppercase tracking-widest">
-              Agendar com plano
-            </Button>
-            <Button
-              variant="outline"
-              onClick={openPlansDialog}
-              className="h-11 rounded-lg text-[11px] font-black uppercase tracking-widest"
-            >
-              {subscription ? "Trocar plano" : "Ver planos disponiveis"}
-            </Button>
-            <Button variant="outline" className="h-11 rounded-lg text-[11px] font-black uppercase tracking-widest">
-              Ver cobrancas
-            </Button>
-          </div>
-        </div>
-      </div>
+      )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="client-card p-4 sm:p-5">
@@ -2030,6 +2057,13 @@ function AvailablePlansDialog({
             <StripeLikeCheckout
               plan={checkoutPlan}
               paymentStatus={paymentStatus}
+            />
+          ) : plans.length === 0 ? (
+            <EmptyState
+              icon={SparklesIcon}
+              title="Nenhum plano disponível"
+              description="Ainda não há planos de assinatura configurados. Volte em breve!"
+              className="py-12"
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -2162,7 +2196,7 @@ function StripeLikeCheckout({
             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
               Email
             </span>
-            <Input value={customer.email} readOnly />
+            <Input value={customer?.email ?? ""} readOnly />
           </label>
           <label className="grid gap-1.5">
             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -2916,7 +2950,7 @@ function getUsedPlanCredits(
   confirmedAppointment: AgendaEvent | null
 ) {
   const appointments = database.agendaEvents.filter(
-    (event) => event.title === customer.name && event.type === "appointment"
+    (event) => event.title === customer?.name && event.type === "appointment"
   )
   const allAppointments = confirmedAppointment
     ? [confirmedAppointment, ...appointments]

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Invoice03Icon, PlusSignCircleIcon } from "@hugeicons/core-free-icons"
+import { Invoice03Icon, PlusSignCircleIcon, UserMultipleIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database, type Subscription } from "@/components/admin/database"
@@ -17,6 +17,7 @@ import {
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
+import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -194,41 +195,62 @@ export default function GerenciarAssinaturasPage() {
           </Select>
         </div>
 
-        <SimpleTable
-          columns={[
-            "Cliente",
-            "Plano",
-            "Valor",
-            "Próxima cobrança",
-            "Status",
-            "Ações",
-          ]}
-          rows={filteredItems.map((subscription) => [
-            subscription.client,
-            subscription.plan,
-            formatCurrency(subscription.value),
-            subscription.nextCharge,
-            <StatusBadge key="status" tone={getStatusTone(subscription.status)}>
-              {subscription.status}
-            </StatusBadge>,
-            <div key="actions" className="flex flex-wrap gap-2">
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => openEdit(subscription)}
-              >
-                Editar
-              </Button>
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => togglePause(subscription)}
-              >
-                {subscription.status === "Pausada" ? "Reativar" : "Pausar"}
-              </Button>
-            </div>,
-          ])}
-        />
+        {items.length === 0 ? (
+          <EmptyState
+            icon={UserMultipleIcon}
+            title="Nenhuma assinatura ativa"
+            description="Você ainda não possui clientes assinantes. Comece criando uma assinatura para um cliente."
+            actionLabel="Nova assinatura"
+            onAction={openCreate}
+          />
+        ) : filteredItems.length === 0 ? (
+          <EmptyState
+            icon={UserMultipleIcon}
+            title="Nenhum assinante encontrado"
+            description="Não encontramos nenhuma assinatura que corresponda aos filtros aplicados."
+            actionLabel="Limpar busca"
+            onAction={() => {
+              setQuery("")
+              setFilter("todas")
+            }}
+          />
+        ) : (
+          <SimpleTable
+            columns={[
+              "Cliente",
+              "Plano",
+              "Valor",
+              "Próxima cobrança",
+              "Status",
+              "Ações",
+            ]}
+            rows={filteredItems.map((subscription) => [
+              subscription.client,
+              subscription.plan,
+              formatCurrency(subscription.value),
+              subscription.nextCharge,
+              <StatusBadge key="status" tone={getStatusTone(subscription.status)}>
+                {subscription.status}
+              </StatusBadge>,
+              <div key="actions" className="flex flex-wrap gap-2">
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => openEdit(subscription)}
+                >
+                  Editar
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => togglePause(subscription)}
+                >
+                  {subscription.status === "Pausada" ? "Reativar" : "Pausar"}
+                </Button>
+              </div>,
+            ])}
+          />
+        )}
 
         <div className="mt-4 flex flex-col gap-2 rounded-md border bg-muted/35 px-3 py-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span className="flex items-center gap-2">

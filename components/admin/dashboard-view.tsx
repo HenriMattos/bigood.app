@@ -4,14 +4,19 @@ import Link from "next/link"
 import { useMemo, useState } from "react"
 import {
   Calendar03Icon,
+  ChartBarLineIcon,
   ChartIncreaseIcon,
+  Clock01Icon,
   CrownIcon,
   MoneyReceiveCircleIcon,
   UserMultipleIcon,
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
-import { database } from "@/components/admin/database"
+import { database, toDateInputValue, toDisplayDate } from "@/components/admin/database"
+import { EmptyState } from "@/components/admin/empty-state"
+import { OnboardingGuide } from "@/components/admin/onboarding-guide"
 import { MetricCard } from "@/components/admin/metric-card"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
@@ -40,16 +45,22 @@ type Goal = {
   kind: GoalKind
 }
 
+const today = new Date()
+const todayInput = toDateInputValue(today)
+const todayDisplay = toDisplayDate(today)
+
 const todayAppointments = database.agendaEvents.filter(
-  (event) => event.date === "2026-04-29" && event.type === "appointment"
+  (event) => event.date === todayInput && event.type === "appointment"
 )
 const todayRevenue = database.comandas
   .filter((comanda) => comanda.status === "paga")
   .reduce((sum, comanda) => sum + getComandaTotal(comanda), 0)
-const averageTicket = Math.round(
-  database.clients.reduce((sum, client) => sum + client.averageTicket, 0) /
-    database.clients.length
-)
+const averageTicket = database.clients.length > 0 
+  ? Math.round(
+      database.clients.reduce((sum, client) => sum + client.averageTicket, 0) /
+        database.clients.length
+    )
+  : 0
 const operationalMetrics = [
   {
     title: "Faturamento hoje",
@@ -61,7 +72,7 @@ const operationalMetrics = [
   {
     title: "Agendamentos",
     value: String(todayAppointments.length),
-    change: "Agenda de 29/04/2026",
+    change: `Agenda de ${todayDisplay}`,
     icon: Calendar03Icon,
     tone: "blue" as const,
   },
@@ -111,21 +122,21 @@ const initialGoals: Goal[] = [
     id: "revenue",
     label: "Meta de faturamento",
     current: database.analytics.monthlyGrossRevenue,
-    target: roundGoalTarget(database.analytics.monthlyGrossRevenue, 1.12),
+    target: 0,
     kind: "currency",
   },
   {
     id: "new-clients",
     label: "Novos clientes",
     current: database.analytics.newClientsThisMonth,
-    target: roundGoalTarget(database.analytics.newClientsThisMonth, 1.2),
+    target: 0,
     kind: "number",
   },
   {
     id: "subscriptions",
     label: "Assinaturas",
     current: database.analytics.activeSubscriptions,
-    target: roundGoalTarget(database.analytics.activeSubscriptions, 1.15),
+    target: 0,
     kind: "number",
   },
 ]
@@ -191,6 +202,7 @@ export function DashboardView() {
 
   return (
     <>
+      <OnboardingGuide />
       <section className="flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-3 shadow-sm sm:gap-4 sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
@@ -258,10 +270,20 @@ function OperationalDashboard() {
           </Button>
         }
       >
-        <SimpleTable
-          columns={["Horario", "Cliente", "Servico", "Barbeiro", "Status"]}
-          rows={appointmentRows}
-        />
+        {appointmentRows.length === 0 ? (
+          <EmptyState
+            icon={Calendar03Icon}
+            title="Agenda vazia para hoje"
+            description="Não há atendimentos agendados para este período. Que tal registrar um novo?"
+            actionLabel="Novo agendamento"
+            href="/agenda"
+          />
+        ) : (
+          <SimpleTable
+            columns={["Horario", "Cliente", "Servico", "Barbeiro", "Status"]}
+            rows={appointmentRows}
+          />
+        )}
       </SectionCard>
 
       <SectionCard title="Receita" description={revenuePeriod.label}>
@@ -408,6 +430,17 @@ function StrategicDashboard({
 }
 
 function WeeklyRevenueChart() {
+  if (revenue.length === 0) {
+    return (
+      <EmptyState
+        icon={ChartBarLineIcon}
+        title="Sem dados de receita"
+        description="Ainda não há registros financeiros suficientes para gerar o gráfico semanal."
+        className="min-h-[200px]"
+      />
+    )
+  }
+
   const totalGross = revenue.reduce((sum, item) => sum + item.gross, 0)
   const totalNet = revenue.reduce((sum, item) => sum + item.net, 0)
   const totalPrevious = revenue.reduce((sum, item) => sum + item.previous, 0)
@@ -428,7 +461,7 @@ function WeeklyRevenueChart() {
     0
   )
   const weeklyFees = estimatePaymentFees(weeklyPaymentMix)
-  const weeklyExpenses = Math.round(database.analytics.monthlyExpenses / 4.33)
+  const weeklyExpenses = 0 // Deve vir de consulta filtrada por data no back-end
   const weeklyMargin =
     totalGross > 0
       ? Math.round(((totalGross - weeklyExpenses) / totalGross) * 100)
@@ -596,17 +629,30 @@ function WeeklyRevenueChart() {
 }
 
 function PeakHoursChart() {
+  if (peakHours.length === 0) {
+    return (
+      <EmptyState
+        icon={Clock01Icon}
+        title="Sem horários de pico"
+        description="Agende os primeiros serviços para descobrir quais são os horários mais movimentados."
+        className="min-h-[200px]"
+      />
+    )
+  }
+
   const totalAppointments = peakHours.reduce(
     (sum, item) => sum + item.appointments,
     0
   )
   const totalRevenue = peakHours.reduce((sum, item) => sum + item.revenue, 0)
-  const busiest = peakHours.reduce((best, item) =>
-    item.appointments > best.appointments ? item : best
+  const busiest = peakHours.reduce(
+    (best, item) => (item.appointments > best.appointments ? item : best),
+    peakHours[0]
   )
-  const maxAppointments = Math.max(
-    ...peakHours.map((item) => item.appointments)
-  )
+  const maxAppointments =
+    peakHours.length > 0
+      ? Math.max(...peakHours.map((item) => item.appointments))
+      : 0
   const afternoonAppointments = peakHours
     .filter((item) => Number(item.time.slice(0, 2)) >= 14)
     .reduce((sum, item) => sum + item.appointments, 0)
@@ -707,23 +753,10 @@ function PeakHoursChart() {
 }
 
 function buildWeeklyPaymentMix(totalGross: number) {
-  const totalMethodAmount = database.paymentMethods.reduce(
-    (sum, method) => sum + method.amount,
-    0
-  )
-  let allocated = 0
-
   return database.paymentMethods.map((method, index) => {
-    const isLast = index === database.paymentMethods.length - 1
-    const value = isLast
-      ? Math.max(0, totalGross - allocated)
-      : Math.round(totalGross * (method.amount / totalMethodAmount))
-
-    allocated += value
-
     return {
       label: method.name,
-      value,
+      value: 0, // No período atual (hoje/semana), deve ser calculado do caixa real
       fee: method.fee,
       tone: paymentTones[index % paymentTones.length],
     }
@@ -835,16 +868,6 @@ function readSavedGoals() {
 
 function formatGoalValue(value: number, kind: GoalKind) {
   return kind === "currency" ? formatCurrency(value) : String(value)
-}
-
-function roundGoalTarget(value: number, multiplier: number) {
-  const nextTarget = Math.ceil(value * multiplier)
-
-  if (nextTarget >= 1000) {
-    return Math.ceil(nextTarget / 100) * 100
-  }
-
-  return Math.max(1, nextTarget)
 }
 
 function calculateGoalProgress(goal: Goal) {

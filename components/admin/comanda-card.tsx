@@ -16,6 +16,7 @@ export function ComandaCard({
   comanda: Comanda
   action?: React.ReactNode
 }) {
+  if (!comanda) return null
   const subtotal = getComandaSubtotal(comanda)
   const total = getComandaTotal(comanda)
   const serviceCount = comanda.items.filter(
@@ -93,6 +94,7 @@ export function LatestComandaCard({
   comanda: Comanda
   action?: React.ReactNode
 }) {
+  if (!comanda) return null
   const total = getComandaTotal(comanda)
   const services = comanda.items
     .filter((item) => item.category === "servico")

@@ -1,7 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Delete02Icon, UserSearch01Icon } from "@hugeicons/core-free-icons"
+import {
+  Delete02Icon,
+  UserSearch01Icon,
+  UserAdd01Icon,
+} from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import {
@@ -14,6 +18,7 @@ import {
 import { serviceNames } from "@/components/admin/catalog-data"
 import { FormField, FormGrid } from "@/components/admin/responsive-form"
 import { StatusBadge } from "@/components/admin/status-badge"
+import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -69,41 +74,51 @@ export function ClientesListManager() {
   return (
     <>
       <div className="grid gap-3">
-        {items.map((client) => (
-          <article
-            key={client.id}
-            className="grid gap-3 rounded-md border bg-background p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
-          >
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="truncate font-semibold">{client.name}</h3>
-                <StatusBadge tone={getClientStatusTone(client.status)}>
-                  {getClientStatusLabel(client.status)}
-                </StatusBadge>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {client.phone} - {client.email}
-              </p>
-              <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
-                <Info label="Historico" value={`${client.visits} visitas`} />
-                <Info
-                  label="Ticket medio"
-                  value={`R$ ${client.averageTicket}`}
-                />
-                <Info label="Ultima visita" value={client.lastVisit} />
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openEditor(client)}
+        {items.length === 0 ? (
+          <EmptyState
+            icon={UserAdd01Icon}
+            title="Nenhum cliente"
+            description="Sua base de clientes está vazia. Comece cadastrando seus clientes para acompanhar o histórico."
+            actionLabel="Cadastrar agora"
+            href="/clientes/cadastrar"
+          />
+        ) : (
+          items.map((client) => (
+            <article
+              key={client.id}
+              className="grid gap-3 rounded-md border bg-background p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
             >
-              <HugeiconsIcon icon={UserSearch01Icon} size={16} />
-              Editar
-            </Button>
-          </article>
-        ))}
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate font-semibold">{client.name}</h3>
+                  <StatusBadge tone={getClientStatusTone(client.status)}>
+                    {getClientStatusLabel(client.status)}
+                  </StatusBadge>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {client.phone} - {client.email}
+                </p>
+                <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+                  <Info label="Historico" value={`${client.visits} visitas`} />
+                  <Info
+                    label="Ticket medio"
+                    value={`R$ ${client.averageTicket}`}
+                  />
+                  <Info label="Ultima visita" value={client.lastVisit} />
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openEditor(client)}
+              >
+                <HugeiconsIcon icon={UserSearch01Icon} size={16} />
+                Editar
+              </Button>
+            </article>
+          ))
+        )}
       </div>
 
       <Dialog

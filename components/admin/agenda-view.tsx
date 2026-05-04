@@ -20,7 +20,9 @@ import {
 
 import { serviceNames } from "@/components/admin/catalog-data"
 import { database } from "@/components/admin/database"
+import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogClose,
@@ -88,7 +90,7 @@ const appointmentTypes = [
   "Intervalo",
   "Bloqueio",
 ]
-const branches = [database.company.tradeName]
+const branches: string[] = []
 const initialClients: AgendaClient[] = database.clients.map((client) => ({
   id: String(client.id),
   name: client.name,
@@ -140,9 +142,10 @@ const initialEvents: AgendaEvent[] = database.agendaEvents
 
 export function AgendaView() {
   const [selectedBarber, setSelectedBarber] = useState<Barber>(barbers[0] ?? "")
-  const [selectedDay, setSelectedDay] = useState("29")
-  const [selectedMonth, setSelectedMonth] = useState("04")
-  const [selectedYear, setSelectedYear] = useState("2026")
+  const now = new Date()
+  const [selectedDay, setSelectedDay] = useState(String(now.getDate()).padStart(2, "0"))
+  const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1).padStart(2, "0"))
+  const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()))
   const [events, setEvents] = useState(initialEvents)
   const [appointmentClients, setAppointmentClients] = useState(initialClients)
   const [modalOpen, setModalOpen] = useState(false)
@@ -153,9 +156,9 @@ export function AgendaView() {
   const [formClient, setFormClient] = useState("")
   const [formService, setFormService] = useState(serviceNames[0] ?? "")
   const [formAddedServices, setFormAddedServices] = useState<string[]>([])
-  const [formBranch, setFormBranch] = useState(database.company.tradeName)
+  const [formBranch, setFormBranch] = useState((branches[0] ?? ""))
   const [formNoPreference, setFormNoPreference] = useState(false)
-  const [blockReason, setBlockReason] = useState("Horario bloqueado")
+  const [blockReason, setBlockReason] = useState("")
   const [formRepeatMode, setFormRepeatMode] = useState<RepeatMode>("today")
   const [formRepeatDays, setFormRepeatDays] = useState<number[]>([
     1, 2, 3, 4, 5,
@@ -184,9 +187,9 @@ export function AgendaView() {
     setFormClient("")
     setFormService(serviceNames[0] ?? "")
     setFormAddedServices([])
-    setFormBranch(database.company.tradeName)
+    setFormBranch((branches[0] ?? ""))
     setFormNoPreference(false)
-    setBlockReason("Horario bloqueado")
+    setBlockReason("")
     setFormRepeatMode("today")
     setFormRepeatDays([1, 2, 3, 4, 5])
     setFormRepurchaseItem("none")
@@ -348,6 +351,20 @@ export function AgendaView() {
       setBlockReason("Horario bloqueado")
       setFormRepeatMode("today")
     }
+  }
+
+  const router = useRouter()
+
+  if (barbers.length === 0) {
+    return (
+      <EmptyState
+        icon={UserAdd01Icon}
+        title="Nenhum profissional cadastrado"
+        description="A agenda precisa de pelo menos um profissional para funcionar. Cadastre sua equipe para começar."
+        actionLabel="Cadastrar Profissional"
+        onAction={() => router.push("/profissionais/cadastrar")}
+      />
+    )
   }
 
   return (
@@ -1161,22 +1178,28 @@ function ScheduleModal({
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
+<div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
                       <FieldLabel required icon={Store01Icon}>
                         Filial
                       </FieldLabel>
-                      <Select value={branch} onValueChange={onBranchChange}>
-                        <SelectTrigger className="h-9 text-sm sm:h-10">
-                          <SelectValue placeholder="Filial" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {branches.map((item) => (
-                            <SelectItem key={item} value={item}>
-                              {item}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {branches.length === 0 ? (
+                        <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground sm:h-10">
+                          Nenhuma filial cadastrada
+                        </div>
+                      ) : (
+                        <Select value={branch} onValueChange={onBranchChange}>
+                          <SelectTrigger className="h-9 text-sm sm:h-10">
+                            <SelectValue placeholder="Filial" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {branches.map((item) => (
+                              <SelectItem key={item} value={item}>
+                                {item}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                   </div>
 
@@ -1360,7 +1383,12 @@ function ScheduleModal({
                             ))}
                           </div>
                         ) : (
-                          <EmptyState text="Selecione ou digite um cliente para ver os registros." />
+                          <EmptyState
+                            icon={InformationCircleIcon}
+                            title="Nenhum cliente selecionado"
+                            description="Selecione ou digite um cliente para ver os registros."
+                            className="min-h-40"
+                          />
                         )}
                       </InfoBlock>
 
@@ -1380,7 +1408,12 @@ function ScheduleModal({
                             ))}
                           </div>
                         ) : (
-                          <EmptyState text="Cliente nao possui itens para recompra." />
+                          <EmptyState
+                            icon={InformationCircleIcon}
+                            title="Sem recompras"
+                            description="Cliente nao possui itens para recompra."
+                            className="min-h-40"
+                          />
                         )}
                       </InfoBlock>
                     </>
@@ -1441,7 +1474,12 @@ function ScheduleModal({
                         ))}
                       </div>
                     ) : (
-                      <EmptyState text="Nenhum servico adicionado." compact />
+                      <EmptyState
+                        icon={InformationCircleIcon}
+                        title="Lista vazia"
+                        description="Nenhum servico adicionado."
+                        className="min-h-32"
+                      />
                     )}
                   </div>
 
@@ -1802,19 +1840,6 @@ function InfoBlock({
       </h3>
       <div className="mt-3">{children}</div>
     </section>
-  )
-}
-
-function EmptyState({ text, compact }: { text: string; compact?: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-center rounded-md bg-muted/30 px-3 text-center text-xs text-muted-foreground",
-        compact ? "min-h-10" : "min-h-20"
-      )}
-    >
-      {text}
-    </div>
   )
 }
 

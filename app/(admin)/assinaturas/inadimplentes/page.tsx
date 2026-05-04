@@ -5,6 +5,7 @@ import { CancelCircleIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database, type OverdueSubscription } from "@/components/admin/database"
+import { EmptyState } from "@/components/admin/empty-state"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
@@ -71,33 +72,41 @@ export default function InadimplentesPage() {
           </Button>
         }
       >
-        <SimpleTable
-          columns={["Cliente", "Plano", "Valor", "Atraso", "Status", "Ações"]}
-          rows={items.map((item) => [
-            item.client,
-            item.plan,
-            formatCurrency(item.value),
-            item.delay,
-            <StatusBadge
-              key="status"
-              tone={item.status === "Cobranca enviada" ? "amber" : "red"}
-            >
-              {item.status}
-            </StatusBadge>,
-            <div key="actions" className="flex flex-wrap gap-2">
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => openCharge(item)}
+        {items.length === 0 ? (
+          <EmptyState
+            icon={CancelCircleIcon}
+            title="Tudo em dia!"
+            description="Não há assinaturas com pagamento pendente no momento. Bom trabalho!"
+          />
+        ) : (
+          <SimpleTable
+            columns={["Cliente", "Plano", "Valor", "Atraso", "Status", "Ações"]}
+            rows={items.map((item) => [
+              item.client,
+              item.plan,
+              formatCurrency(item.value),
+              item.delay,
+              <StatusBadge
+                key="status"
+                tone={item.status === "Cobranca enviada" ? "amber" : "red"}
               >
-                Cobrar
-              </Button>
-              <Button size="xs" onClick={() => markAsPaid(item)}>
-                Regularizar
-              </Button>
-            </div>,
-          ])}
-        />
+                {item.status}
+              </StatusBadge>,
+              <div key="actions" className="flex flex-wrap gap-2">
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => openCharge(item)}
+                >
+                  Cobrar
+                </Button>
+                <Button size="xs" onClick={() => markAsPaid(item)}>
+                  Regularizar
+                </Button>
+              </div>,
+            ])}
+          />
+        )}
         <p className="mt-4 rounded-md border bg-muted/35 px-3 py-2 text-sm text-muted-foreground">
           {feedback}
         </p>

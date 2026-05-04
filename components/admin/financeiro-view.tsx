@@ -7,6 +7,7 @@ import {
   ArrowLeftRightIcon,
   BankIcon,
   CancelCircleIcon,
+  ChartBarLineIcon,
   ChartDecreaseIcon,
   ChartIncreaseIcon,
   CheckmarkCircle01Icon,
@@ -14,6 +15,7 @@ import {
   Delete02Icon,
   DollarCircleIcon,
   File01Icon,
+  InformationCircleIcon,
   MoneyReceiveCircleIcon,
   MoneySendCircleIcon,
   PlusSignCircleIcon,
@@ -23,6 +25,7 @@ import {
 } from "@hugeicons/core-free-icons"
 
 import { MetricCard } from "@/components/admin/metric-card"
+import { EmptyState } from "@/components/admin/empty-state"
 import {
   formatDateForDisplay,
   toDateInputValue,
@@ -515,50 +518,62 @@ export function ContasBancariasView() {
         }
       >
         <div className="grid gap-3 lg:grid-cols-2">
-          {accounts.map((account) => (
-            <FinanceCard key={account.id}>
-              <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="min-w-0 font-semibold break-words">
-                      {account.name}
-                    </h3>
-                    <StatusBadge tone={getAccountTone(account.status)}>
-                      {account.status}
-                    </StatusBadge>
+          {accounts.length === 0 ? (
+            <div className="lg:col-span-2">
+              <EmptyState
+                icon={BankIcon}
+                title="Nenhuma conta cadastrada"
+                description="Cadastre suas contas bancárias para gerenciar saldos e movimentações."
+                actionLabel="Nova conta"
+                onAction={openCreate}
+              />
+            </div>
+          ) : (
+            accounts.map((account) => (
+              <FinanceCard key={account.id}>
+                <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="min-w-0 font-semibold break-words">
+                        {account.name}
+                      </h3>
+                      <StatusBadge tone={getAccountTone(account.status)}>
+                        {account.status}
+                      </StatusBadge>
+                    </div>
+                    <p className="mt-1 text-sm break-words text-muted-foreground">
+                      Agência {account.agency} · Conta {account.account}
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm break-words text-muted-foreground">
-                    Agência {account.agency} · Conta {account.account}
-                  </p>
+                  <strong className="text-lg sm:text-right">
+                    {formatCurrency(account.balance)}
+                  </strong>
                 </div>
-                <strong className="text-lg sm:text-right">
-                  {formatCurrency(account.balance)}
-                </strong>
-              </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <InfoPill label="Tipo" value={account.type} />
-                <InfoPill
-                  label="Saldo"
-                  value={formatCurrency(account.balance)}
-                />
-                <InfoPill label="Status" value={account.status} />
-              </div>
-              <ResponsiveActions className="mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMovementAccount(account)}
-                >
-                  <HugeiconsIcon icon={ArrowLeftRightIcon} size={16} />
-                  Movimentar
-                </Button>
-                <Button size="sm" onClick={() => openEdit(account)}>
-                  <HugeiconsIcon icon={File01Icon} size={16} />
-                  Editar
-                </Button>
-              </ResponsiveActions>
-            </FinanceCard>
-          ))}
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <InfoPill label="Tipo" value={account.type} />
+                  <InfoPill
+                    label="Saldo"
+                    value={formatCurrency(account.balance)}
+                  />
+                  <InfoPill label="Status" value={account.status} />
+                </div>
+                <ResponsiveActions className="mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMovementAccount(account)}
+                  >
+                    <HugeiconsIcon icon={ArrowLeftRightIcon} size={16} />
+                    Movimentar
+                  </Button>
+                  <Button size="sm" onClick={() => openEdit(account)}>
+                    <HugeiconsIcon icon={File01Icon} size={16} />
+                    Editar
+                  </Button>
+                </ResponsiveActions>
+              </FinanceCard>
+            ))
+          )}
         </div>
       </SectionCard>
 
@@ -566,20 +581,29 @@ export function ContasBancariasView() {
         title="Transações Recentes"
         description="Últimas movimentações registradas nesta sessão"
       >
-        <SimpleTable
-          columns={["Data", "Descrição", "Valor", "Tipo"]}
-          rows={movements.map((movement) => [
-            movement.date,
-            movement.description,
-            formatCurrency(movement.amount),
-            <StatusBadge
-              key={movement.id}
-              tone={movement.type === "Receita" ? "green" : "red"}
-            >
-              {movement.type === "Receita" ? "Entrada" : "Saída"}
-            </StatusBadge>,
-          ])}
-        />
+        {movements.length === 0 ? (
+          <EmptyState
+            icon={InformationCircleIcon}
+            title="Nenhuma transação"
+            description="As movimentações financeiras recentes aparecerão nesta lista."
+            className="min-h-40"
+          />
+        ) : (
+          <SimpleTable
+            columns={["Data", "Descrição", "Valor", "Tipo"]}
+            rows={movements.map((movement) => [
+              movement.date,
+              movement.description,
+              formatCurrency(movement.amount),
+              <StatusBadge
+                key={movement.id}
+                tone={movement.type === "Receita" ? "green" : "red"}
+              >
+                {movement.type === "Receita" ? "Entrada" : "Saída"}
+              </StatusBadge>,
+            ])}
+          />
+        )}
       </SectionCard>
 
       <AccountModal
@@ -712,43 +736,53 @@ export function CategoriasFinanceirasView() {
           }
         >
           <div className="grid gap-3">
-            {categories.map((category) => (
-              <FinanceCard key={category.id}>
-                <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="min-w-0 font-semibold break-words">
-                        {category.name}
-                      </h3>
-                      <StatusBadge
-                        tone={category.type === "Receita" ? "green" : "red"}
-                      >
-                        {category.type}
-                      </StatusBadge>
+            {categories.length === 0 ? (
+              <EmptyState
+                icon={File01Icon}
+                title="Nenhuma categoria"
+                description="Organize suas receitas e despesas criando categorias personalizadas."
+                actionLabel="Nova categoria"
+                onAction={openCreate}
+              />
+            ) : (
+              categories.map((category) => (
+                <FinanceCard key={category.id}>
+                  <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="min-w-0 font-semibold break-words">
+                          {category.name}
+                        </h3>
+                        <StatusBadge
+                          tone={category.type === "Receita" ? "green" : "red"}
+                        >
+                          {category.type}
+                        </StatusBadge>
+                      </div>
+                      <p className="mt-1 text-sm break-words text-muted-foreground">
+                        {category.description}
+                      </p>
                     </div>
-                    <p className="mt-1 text-sm break-words text-muted-foreground">
-                      {category.description}
-                    </p>
+                    <strong className="text-lg md:text-right">
+                      {formatCurrency(category.monthlyAmount)}
+                    </strong>
                   </div>
-                  <strong className="text-lg md:text-right">
-                    {formatCurrency(category.monthlyAmount)}
-                  </strong>
-                </div>
-                <ResponsiveActions className="mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => duplicateCategory(category)}
-                  >
-                    Duplicar
-                  </Button>
-                  <Button size="sm" onClick={() => openEdit(category)}>
-                    <HugeiconsIcon icon={File01Icon} size={16} />
-                    Editar
-                  </Button>
-                </ResponsiveActions>
-              </FinanceCard>
-            ))}
+                  <ResponsiveActions className="mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => duplicateCategory(category)}
+                    >
+                      Duplicar
+                    </Button>
+                    <Button size="sm" onClick={() => openEdit(category)}>
+                      <HugeiconsIcon icon={File01Icon} size={16} />
+                      Editar
+                    </Button>
+                  </ResponsiveActions>
+                </FinanceCard>
+              ))
+            )}
           </div>
         </SectionCard>
 
@@ -756,27 +790,35 @@ export function CategoriasFinanceirasView() {
           title="Performance por Categoria"
           description="Variação percentual das categorias por período"
         >
-          <SimpleTable
-            columns={["Categoria", "Mensal", "Trimestral", "Semestral"]}
-            rows={categories.map((category) => [
-              category.name,
-              <Trend
-                key="m"
-                tone={category.trend >= 0 ? "green" : "red"}
-                value={`${category.trend}%`}
-              />,
-              <Trend
-                key="t"
-                tone={category.trend >= 0 ? "green" : "red"}
-                value={`${category.trend + 2}%`}
-              />,
-              <Trend
-                key="s"
-                tone={category.trend >= 0 ? "green" : "red"}
-                value={`${category.trend + 5}%`}
-              />,
-            ])}
-          />
+          {categories.length === 0 ? (
+            <EmptyState
+              icon={ChartBarLineIcon}
+              title="Sem dados de performance"
+              description="Acompanhe o crescimento ou queda das suas categorias conforme registra movimentações."
+            />
+          ) : (
+            <SimpleTable
+              columns={["Categoria", "Mensal", "Trimestral", "Semestral"]}
+              rows={categories.map((category) => [
+                category.name,
+                <Trend
+                  key="m"
+                  tone={category.trend >= 0 ? "green" : "red"}
+                  value={`${category.trend}%`}
+                />,
+                <Trend
+                  key="t"
+                  tone={category.trend >= 0 ? "green" : "red"}
+                  value={`${category.trend + 2}%`}
+                />,
+                <Trend
+                  key="s"
+                  tone={category.trend >= 0 ? "green" : "red"}
+                  value={`${category.trend + 5}%`}
+                />,
+              ])}
+            />
+          )}
         </SectionCard>
       </section>
 
@@ -910,59 +952,69 @@ export function FormasPagamentoView() {
           }
         >
           <div className="grid gap-3">
-            {methods.map((method) => (
-              <FinanceCard key={method.id}>
-                <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="min-w-0 font-semibold break-words">
-                        {method.name}
-                      </h3>
-                      <StatusBadge
-                        tone={method.status === "Ativo" ? "green" : "neutral"}
-                      >
-                        {method.status}
-                      </StatusBadge>
+            {methods.length === 0 ? (
+              <EmptyState
+                icon={CreditCardIcon}
+                title="Nenhuma forma de pagamento"
+                description="Ative as formas de pagamento que sua barbearia aceita."
+                actionLabel="Nova forma"
+                onAction={openCreate}
+              />
+            ) : (
+              methods.map((method) => (
+                <FinanceCard key={method.id}>
+                  <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="min-w-0 font-semibold break-words">
+                          {method.name}
+                        </h3>
+                        <StatusBadge
+                          tone={method.status === "Ativo" ? "green" : "neutral"}
+                        >
+                          {method.status}
+                        </StatusBadge>
+                      </div>
+                      <p className="mt-1 text-sm break-words text-muted-foreground">
+                        {method.description}
+                      </p>
                     </div>
-                    <p className="mt-1 text-sm break-words text-muted-foreground">
-                      {method.description}
-                    </p>
+                    <strong className="text-lg md:text-right">
+                      {formatCurrency(method.amount)}
+                    </strong>
                   </div>
-                  <strong className="text-lg md:text-right">
-                    {formatCurrency(method.amount)}
-                  </strong>
-                </div>
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  <InfoPill label="Taxa" value={`${method.fee.toFixed(2)}%`} />
-                  <InfoPill label="Liquidação" value={method.settlement} />
-                  <InfoPill
-                    label="Transações"
-                    value={String(method.transactions)}
-                  />
-                </div>
-                <ResponsiveActions className="mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleStatus(method)}
-                  >
-                    <HugeiconsIcon
-                      icon={
-                        method.status === "Ativo"
-                          ? CancelCircleIcon
-                          : CheckmarkCircle01Icon
-                      }
-                      size={16}
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    <InfoPill label="Taxa" value={`${method.fee.toFixed(2)}%`} />
+                    <InfoPill label="Liquidação" value={method.settlement} />
+                    <InfoPill
+                      label="Transações"
+                      value={String(method.transactions)}
                     />
-                    {method.status === "Ativo" ? "Desativar" : "Ativar"}
-                  </Button>
-                  <Button size="sm" onClick={() => openEdit(method)}>
-                    <HugeiconsIcon icon={File01Icon} size={16} />
-                    Editar
-                  </Button>
-                </ResponsiveActions>
-              </FinanceCard>
-            ))}
+                  </div>
+                  <ResponsiveActions className="mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleStatus(method)}
+                    >
+                      <HugeiconsIcon
+                        icon={
+                          method.status === "Ativo"
+                            ? CancelCircleIcon
+                            : CheckmarkCircle01Icon
+                        }
+                        size={16}
+                      />
+                      {method.status === "Ativo" ? "Desativar" : "Ativar"}
+                    </Button>
+                    <Button size="sm" onClick={() => openEdit(method)}>
+                      <HugeiconsIcon icon={File01Icon} size={16} />
+                      Editar
+                    </Button>
+                  </ResponsiveActions>
+                </FinanceCard>
+              ))
+            )}
           </div>
         </SectionCard>
 

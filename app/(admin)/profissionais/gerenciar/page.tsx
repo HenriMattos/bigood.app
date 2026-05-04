@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { UserListIcon } from "@hugeicons/core-free-icons"
+import { UserListIcon, UserAdd01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import Link from "next/link"
 
 import { database, type Professional } from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
+import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -83,57 +85,77 @@ export default function GerenciarProfissionalPage() {
         title="Gerenciar profissional"
         description="Equipe, comissão, disponibilidade e status de agenda"
         action={
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setScaleOpen(true)}
-          >
-            <HugeiconsIcon icon={UserListIcon} size={16} />
-            Escalas
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setScaleOpen(true)}
+            >
+              <HugeiconsIcon icon={UserListIcon} size={16} />
+              Escalas
+            </Button>
+            <Link href="/profissionais/cadastrar">
+              <Button size="sm">
+                <HugeiconsIcon icon={UserAdd01Icon} size={16} />
+                Cadastrar
+              </Button>
+            </Link>
+          </div>
         }
       >
-        <SimpleTable
-          columns={[
-            "Profissional",
-            "Função",
-            "Comissão",
-            "Agenda",
-            "Status",
-            "Ações",
-          ]}
-          rows={professionals.map((professional) => [
-            professional.name,
-            professional.role,
-            professional.commission,
-            formatDateRange(
-              professional.scheduleStart,
-              professional.scheduleEnd
-            ),
-            <StatusBadge key="status" tone={getStatusTone(professional.status)}>
-              {professional.status}
-            </StatusBadge>,
-            <div key="actions" className="flex flex-wrap gap-2">
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => openEdit(professional)}
-              >
-                Editar
-              </Button>
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => toggleStatus(professional)}
-              >
-                {professional.status === "Ativo" ? "Inativar" : "Ativar"}
-              </Button>
-            </div>,
-          ])}
-        />
-        <p className="mt-4 rounded-md border bg-muted/35 px-3 py-2 text-sm text-muted-foreground">
-          {feedback}
-        </p>
+        {professionals.length === 0 ? (
+          <EmptyState
+            icon={UserAdd01Icon}
+            title="Nenhum profissional"
+            description="Sua equipe está vazia. Comece cadastrando os profissionais que atendem na sua barbearia."
+            actionLabel="Cadastrar agora"
+            href="/profissionais/cadastrar"
+          />
+        ) : (
+          <>
+            <SimpleTable
+              columns={[
+                "Profissional",
+                "Função",
+                "Comissão",
+                "Agenda",
+                "Status",
+                "Ações",
+              ]}
+              rows={professionals.map((professional) => [
+                professional.name,
+                professional.role,
+                professional.commission,
+                formatDateRange(
+                  professional.scheduleStart,
+                  professional.scheduleEnd
+                ),
+                <StatusBadge key="status" tone={getStatusTone(professional.status)}>
+                  {professional.status}
+                </StatusBadge>,
+                <div key="actions" className="flex flex-wrap gap-2">
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => openEdit(professional)}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => toggleStatus(professional)}
+                  >
+                    {professional.status === "Ativo" ? "Inativar" : "Ativar"}
+                  </Button>
+                </div>,
+              ])}
+            />
+            <p className="mt-4 rounded-md border bg-muted/35 px-3 py-2 text-sm text-muted-foreground">
+              {feedback}
+            </p>
+          </>
+        )}
       </SectionCard>
 
       <Dialog

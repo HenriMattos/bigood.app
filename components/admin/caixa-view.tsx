@@ -35,6 +35,7 @@ import { database } from "@/components/admin/database"
 import { LatestComandaCard } from "@/components/admin/comanda-card"
 import { MetricCard } from "@/components/admin/metric-card"
 import { SectionCard } from "@/components/admin/section-card"
+import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -62,9 +63,10 @@ const services = serviceCatalog.map((service) => ({
   price: service.price,
 }))
 
+const chairOptions = database.company.chairs
 const appointments = database.agendaEvents
   .filter((event) => event.type === "appointment")
-  .map((event, index) => {
+  .map((event) => {
     const service = serviceCatalog.find((item) => item.name === event.detail)
 
     return {
@@ -72,7 +74,7 @@ const appointments = database.agendaEvents
       label: `${event.start} - ${event.title}`,
       client: event.title,
       barber: event.barber,
-      chair: index % 2 === 0 ? "Cadeira 1" : "Cadeira 2",
+      chair: chairOptions[0] ?? "Geral",
       service: event.detail,
       price: service?.price ?? 0,
     }
@@ -82,7 +84,6 @@ const products = database.products
 const barberOptions = database.professionals
   .filter((professional) => professional.status === "Ativo")
   .map((professional) => professional.name)
-const chairOptions = ["Cadeira 1", "Cadeira 2", "Sala de atendimento"]
 
 export function CaixaView() {
   const [comandas, setComandas] = useState<Comanda[]>(initialComandas)
@@ -191,19 +192,29 @@ export function CaixaView() {
           </div>
         }
       >
-        <LatestComandaCard
-          comanda={latestComanda}
-          action={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => openEditModal(latestComanda)}
-            >
-              <HugeiconsIcon icon={Edit02Icon} size={16} />
-              Editar
-            </Button>
-          }
-        />
+        {latestComanda ? (
+          <LatestComandaCard
+            comanda={latestComanda}
+            action={
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openEditModal(latestComanda)}
+              >
+                <HugeiconsIcon icon={Edit02Icon} size={16} />
+                Editar
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={CashierIcon}
+            title="Nenhuma comanda hoje"
+            description="O caixa ainda não recebeu agendamentos ou vendas. Clique em 'Nova comanda' para começar."
+            actionLabel="Nova comanda"
+            onAction={openCreateModal}
+          />
+        )}
       </SectionCard>
 
       <SectionCard
@@ -232,9 +243,19 @@ export function CaixaView() {
         }
       >
         <div className="grid gap-2">
-          {cashMovements.slice(0, 5).map((movement) => (
-            <CashMovementRow key={movement.id} movement={movement} />
-          ))}
+          {cashMovements.length === 0 ? (
+            <EmptyState
+              icon={Wallet02Icon}
+              title="Sem movimentações"
+              description="Registre entradas ou saídas manuais (troco, despesas, retiradas) para controlar seu saldo."
+              actionLabel="Lançar entrada"
+              onAction={() => setMovementModalType("entrada")}
+            />
+          ) : (
+            cashMovements.slice(0, 5).map((movement) => (
+              <CashMovementRow key={movement.id} movement={movement} />
+            ))
+          )}
         </div>
       </SectionCard>
 

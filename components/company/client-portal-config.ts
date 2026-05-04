@@ -34,11 +34,11 @@ export type ClientPortalTheme = {
   previewTextClass: string
 }
 
-export const CLIENT_PORTAL_SETTINGS_STORAGE_KEY = "clientPortal.settings"
-export const CLIENT_PORTAL_PLANS_STORAGE_KEY = "clientPortal.plans"
+export const CLIENT_PORTAL_SETTINGS_STORAGE_KEY = "mydashbarber.v1.settings"
+export const CLIENT_PORTAL_PLANS_STORAGE_KEY = "mydashbarber.v1.plans"
 export const CLIENT_PORTAL_SUBSCRIPTIONS_STORAGE_KEY =
-  "clientPortal.subscriptions"
-export const CLIENT_PORTAL_SYNC_EVENT = "clientPortal:sync"
+  "mydashbarber.v1.subscriptions"
+export const CLIENT_PORTAL_SYNC_EVENT = "mydashbarber.v1.sync"
 
 export const clientPortalThemes: ClientPortalTheme[] = [
   {
@@ -237,5 +237,7 @@ function writeStorage<T>(key: string, value: T) {
   if (typeof window === "undefined") return
 
   window.localStorage.setItem(key, JSON.stringify(value))
-  window.dispatchEvent(new Event(CLIENT_PORTAL_SYNC_EVENT))
+  window.requestAnimationFrame(() => {
+    window.dispatchEvent(new CustomEvent(CLIENT_PORTAL_SYNC_EVENT))
+  })
 }

@@ -1,4 +1,4 @@
-import { CrownIcon } from "@hugeicons/core-free-icons"
+import { CrownIcon, SparklesIcon } from "@hugeicons/core-free-icons"
 import Link from "next/link"
 
 import { MetricCard } from "@/components/admin/metric-card"
@@ -6,6 +6,7 @@ import { database } from "@/components/admin/database"
 import { SectionCard } from "@/components/admin/section-card"
 import { SimpleTable } from "@/components/admin/simple-table"
 import { StatusBadge } from "@/components/admin/status-badge"
+import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 
 export default function PlanosPage() {
@@ -69,10 +70,20 @@ export default function PlanosPage() {
           </Button>
         }
       >
-        <SimpleTable
-          columns={["Plano", "Beneficio", "Preco", "Base", "Status"]}
-          rows={planRows}
-        />
+        {database.plans.length === 0 ? (
+          <EmptyState
+            icon={SparklesIcon}
+            title="Nenhum plano criado"
+            description="Crie planos de assinatura para fidelizar seus clientes e garantir receita recorrente."
+            actionLabel="Criar meu primeiro plano"
+            href="/planos/criar"
+          />
+        ) : (
+          <SimpleTable
+            columns={["Plano", "Beneficio", "Preco", "Base", "Status"]}
+            rows={planRows}
+          />
+        )}
       </SectionCard>
     </>
   )

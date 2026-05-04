@@ -9,6 +9,7 @@ import { type Comanda, comandas as initialComandas } from "@/components/admin/ca
 import { ComandaCard } from "@/components/admin/comanda-card"
 import { NovaComandaModal } from "@/components/admin/caixa-view"
 import { SectionCard } from "@/components/admin/section-card"
+import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 
 export function ComandasView() {
@@ -57,22 +58,32 @@ export function ComandasView() {
         }
       >
         <div className="grid gap-3">
-          {comandas.map((comanda) => (
-            <ComandaCard
-              key={comanda.id}
-              comanda={comanda}
-              action={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => openEditModal(comanda)}
-                >
-                  <HugeiconsIcon icon={Edit02Icon} size={16} />
-                  Editar
-                </Button>
-              }
+          {comandas.length === 0 ? (
+            <EmptyState
+              icon={CashierIcon}
+              title="Nenhuma comanda aberta"
+              description="Não há atendimentos em andamento. Abra uma nova comanda para registrar serviços."
+              actionLabel="Nova comanda"
+              onAction={openCreateModal}
             />
-          ))}
+          ) : (
+            comandas.map((comanda) => (
+              <ComandaCard
+                key={comanda.id}
+                comanda={comanda}
+                action={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openEditModal(comanda)}
+                  >
+                    <HugeiconsIcon icon={Edit02Icon} size={16} />
+                    Editar
+                  </Button>
+                }
+              />
+            ))
+          )}
         </div>
       </SectionCard>
 

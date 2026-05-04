@@ -10,6 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { clients, loyalClients } from "@/components/admin/clientes-data"
 import { database } from "@/components/admin/database"
+import { EmptyState } from "@/components/admin/empty-state"
 import { SectionCard } from "@/components/admin/section-card"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
@@ -98,63 +99,74 @@ export default function ClientesPage() {
         }
       >
         <div className="grid gap-3 lg:grid-cols-3">
-          {loyalClients.map((client, index) => (
-            <article
-              key={client.id}
-              className="min-w-0 rounded-md border bg-background p-3 shadow-xs"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
-                    {client.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate font-semibold">{client.name}</h3>
-                      <StatusBadge tone="green">Destaque</StatusBadge>
+          {loyalClients.length === 0 ? (
+            <div className="lg:col-span-3">
+              <EmptyState
+                icon={UserStar01Icon}
+                title="Nenhum cliente em destaque"
+                description="Os clientes com mais de 10 visitas aparecerão aqui automaticamente conforme você registra novos agendamentos."
+                className="min-h-[250px]"
+              />
+            </div>
+          ) : (
+            loyalClients.map((client, index) => (
+              <article
+                key={client.id}
+                className="min-w-0 rounded-md border bg-background p-3 shadow-xs"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                      {client.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate font-semibold">{client.name}</h3>
+                        <StatusBadge tone="green">Destaque</StatusBadge>
+                      </div>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                        {client.phone}
+                      </p>
                     </div>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {client.phone}
-                    </p>
+                  </div>
+
+                  <span className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-semibold text-primary">
+                    #{index + 1}
+                  </span>
+                </div>
+
+                <div className="mt-4 rounded-md bg-muted/35 p-3">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">Recorrencia</span>
+                    <span className="font-semibold">{client.visits} visitas</span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-background">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${Math.min(client.visits * 5, 100)}%` }}
+                    />
                   </div>
                 </div>
 
-                <span className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-semibold text-primary">
-                  #{index + 1}
-                </span>
-              </div>
-
-              <div className="mt-4 rounded-md bg-muted/35 p-3">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-muted-foreground">Recorrencia</span>
-                  <span className="font-semibold">{client.visits} visitas</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-background">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${Math.min(client.visits * 5, 100)}%` }}
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <Info label="Ultima visita" value={client.lastVisit} />
+                  <Info
+                    label="Ticket medio"
+                    value={`R$ ${client.averageTicket}`}
                   />
                 </div>
-              </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                <Info label="Ultima visita" value={client.lastVisit} />
-                <Info
-                  label="Ticket medio"
-                  value={`R$ ${client.averageTicket}`}
-                />
-              </div>
-
-              <div className="mt-3 border-t pt-3 text-sm">
-                <p className="text-muted-foreground">Servico preferido</p>
-                <p className="mt-1 font-semibold">{client.favoriteService}</p>
-              </div>
-            </article>
-          ))}
+                <div className="mt-3 border-t pt-3 text-sm">
+                  <p className="text-muted-foreground">Servico preferido</p>
+                  <p className="mt-1 font-semibold">{client.favoriteService}</p>
+                </div>
+              </article>
+            ))
+          )}
         </div>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
