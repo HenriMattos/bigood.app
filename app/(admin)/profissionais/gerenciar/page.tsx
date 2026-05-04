@@ -126,7 +126,7 @@ export default function GerenciarProfissionalPage() {
                 professional.name,
                 professional.role,
                 professional.commission,
-                formatDateRange(
+                formatTimeRange(
                   professional.scheduleStart,
                   professional.scheduleEnd
                 ),
@@ -217,6 +217,24 @@ export default function GerenciarProfissionalPage() {
                   </SelectContent>
                 </Select>
               </Field>
+              <Field label="Início da Agenda">
+                <Input
+                  type="time"
+                  value={draft.scheduleStart}
+                  onChange={(event) =>
+                    updateDraft("scheduleStart", event.target.value)
+                  }
+                />
+              </Field>
+              <Field label="Fim da Agenda">
+                <Input
+                  type="time"
+                  value={draft.scheduleEnd}
+                  onChange={(event) =>
+                    updateDraft("scheduleEnd", event.target.value)
+                  }
+                />
+              </Field>
             </DialogBody>
           ) : null}
           <DialogFooter>
@@ -233,7 +251,7 @@ export default function GerenciarProfissionalPage() {
           <DialogHeader>
             <DialogTitle>Escalas da equipe</DialogTitle>
             <DialogDescription>
-              Resumo do período de agenda cadastrado por profissional.
+              Resumo do horário de atendimento cadastrado por profissional.
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="grid gap-2">
@@ -244,7 +262,7 @@ export default function GerenciarProfissionalPage() {
               >
                 <span className="font-medium">{professional.name}</span>
                 <span className="text-muted-foreground">
-                  {formatDateRange(
+                  {formatTimeRange(
                     professional.scheduleStart,
                     professional.scheduleEnd
                   )}
@@ -284,13 +302,6 @@ function getStatusTone(status: Professional["status"]) {
   return "neutral"
 }
 
-function formatDateRange(start: string, end: string) {
-  return `${formatDate(start)} a ${formatDate(end)}`
-}
-
-function formatDate(value: string) {
-  if (!value) return "-"
-  const [year, month, day] = value.split("-")
-
-  return `${day}/${month}/${year}`
+function formatTimeRange(start: string, end: string) {
+  return `${start || "00:00"} às ${end || "00:00"}`
 }

@@ -203,6 +203,20 @@ const company = {
   chairs: ["Cadeira 01"],
   professionalRoles: ["Barbeiro", "Proprietário"],
   serviceCategories: ["Cabelo", "Barba", "Combo"],
+  address: {
+    street: "Av. Paulista",
+    number: "1000",
+    neighborhood: "Bela Vista",
+    city: "São Paulo",
+    state: "SP",
+    zip: "01310-100",
+    mapsUrl: "https://maps.google.com",
+  },
+  social: {
+    instagram: "studiosimetria",
+    whatsapp: "11987654321",
+    facebook: "studiosimetria",
+  },
 }
 
 export type RevenueDay = {

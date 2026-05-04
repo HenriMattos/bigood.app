@@ -34,6 +34,8 @@ type ProfessionalForm = {
   role: string
   commission: string
   status: string
+  scheduleStart: string
+  scheduleEnd: string
 }
 
 const initialForm: ProfessionalForm = {
@@ -43,6 +45,8 @@ const initialForm: ProfessionalForm = {
   role: "",
   commission: "40%",
   status: "Ativo",
+  scheduleStart: "09:00",
+  scheduleEnd: "19:00",
 }
 
 export default function CadastrarProfissionalPage() {
@@ -173,6 +177,20 @@ export default function CadastrarProfissionalPage() {
                 <SelectItem value="Inativo">Inativo</SelectItem>
               </SelectContent>
             </Select>
+          </Field>
+          <Field label="Início da Agenda">
+            <Input
+              type="time"
+              value={form.scheduleStart}
+              onChange={(event) => updateForm("scheduleStart", event.target.value)}
+            />
+          </Field>
+          <Field label="Fim da Agenda">
+            <Input
+              type="time"
+              value={form.scheduleEnd}
+              onChange={(event) => updateForm("scheduleEnd", event.target.value)}
+            />
           </Field>
         </div>
 

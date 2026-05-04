@@ -20,6 +20,20 @@ export type ClientPortalSettings = {
   introSubtitle3?: string
   themeId: string
   mode: ClientPortalMode
+  address?: {
+    street: string
+    number: string
+    neighborhood: string
+    city: string
+    state: string
+    zip: string
+    mapsUrl: string
+  }
+  social?: {
+    instagram: string
+    whatsapp: string
+    facebook: string
+  }
 }
 
 export type ClientPortalTheme = {
@@ -46,10 +60,10 @@ export const clientPortalThemes: ClientPortalTheme[] = [
     name: "Claro Premium",
     description: "Design limpo, moderno e sofisticado",
     mode: "light",
-    gradient: "linear-gradient(135deg, #059447 0%, #10b981 42%, #34d399 100%)",
-    primary: "#10b981",
-    primaryForeground: "#ffffff",
-    accent: "#34d399",
+    gradient: "linear-gradient(135deg, oklch(0.857 0.1698 134.5554 / 0.1) 0%, oklch(0.9842 0.0034 247.8575) 42%, oklch(0.857 0.1698 134.5554 / 0.05) 100%)",
+    primary: "oklch(0.857 0.1698 134.5554)",
+    primaryForeground: "oklch(0.2869 0.0839 135.0504)",
+    accent: "oklch(0.9683 0.0069 247.8956)",
     previewTextClass: "text-[#064e3b]",
   },
   {
@@ -58,8 +72,8 @@ export const clientPortalThemes: ClientPortalTheme[] = [
     description: "Elegância absoluta em tons de cinza e preto",
     mode: "dark",
     gradient: "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
-    primary: "#94a3b8",
-    primaryForeground: "#0f172a",
+    primary: "oklch(0.857 0.1698 134.5554)",
+    primaryForeground: "oklch(0.2869 0.0839 135.0504)",
     accent: "#f8fafc",
     previewTextClass: "text-white",
   },
@@ -90,6 +104,20 @@ export function createDefaultClientPortalSettings(company: {
   carouselImage1?: string
   carouselImage2?: string
   carouselImage3?: string
+  address?: {
+    street: string
+    number: string
+    neighborhood: string
+    city: string
+    state: string
+    zip: string
+    mapsUrl: string
+  }
+  social?: {
+    instagram: string
+    whatsapp: string
+    facebook: string
+  }
 }): ClientPortalSettings {
   return {
     tradeName: company.tradeName,
@@ -105,6 +133,8 @@ export function createDefaultClientPortalSettings(company: {
     carouselImage1: company.carouselImage1,
     carouselImage2: company.carouselImage2,
     carouselImage3: company.carouselImage3,
+    address: company.address,
+    social: company.social,
     themeId: clientPortalThemes[0].id,
     mode: clientPortalThemes[0].mode,
   }
@@ -208,12 +238,14 @@ export function getClientPortalCssVariables(
 ): CSSProperties {
   const theme = getClientPortalTheme(settings.themeId)
   const dark = theme.mode === "dark"
-  const background = dark ? "#070707" : "#f8faf7"
-  const foreground = dark ? "#f8fafc" : "#102415"
-  const card = dark ? "#0f0f10" : "#ffffff"
-  const muted = dark ? "#1d1f23" : "#eef3ee"
-  const mutedForeground = dark ? "#aeb4bd" : "#5d6d61"
-  const border = dark ? "#343840" : "#dde7dd"
+  
+  // Cores baseadas no globals.css do admin
+  const background = dark ? "oklch(0.1288 0.0406 264.6952)" : "oklch(0.9842 0.0034 247.8575)"
+  const foreground = dark ? "oklch(0.9842 0.0034 247.8575)" : "oklch(0.235 0.055 145)"
+  const card = dark ? "oklch(0.2077 0.0398 265.7549)" : "oklch(1 0 0)"
+  const muted = dark ? "oklch(0.2795 0.0368 260.031)" : "oklch(0.9683 0.0069 247.8956)"
+  const mutedForeground = dark ? "oklch(0.7107 0.0351 256.7878)" : "oklch(0.47 0.035 150)"
+  const border = dark ? "oklch(0.2795 0.0368 260.031)" : "oklch(0.9288 0.0126 255.5078)"
 
   return {
     "--primary": theme.primary,
@@ -249,8 +281,8 @@ export function getClientPortalCssVariables(
     "--color-border": border,
     "--input": border,
     "--color-input": border,
-    "--client-primary-contrast": dark ? "#ffffff" : theme.primary,
-    "--radius": "1rem",
+    "--client-primary-contrast": dark ? "#ffffff" : "oklch(0.2869 0.0839 135.0504)",
+    "--radius": "0.75rem",
     colorScheme: dark ? "dark" : "light",
   } as CSSProperties
 }

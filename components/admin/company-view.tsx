@@ -93,6 +93,16 @@ const initialCompanyForm = {
   introSubtitle2: "",
   introTitle3: "",
   introSubtitle3: "",
+  street: database.company.address.street,
+  number: database.company.address.number,
+  neighborhood: database.company.address.neighborhood,
+  city: database.company.address.city,
+  state: database.company.address.state,
+  zip: database.company.address.zip,
+  mapsUrl: database.company.address.mapsUrl,
+  instagram: database.company.social.instagram,
+  whatsapp: database.company.social.whatsapp,
+  facebook: database.company.social.facebook,
   cancellationTolerance: toleranceOptions[0],
   penaltyDuration: penaltyOptions[0],
   beardClubName: "",
@@ -135,6 +145,16 @@ export function EmpresaView() {
         introSubtitle2: settings.introSubtitle2 ?? current.introSubtitle2,
         introTitle3: settings.introTitle3 ?? current.introTitle3,
         introSubtitle3: settings.introSubtitle3 ?? current.introSubtitle3,
+        street: settings.address?.street ?? current.street,
+        number: settings.address?.number ?? current.number,
+        neighborhood: settings.address?.neighborhood ?? current.neighborhood,
+        city: settings.address?.city ?? current.city,
+        state: settings.address?.state ?? current.state,
+        zip: settings.address?.zip ?? current.zip,
+        mapsUrl: settings.address?.mapsUrl ?? current.mapsUrl,
+        instagram: settings.social?.instagram ?? current.instagram,
+        whatsapp: settings.social?.whatsapp ?? current.whatsapp,
+        facebook: settings.social?.facebook ?? current.facebook,
         clientThemeId: settings.themeId,
         clientMode: settings.mode,
       }))
@@ -181,6 +201,20 @@ export function EmpresaView() {
       introSubtitle2: nextForm.introSubtitle2,
       introTitle3: nextForm.introTitle3,
       introSubtitle3: nextForm.introSubtitle3,
+      address: {
+        street: nextForm.street,
+        number: nextForm.number,
+        neighborhood: nextForm.neighborhood,
+        city: nextForm.city,
+        state: nextForm.state,
+        zip: nextForm.zip,
+        mapsUrl: nextForm.mapsUrl,
+      },
+      social: {
+        instagram: nextForm.instagram,
+        whatsapp: nextForm.whatsapp,
+        facebook: nextForm.facebook,
+      },
       themeId: nextForm.clientThemeId,
       mode: nextForm.clientMode,
     })
@@ -403,6 +437,86 @@ export function EmpresaView() {
             storageKey={COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY}
           />
         </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Localização"
+        description="Onde seus clientes podem te encontrar"
+      >
+        <FormGrid>
+          <FormField label="Rua / Logradouro">
+            <Input
+              value={form.street}
+              onChange={(event) => update("street", event.target.value)}
+            />
+          </FormField>
+          <FormField label="Número">
+            <Input
+              value={form.number}
+              onChange={(event) => update("number", event.target.value)}
+            />
+          </FormField>
+          <FormField label="Bairro">
+            <Input
+              value={form.neighborhood}
+              onChange={(event) => update("neighborhood", event.target.value)}
+            />
+          </FormField>
+          <FormField label="Cidade">
+            <Input
+              value={form.city}
+              onChange={(event) => update("city", event.target.value)}
+            />
+          </FormField>
+          <FormField label="Estado (UF)">
+            <Input
+              value={form.state}
+              placeholder="Ex: SP"
+              onChange={(event) => update("state", event.target.value)}
+            />
+          </FormField>
+          <FormField label="CEP">
+            <Input
+              value={form.zip}
+              onChange={(event) => update("zip", event.target.value)}
+            />
+          </FormField>
+          <div className="col-span-full">
+            <FormField label="Link do Google Maps">
+              <Input
+                value={form.mapsUrl}
+                placeholder="https://maps.google.com/..."
+                onChange={(event) => update("mapsUrl", event.target.value)}
+              />
+            </FormField>
+          </div>
+        </FormGrid>
+      </SectionCard>
+
+      <SectionCard title="Redes Sociais">
+        <FormGrid>
+          <FormField label="Instagram (usuário)">
+            <Input
+              value={form.instagram}
+              placeholder="@seu.perfil"
+              onChange={(event) => update("instagram", event.target.value)}
+            />
+          </FormField>
+          <FormField label="WhatsApp (número)">
+            <Input
+              value={form.whatsapp}
+              placeholder="11987654321"
+              onChange={(event) => update("whatsapp", event.target.value)}
+            />
+          </FormField>
+          <FormField label="Facebook (slug)">
+            <Input
+              value={form.facebook}
+              placeholder="sua.pagina"
+              onChange={(event) => update("facebook", event.target.value)}
+            />
+          </FormField>
+        </FormGrid>
       </SectionCard>
 
       <SectionCard

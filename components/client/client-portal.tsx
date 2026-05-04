@@ -23,6 +23,10 @@ import {
   SparklesIcon,
   UserMultipleIcon,
   Wallet02Icon,
+  InstagramIcon,
+  WhatsappIcon,
+  Facebook01Icon,
+  MapsLocation01Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import { EmptyState } from "@/components/admin/empty-state"
@@ -405,6 +409,7 @@ export function ClientPortal() {
 
               {stage === "menu" && (
                 <ChoiceMenu
+                  portalSettings={portalSettings}
                   onBooking={() => {
                     setStage("booking")
                     setBookingStep("service")
@@ -679,7 +684,6 @@ function WelcomeScreen({
                 <Input
                   id="client-email"
                   type="email"
-                  defaultValue={customer?.email ?? ""}
                   className="h-12 rounded-xl border-border/50 bg-muted/20 pl-11 text-sm transition-all focus:bg-background focus:ring-4 focus:ring-primary/10"
                   placeholder="seu@email.com"
                   required
@@ -743,6 +747,18 @@ function WelcomeScreen({
             <button className="font-bold text-foreground hover:underline">Termos de Uso</button> e{" "}
             <button className="font-bold text-foreground hover:underline">Privacidade</button>.
           </p>
+
+          {portalSettings.address && (
+            <div className="mt-4 border-t border-dashed pt-4 text-center">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">Nossa Localização</p>
+              <p className="mt-1 text-[11px] font-semibold text-foreground">
+                {portalSettings.address.street}, {portalSettings.address.number}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {portalSettings.address.neighborhood} — {portalSettings.address.city}, {portalSettings.address.state}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -851,10 +867,12 @@ function CompanyLogoShowcase({
 }
 
 function ChoiceMenu({
+  portalSettings,
   onBooking,
   onAppointments,
   onPlan,
 }: {
+  portalSettings: ClientPortalSettings
   onBooking: () => void
   onAppointments: () => void
   onPlan: () => void
@@ -891,6 +909,74 @@ function ChoiceMenu({
             onClick={onPlan}
           />
         </div>
+
+        <div className="mt-8 grid gap-4 border-t border-dashed pt-8 sm:mt-16 sm:grid-cols-2">
+          {portalSettings.address && (
+            <div className="client-card flex items-start gap-3 p-4">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <HugeiconsIcon icon={MapsLocation01Icon} size={20} />
+              </span>
+              <div className="min-w-0">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Localização</h4>
+                <p className="mt-1 text-sm font-semibold leading-tight text-foreground">
+                  {portalSettings.address.street}, {portalSettings.address.number}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {portalSettings.address.neighborhood} — {portalSettings.address.city}, {portalSettings.address.state}
+                </p>
+                {portalSettings.address.mapsUrl && (
+                  <a
+                    href={portalSettings.address.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center text-[10px] font-black uppercase tracking-wider text-primary hover:underline"
+                  >
+                    Ver no Google Maps →
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="client-card flex flex-col justify-center gap-4 p-4">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Nossas Redes</h4>
+            <div className="flex flex-wrap gap-3">
+              {portalSettings.social?.instagram && (
+                <a
+                  href={`https://instagram.com/${portalSettings.social.instagram.replace("@", "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex size-10 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                  title="Instagram"
+                >
+                  <HugeiconsIcon icon={InstagramIcon} size={20} />
+                </a>
+              )}
+              {portalSettings.social?.whatsapp && (
+                <a
+                  href={`https://wa.me/${portalSettings.social.whatsapp.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex size-10 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                  title="WhatsApp"
+                >
+                  <HugeiconsIcon icon={WhatsappIcon} size={20} />
+                </a>
+              )}
+              {portalSettings.social?.facebook && (
+                <a
+                  href={`https://facebook.com/${portalSettings.social.facebook}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex size-10 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                  title="Facebook"
+                >
+                  <HugeiconsIcon icon={Facebook01Icon} size={20} />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -913,19 +999,28 @@ function MenuActionButton({
     <button
       onClick={onClick}
       className={cn(
-        "client-card group flex items-center gap-3 p-3.5 text-left text-foreground transition-all sm:flex-col sm:p-6 sm:text-center",
-        variant === "primary" ? "border-primary/20 bg-primary/5" : ""
+        "premium-card group relative flex items-center gap-4 p-4 text-left transition-all sm:flex-col sm:items-center sm:p-8 sm:text-center",
+        variant === "primary" ? "border-primary/20 bg-primary/[0.03]" : ""
       )}
     >
-      <span className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 sm:size-14",
-        variant === "primary" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+      <div className={cn(
+        "relative flex size-12 shrink-0 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110 sm:size-16",
+        variant === "primary" ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20" : "bg-muted text-foreground"
       )}>
-        <HugeiconsIcon icon={icon} size={24} />
-      </span>
+        <HugeiconsIcon icon={icon} size={28} />
+      </div>
+      
       <div className="min-w-0">
-          <h3 className="text-sm font-bold tracking-tight text-foreground sm:mt-6 sm:text-lg">{title}</h3>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground sm:mt-2 sm:text-xs">{description}</p>
+        <h3 className="text-base font-black uppercase tracking-tight text-foreground sm:mt-6 sm:text-xl">
+          {title}
+        </h3>
+        <p className="mt-1 text-[11px] font-medium leading-relaxed text-muted-foreground sm:mt-2 sm:text-xs">
+          {description}
+        </p>
+      </div>
+
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100 sm:hidden">
+        <HugeiconsIcon icon={ArrowRight01Icon} size={18} className="text-primary" />
       </div>
     </button>
   )
@@ -1307,15 +1402,18 @@ function ServiceSection({
   }, 0)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div>
-        <p className="text-[9px] font-black tracking-[0.24em] text-primary-contrast uppercase">
-          {eyebrow}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-8 rounded-full bg-primary/40" />
+          <p className="text-[10px] font-black tracking-[0.24em] text-primary uppercase">
+            {eyebrow}
+          </p>
+        </div>
+        <p className="mt-1 text-xs font-medium text-muted-foreground/80">{description}</p>
       </div>
 
-      <div className="grid gap-2.5 sm:gap-4">
+      <div className="grid gap-3 sm:grid-cols-2">
         {services.map((service) => {
           const selected = selectedServiceIds.includes(service.id)
           const planCreditsLeft = Math.max(
@@ -1337,66 +1435,58 @@ function ServiceSection({
               type="button"
               disabled={!canSelectPlanService}
               onClick={() => onServiceToggle(service.id)}
-              data-selected={selected}
-              className="client-choice-card flex items-center justify-between gap-3 p-3.5 disabled:cursor-not-allowed disabled:opacity-45 sm:p-6"
+              className={cn(
+                "premium-card relative flex flex-col p-5 text-left transition-all duration-300 disabled:opacity-40",
+                selected ? "border-primary bg-primary/[0.02] shadow-lg shadow-primary/5" : "hover:bg-muted/30"
+              )}
             >
-              <div className="min-w-0 text-left">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="truncate text-base font-black tracking-tight uppercase sm:text-xl">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h4 className="truncate text-lg font-black uppercase tracking-tight text-foreground">
                     {service.name}
                   </h4>
-                  <span
-                    className={cn(
-                      "rounded px-2 py-1 text-[8px] font-black tracking-widest uppercase",
-                      line.kind === "plan"
-                        ? "bg-primary/15 text-primary-contrast"
-                        : line.kind === "extra"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {line.kind === "plan"
-                      ? "Plano"
-                      : line.kind === "extra"
-                        ? `${line.discountPercent}% off`
-                        : "Avulso"}
-                  </span>
+                  <div className="mt-2 flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <span className="flex items-center gap-1.5">
+                      <HugeiconsIcon icon={Clock01Icon} size={14} />
+                      {service.duration}
+                    </span>
+                    <span>•</span>
+                    <span>{service.category}</span>
+                  </div>
                 </div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[9px] font-black tracking-widest text-muted-foreground uppercase sm:mt-2 sm:text-[11px]">
-                  <span className="flex items-center gap-1.5">
-                    <HugeiconsIcon icon={Clock01Icon} size={14} />
-                    {service.duration}
-                  </span>
-                  <span className="opacity-30">•</span>
-                  <span>{service.category}</span>
+                
+                <div className={cn(
+                  "rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest border",
+                  line.kind === "plan" 
+                    ? "bg-primary/10 border-primary/20 text-primary" 
+                    : "bg-muted border-border text-muted-foreground"
+                )}>
+                  {line.kind === "plan" ? "Plano" : line.kind === "extra" ? `${line.discountPercent}% OFF` : "Standard"}
                 </div>
               </div>
-              <div className="shrink-0 text-right">
-                {line.kind === "plan" ? (
-                  <p className="text-lg font-black text-primary-contrast sm:text-2xl">
-                    Incluído
-                  </p>
-                ) : (
-                  <>
-                    {line.discountPercent > 0 && (
-                      <p className="text-[10px] font-bold text-muted-foreground line-through">
-                        {formatCurrency(service.price)}
-                      </p>
-                    )}
-                    <p className="text-xl font-black text-primary-contrast sm:text-2xl">
-                      {formatCurrency(line.finalPrice)}
-                    </p>
-                  </>
-                )}
-                <p className="mt-0.5 text-[8px] font-black text-muted-foreground uppercase tracking-tighter sm:mt-1 sm:text-[9px]">
-                  {selected
-                    ? "Selecionado"
-                    : !canSelectPlanService
-                      ? "Sem saldo"
-                      : planOnly
-                        ? `${planCreditsLeft} restante(s)`
-                        : "Adicionar"}
-                </p>
+
+              <div className="mt-6 flex items-center justify-between border-t border-border/40 pt-4">
+                <div className="min-w-0">
+                  {line.kind === "plan" ? (
+                    <p className="text-xl font-black text-primary">Incluso</p>
+                  ) : (
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-xl font-black text-foreground">{formatCurrency(line.finalPrice)}</p>
+                      {line.discountPercent > 0 && (
+                        <p className="text-xs font-bold text-muted-foreground line-through opacity-50">
+                          {formatCurrency(service.price)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <div className={cn(
+                  "flex size-8 items-center justify-center rounded-full transition-all duration-300",
+                  selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                )}>
+                  <HugeiconsIcon icon={selected ? CheckmarkCircle01Icon : ArrowRight01Icon} size={16} />
+                </div>
               </div>
             </button>
           )
@@ -1414,27 +1504,49 @@ function ProfessionalStep({
   onProfessionalChange: (id: number) => void
 }) {
   return (
-    <div className="grid gap-2.5 sm:gap-4">
-      {professionals.map((professional) => (
-        <button
-          key={professional.id}
-          type="button"
-          onClick={() => onProfessionalChange(professional.id)}
-          data-selected={professional.id === professionalId}
-          className="client-choice-card flex items-center justify-between gap-3 p-3.5 sm:p-5"
-        >
-          <div className="flex min-w-0 items-center gap-3 sm:gap-5">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-black tracking-tighter text-muted-foreground sm:size-16 sm:text-xl">
-              {getInitials(professional.name)}
+    <div className="grid gap-4 sm:grid-cols-2">
+      {professionals.map((professional) => {
+        const selected = professional.id === professionalId
+        return (
+          <button
+            key={professional.id}
+            type="button"
+            onClick={() => onProfessionalChange(professional.id)}
+            className={cn(
+              "premium-card relative flex flex-col items-center p-8 text-center transition-all duration-300",
+              selected ? "border-primary bg-primary/[0.02] shadow-lg shadow-primary/5" : "hover:bg-muted/30"
+            )}
+          >
+            <div className="relative group/avatar">
+              <div className={cn(
+                "flex size-20 items-center justify-center rounded-3xl text-2xl font-black tracking-tighter transition-all duration-500",
+                selected ? "bg-primary text-primary-foreground shadow-2xl shadow-primary/30" : "bg-muted text-muted-foreground group-hover/avatar:bg-primary/10 group-hover/avatar:text-primary"
+              )}>
+                {getInitials(professional.name)}
+              </div>
+              {selected && (
+                <div className="absolute -bottom-2 -right-2 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground ring-4 ring-background">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} />
+                </div>
+              )}
             </div>
-            <div className="min-w-0 text-left">
-              <h4 className="truncate text-base font-black tracking-tight uppercase sm:text-xl">{professional.name}</h4>
-              <p className="mt-0.5 truncate text-[9px] font-black tracking-[0.14em] text-primary-contrast uppercase sm:mt-1 sm:text-[11px] sm:tracking-[0.2em]">{professional.role}</p>
+            
+            <div className="mt-6">
+              <h4 className="text-xl font-black uppercase tracking-tight text-foreground">
+                {professional.name}
+              </h4>
+              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                {professional.role}
+              </p>
             </div>
-          </div>
-          <HugeiconsIcon icon={UserMultipleIcon} size={22} className="shrink-0 text-muted-foreground/20" />
-        </button>
-      ))}
+
+            <div className="mt-4 flex items-center gap-2 rounded-full bg-muted/40 px-3 py-1 text-[10px] font-bold text-muted-foreground">
+              <HugeiconsIcon icon={Clock01Icon} size={12} />
+              Disponível hoje
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -1451,10 +1563,15 @@ function DateTimeStep({
   onTimeChange: (time: string) => void
 }) {
   return (
-    <div className="space-y-4 sm:space-y-8">
+    <div className="space-y-10">
       <div>
-        <h4 className="mb-2 text-[9px] font-black tracking-[0.22em] text-muted-foreground uppercase sm:mb-4 sm:text-[10px] sm:tracking-[0.3em]">Selecione o Dia</h4>
-        <div className="-mx-2 flex gap-2 overflow-x-auto px-2 pb-3 no-scrollbar sm:mx-0 sm:gap-3 sm:px-0 sm:pb-4">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="h-1 w-8 rounded-full bg-primary/40" />
+          <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+            Selecione a Data
+          </h4>
+        </div>
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-6 no-scrollbar sm:mx-0 sm:px-0">
           {dateOptions.map((date) => {
             const active = date.id === dateId
             return (
@@ -1462,12 +1579,26 @@ function DateTimeStep({
                 key={date.id}
                 type="button"
                 onClick={() => onDateChange(date.id)}
-                data-selected={active}
-                className="client-choice-card flex min-w-[64px] flex-col items-center justify-center py-2.5 sm:min-w-[80px] sm:py-4"
+                className={cn(
+                  "premium-card flex min-w-[85px] flex-col items-center justify-center py-6 transition-all duration-300 sm:min-w-[100px]",
+                  active ? "border-primary bg-primary text-primary-foreground shadow-xl shadow-primary/20 scale-105" : "hover:bg-muted/40"
+                )}
               >
-                <span className="text-[9px] font-bold tracking-widest text-muted-foreground uppercase sm:text-[10px]">{date.weekday}</span>
-                <span className="mt-0.5 text-xl font-black tracking-tighter sm:mt-1 sm:text-3xl">{date.day}</span>
-                <span className="mt-1 text-[9px] font-black uppercase text-primary/70">{date.label}</span>
+                <span className={cn(
+                  "text-[10px] font-black uppercase tracking-widest",
+                  active ? "text-primary-foreground/70" : "text-muted-foreground/60"
+                )}>
+                  {date.weekday}
+                </span>
+                <span className="mt-2 text-4xl font-black tracking-tighter">
+                  {date.day}
+                </span>
+                <span className={cn(
+                  "mt-2 text-[9px] font-black uppercase tracking-tight",
+                  active ? "text-primary-foreground" : "text-primary/70"
+                )}>
+                  {date.label}
+                </span>
               </button>
             )
           })}
@@ -1475,8 +1606,13 @@ function DateTimeStep({
       </div>
 
       <div>
-        <h4 className="mb-2 text-[9px] font-black tracking-[0.22em] text-muted-foreground uppercase sm:mb-5 sm:text-[11px] sm:tracking-[0.4em]">Horários Disponíveis</h4>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-4 sm:gap-4 md:grid-cols-5">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="h-1 w-8 rounded-full bg-primary/40" />
+          <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+            Escolha o Horário
+          </h4>
+        </div>
+        <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 sm:gap-4">
           {timeSlots.map((slot) => {
             const active = slot.time === time
             return (
@@ -1485,8 +1621,10 @@ function DateTimeStep({
                 type="button"
                 disabled={!slot.available}
                 onClick={() => onTimeChange(slot.time)}
-                data-selected={active}
-                className="client-choice-card flex h-11 items-center justify-center text-sm font-black tracking-tighter disabled:opacity-20 disabled:grayscale sm:h-16 sm:text-xl"
+                className={cn(
+                  "premium-card flex h-14 items-center justify-center text-lg font-black tracking-tighter transition-all duration-300 disabled:opacity-10 disabled:grayscale sm:h-20 sm:text-2xl",
+                  active ? "border-primary bg-primary text-primary-foreground shadow-xl shadow-primary/20" : "hover:bg-muted/40"
+                )}
               >
                 {slot.time}
               </button>
@@ -1886,22 +2024,22 @@ function PlanScreen({
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <div className="plan-premium-card relative min-h-[250px] overflow-hidden rounded-lg p-5 text-white shadow-2xl sm:p-7">
+          <div className="plan-premium-card relative min-h-[250px] overflow-hidden rounded-lg p-5 sm:p-7">
             <div className="plan-card-ray" />
             <div className="relative z-10 flex h-full min-h-[220px] flex-col justify-between">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.32em] text-white/75">
+                  <p className="text-[10px] font-black uppercase tracking-[0.32em] text-muted-foreground">
                     Cartao do plano
                   </p>
-                  <h3 className="mt-3 text-3xl font-black uppercase tracking-tight sm:text-5xl">
+                  <h3 className="mt-3 text-3xl font-black uppercase tracking-tight text-foreground sm:text-5xl">
                     {plan?.name ?? "Cliente"}
                   </h3>
-                  <p className="mt-2 max-w-md text-sm font-semibold leading-relaxed text-white/75">
+                  <p className="mt-2 max-w-md text-sm font-semibold leading-relaxed text-foreground/75">
                     {plan?.benefit ?? "Escolha um plano para liberar beneficios mensais."}
                   </p>
                 </div>
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white shadow-lg backdrop-blur">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-sm backdrop-blur">
                   <HugeiconsIcon icon={CrownIcon} size={24} />
                 </span>
               </div>
@@ -1948,51 +2086,57 @@ function PlanScreen({
         </div>
       )}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="client-card p-4 sm:p-5">
-          <p className="text-[9px] font-black uppercase tracking-[0.24em] text-primary-contrast">
-            Beneficios
-          </p>
-          <div className="mt-4 grid gap-2">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="premium-card p-6">
+          <div className="flex items-center gap-2">
+            <div className="h-1 w-8 rounded-full bg-primary" />
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+              Vantagens Exclusivas
+            </p>
+          </div>
+          <div className="mt-6 grid gap-3">
             {benefits.map((benefit) => (
-              <div key={benefit} className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 p-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={17} />
+              <div key={benefit} className="flex items-center gap-4 rounded-xl border border-border/40 bg-muted/20 p-4 transition-colors hover:bg-muted/40">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} />
                 </span>
-                <p className="text-sm font-bold leading-snug">{benefit}</p>
+                <p className="text-sm font-bold leading-snug text-foreground">{benefit}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="client-card p-4 sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-primary-contrast">
-                Servicos inclusos
-              </p>
-              <h3 className="mt-1 text-xl font-black uppercase tracking-tight">
-                Pode usar no plano
+        <div className="premium-card p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="h-1 w-8 rounded-full bg-primary" />
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+                  Catálogo do Plano
+                </p>
+              </div>
+              <h3 className="mt-3 text-2xl font-black uppercase tracking-tight">
+                Serviços Inclusos
               </h3>
             </div>
-            <span className="text-2xl font-black text-primary-contrast">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-3xl font-black text-primary border border-primary/20">
               {planServices.length}
-            </span>
+            </div>
           </div>
-          <div className="mt-4 grid gap-2">
+          <div className="mt-6 grid gap-3">
             {planServices.slice(0, 5).map((service) => (
-              <div key={service.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-background/70 p-3">
+              <div key={service.id} className="group/service flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-muted/20 p-4 transition-all hover:border-primary/20 hover:bg-card">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-black uppercase">
+                  <p className="truncate text-sm font-black uppercase tracking-tight text-foreground">
                     {service.name}
                   </p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
                     {service.duration} · {service.category}
                   </p>
                 </div>
-                <p className="shrink-0 text-sm font-black text-primary-contrast">
+                <div className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20">
                   Incluso
-                </p>
+                </div>
               </div>
             ))}
           </div>
@@ -2066,7 +2210,7 @@ function AvailablePlansDialog({
               className="py-12"
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               {plans.map((plan) => {
                 const current = plan.name === currentPlanName
 
@@ -2075,39 +2219,47 @@ function AvailablePlansDialog({
                     key={plan.id}
                     type="button"
                     onClick={() => onSelectPlan(plan)}
-                    className="client-plan-option-card group min-w-0 p-4 text-left transition"
+                    className="client-plan-option-card group relative flex flex-col p-6 text-left transition-all hover:-translate-y-1"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-primary-contrast">
-                          {current ? "Plano atual" : plan.status}
-                        </p>
-                        <h3 className="mt-1 truncate text-xl font-black uppercase tracking-tight">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "flex size-1.5 rounded-full animate-pulse",
+                            current ? "bg-primary" : "bg-primary/40"
+                          )} />
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                            {current ? "Seu Plano Atual" : plan.status}
+                          </p>
+                        </div>
+                        <h3 className="mt-2 truncate text-2xl font-black uppercase tracking-tight text-foreground">
                           {plan.name}
                         </h3>
-                        <p className="mt-2 line-clamp-2 text-xs font-semibold leading-relaxed text-muted-foreground">
+                        <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-muted-foreground">
                           {plan.benefit}
                         </p>
                       </div>
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <HugeiconsIcon icon={CrownIcon} size={20} />
+                      <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+                        <HugeiconsIcon icon={CrownIcon} size={24} />
                       </span>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-2 gap-2">
-                      <PlanMiniMetric label="Mensal" value={formatCurrency(plan.price)} />
-                      <PlanMiniMetric label="Limite" value={`${plan.servicesLimit} usos`} />
+                    <div className="mt-6 grid grid-cols-2 gap-3">
+                      <PlanMiniMetric label="Valor Mensal" value={formatCurrency(plan.price)} />
+                      <PlanMiniMetric label="Limite Mensal" value={`${plan.servicesLimit} usos`} />
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between border-t pt-3">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                        {current ? "Gerenciar" : "Assinar agora"}
+                    <div className="mt-6 flex items-center justify-between border-t border-border/40 pt-4">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+                        {current ? "Gerenciar Assinatura" : "Assinar Este Plano"}
                       </span>
-                      <HugeiconsIcon
-                        icon={ArrowRight01Icon}
-                        size={18}
-                        className="text-primary-contrast transition group-hover:translate-x-0.5"
-                      />
+                      <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground">
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          size={16}
+                          className="transition group-hover:translate-x-0.5"
+                        />
+                      </div>
                     </div>
                   </button>
                 )
@@ -2159,36 +2311,43 @@ function StripeLikeCheckout({
   paymentStatus: "idle" | "processing" | "success"
 }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-      <div className="plan-premium-card rounded-lg p-5 text-white">
-        <p className="text-[10px] font-black uppercase tracking-[0.32em] text-white/70">
-          Assinatura
-        </p>
-        <h3 className="mt-2 text-3xl font-black uppercase tracking-tight">
-          {plan.name}
-        </h3>
-        <p className="mt-2 text-sm font-semibold leading-relaxed text-white/75">
-          {plan.benefit}
-        </p>
-        <div className="mt-6 grid gap-2">
-          <PlanCardMetric label="Mensalidade" value={formatCurrency(plan.price)} />
-          <PlanCardMetric label="Limite mensal" value={`${plan.servicesLimit} servicos`} />
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="plan-premium-card flex flex-col justify-between rounded-3xl p-6 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex size-1.5 rounded-full bg-primary/40" />
+            <p className="text-[10px] font-black uppercase tracking-[0.32em] text-muted-foreground/80">
+              Assinatura Selecionada
+            </p>
+          </div>
+          <h3 className="mt-4 text-4xl font-black uppercase tracking-tight text-foreground sm:text-5xl">
+            {plan.name}
+          </h3>
+          <p className="mt-3 text-sm font-medium leading-relaxed text-foreground/75">
+            {plan.benefit}
+          </p>
+        </div>
+        
+        <div className="mt-8 grid gap-3">
+          <PlanCardMetric label="Valor da Mensalidade" value={formatCurrency(plan.price)} />
+          <PlanCardMetric label="Capacidade do Plano" value={`${plan.servicesLimit} serviços p/ mês`} />
         </div>
       </div>
 
-      <div className="rounded-lg border bg-background p-4 shadow-sm">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="rounded-3xl border border-border/40 bg-card/50 p-6 shadow-sm backdrop-blur-sm">
+        <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.24em] text-muted-foreground">
-              Stripe checkout
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground/60">
+              Checkout Seguro
             </p>
-            <h3 className="mt-1 text-lg font-black uppercase tracking-tight">
-              Pagamento seguro
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-tight">
+              Dados de Pagamento
             </h3>
           </div>
-          <span className="rounded bg-muted px-2 py-1 text-[10px] font-black uppercase tracking-widest">
-            Teste
-          </span>
+          <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20">
+            <span className="flex size-1.5 rounded-full bg-primary animate-pulse" />
+            Simulação
+          </div>
         </div>
 
         <div className="grid gap-3">
@@ -2243,22 +2402,22 @@ function StripeLikeCheckout({
 
 function PlanMiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-muted/30 p-2">
-      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+    <div className="rounded-xl border border-border/40 bg-muted/30 p-3 transition-colors hover:bg-muted/50">
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
         {label}
       </p>
-      <p className="mt-1 truncate text-sm font-black uppercase">{value}</p>
+      <p className="mt-1 truncate text-sm font-black uppercase tracking-tight">{value}</p>
     </div>
   )
 }
 
 function PlanCardMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/15 bg-white/10 p-3 backdrop-blur">
-      <p className="text-[9px] font-black uppercase tracking-widest text-white/60">
+    <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4 backdrop-blur-md transition-colors hover:bg-primary/10">
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
         {label}
       </p>
-      <p className="mt-1 text-lg font-black uppercase tracking-tight text-white">
+      <p className="mt-1 text-xl font-black uppercase tracking-tight text-foreground sm:text-2xl">
         {value}
       </p>
     </div>
@@ -2449,64 +2608,81 @@ function AppointmentCard({
   return (
     <div
       className={cn(
-        "client-premium-card overflow-hidden",
-        isCanceled && "grayscale"
+        "relative flex flex-col overflow-hidden rounded-[2rem] border-[3px] border-primary/30 bg-background shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-primary/10",
+        isCanceled && "opacity-60 grayscale"
       )}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-primary/10 p-4 sm:p-5">
-        <div className="min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-primary-contrast">
-            Reserva premium
-          </p>
-          <h4 className="mt-1 truncate text-xl font-black uppercase tracking-tight sm:text-2xl">
-            {appointment.detail}
-          </h4>
-          <p className="mt-1 text-xs font-bold text-muted-foreground">
-            {formatLongDate(appointment.date)}
-          </p>
-        </div>
-        <div
-          className={cn(
-            "rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-widest",
-            isCanceled
-              ? "border-border bg-muted text-muted-foreground"
-              : "border-primary/30 bg-primary/10 text-primary-contrast"
+      {/* Ticket Header/Main Info */}
+      <div className="relative p-6 pb-10">
+        {/* Left Cutout */}
+        <div className="absolute -bottom-5 -left-5 size-10 rounded-full border-[3px] border-primary/30 bg-background shadow-inner" />
+        {/* Right Cutout */}
+        <div className="absolute -bottom-5 -right-5 size-10 rounded-full border-[3px] border-primary/30 bg-background shadow-inner" />
+        
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="size-2.5 rounded-full bg-primary animate-pulse" />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/80">
+                Reserva Confirmada
+              </p>
+            </div>
+            <h4 className="mt-4 truncate text-4xl font-black uppercase tracking-tight text-foreground sm:text-5xl">
+              {appointment.detail}
+            </h4>
+            <p className="mt-2 text-sm font-black text-muted-foreground uppercase tracking-[0.2em]">
+              {formatLongDate(appointment.date)}
+            </p>
+          </div>
+          
+          {!isCanceled && (
+            <div className="rounded-full bg-primary px-5 py-2 text-[10px] font-black uppercase tracking-widest text-primary-foreground shadow-xl shadow-primary/30">
+              Ativo
+            </div>
           )}
-        >
-          {isCanceled ? "Cancelado" : "Confirmado"}
+        </div>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <AppointmentDetail icon={Clock01Icon} label="Horário de Início" value={appointment.start} />
+          <AppointmentDetail icon={Scissor01Icon} label="Tempo Estimado" value={duration} />
+          <AppointmentDetail icon={UserMultipleIcon} label="Barbeiro" value={appointment.barber} />
+          <AppointmentDetail icon={Wallet02Icon} label="Total Previsto" value={service ? formatCurrency(service.price) : "A combinar"} />
         </div>
       </div>
 
-      <div className="grid gap-2 p-4 sm:grid-cols-2 sm:p-5">
-        <AppointmentDetail icon={Clock01Icon} label="Horario" value={`${appointment.start} - ${appointment.end}`} />
-        <AppointmentDetail icon={Scissor01Icon} label="Duracao" value={duration} />
-        <AppointmentDetail icon={UserMultipleIcon} label="Profissional" value={appointment.barber} />
-        <AppointmentDetail icon={Wallet02Icon} label="Valor estimado" value={service ? formatCurrency(service.price) : "No local"} />
-      </div>
+      {/* Perforation Line */}
+      <div className="relative h-px w-full border-t-[3px] border-dashed border-primary/30 px-10" />
 
-      <div className="grid grid-cols-2 gap-2 border-t border-primary/10 p-4 pt-3 sm:grid-cols-3 sm:p-5 sm:pt-4">
-        <Button
-          type="button"
-          onClick={onReschedule}
-          disabled={isCanceled}
-          className="h-10 rounded-lg bg-muted text-foreground border border-border/40 text-[10px] font-black uppercase tracking-widest hover:bg-muted/80"
-        >
-          Remarcar
-        </Button>
-        <Button
-          type="button"
-          onClick={onCancel}
-          disabled={isCanceled || !canCancel}
-          className="h-10 rounded-lg bg-red-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700"
-        >
-          Cancelar
-        </Button>
+      {/* Ticket Footer/Actions */}
+      <div className="flex flex-col gap-4 bg-muted/20 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onReschedule}
+            disabled={isCanceled}
+            className="h-12 flex-1 rounded-2xl border-2 border-primary/20 bg-background px-8 text-[11px] font-black uppercase tracking-widest transition-all hover:bg-primary/10 hover:border-primary/40 sm:flex-none"
+          >
+            Remarcar
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            disabled={isCanceled || !canCancel}
+            className="h-12 flex-1 rounded-2xl text-[11px] font-black uppercase tracking-widest text-destructive transition-all hover:bg-destructive/10 sm:flex-none sm:px-8"
+          >
+            Cancelar
+          </Button>
+        </div>
+
         <Button
           type="button"
           onClick={onDetails}
-          className="green-shine col-span-2 h-10 rounded-lg text-[10px] font-black uppercase tracking-widest sm:col-span-1"
+          className="green-shine h-14 rounded-2xl px-10 text-[11px] font-black uppercase tracking-[0.25em] shadow-2xl shadow-primary/30"
         >
-          Ver detalhes
+          Detalhes da Reserva
+          <HugeiconsIcon icon={ArrowRight01Icon} size={20} />
         </Button>
       </div>
     </div>
@@ -2523,15 +2699,15 @@ function AppointmentDetail({
   value: string
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-border/50 bg-background/70 p-3">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-primary-contrast">
-        <HugeiconsIcon icon={icon} size={17} />
+    <div className="group/item flex items-center gap-4 rounded-2xl border-2 border-border/80 bg-muted/30 p-5 transition-all hover:border-primary/50 hover:bg-muted/50 hover:shadow-md">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-background text-primary shadow-sm border border-border/50 transition-transform group-hover/item:scale-110">
+        <HugeiconsIcon icon={icon} size={22} />
       </span>
       <div className="min-w-0">
-        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
           {label}
         </p>
-        <p className="truncate text-sm font-black uppercase tracking-tight">
+        <p className="mt-1 truncate text-base font-black uppercase tracking-tight text-foreground">
           {value}
         </p>
       </div>
@@ -2808,15 +2984,19 @@ function StepDots({
   )
 }
 
-function MetricTile({ icon, label, value }: { icon: IconSvgElement, label: string, value: string }) {
+function MetricTile({ icon, label, value }: { icon: IconSvgElement; label: string; value: string }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 sm:block sm:space-y-4">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground sm:size-12">
-        <HugeiconsIcon icon={icon} size={24} />
+    <div className="group/metric flex items-center gap-4 rounded-2xl border border-border/40 bg-card/50 p-4 transition-all hover:border-primary/30 hover:bg-card">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-primary transition-transform group-hover/metric:scale-110">
+        <HugeiconsIcon icon={icon} size={20} />
       </span>
       <div className="min-w-0">
-        <p className="text-[11px] font-black tracking-widest text-muted-foreground uppercase">{label}</p>
-        <p className="mt-1 text-base font-black leading-tight tracking-tight break-words sm:text-xl">{value}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+          {label}
+        </p>
+        <p className="mt-0.5 truncate text-sm font-black uppercase tracking-tight text-foreground">
+          {value}
+        </p>
       </div>
     </div>
   )

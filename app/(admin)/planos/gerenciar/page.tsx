@@ -13,6 +13,8 @@ import {
   Search01Icon,
 } from "@hugeicons/core-free-icons"
 
+import { cn } from "@/lib/utils"
+
 import {
   database,
   type Plan as DatabasePlan,
@@ -419,7 +421,7 @@ function Field({
 
 function PremiumInfo({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-md border border-white/35 bg-white/25 px-3 py-2 shadow-sm backdrop-blur">
+    <div className="PremiumInfo min-w-0 rounded-md border border-white/35 bg-white/25 px-3 py-2 shadow-sm backdrop-blur">
       <p className="text-xs font-semibold text-foreground/58 uppercase">
         {label}
       </p>
