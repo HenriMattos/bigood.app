@@ -180,85 +180,278 @@ export type CashMovement = {
 }
 
 const company = {
-  corporateName: "",
-  tradeName: "",
-  cnpj: "",
-  email: "",
+  corporateName: "Studio Simetria ME",
+  tradeName: "Studio Simetria",
+  cnpj: "12.345.678/0001-90",
+  email: "contato@studiosimetria.com.br",
   timezone: "America/Sao_Paulo",
-  phone: "",
-  slug: "",
+  phone: "(11) 98765-4321",
+  slug: "studio-simetria",
   primaryColor: { r: 145, g: 230, b: 104 },
   logoUrl: "",
-  logoAlt: "",
+  logoAlt: "Studio Simetria Logo",
   iconUrl: "",
   carouselImage1: "",
   carouselImage2: "",
   carouselImage3: "",
-  introTitle1: "",
-  introSubtitle1: "",
-  introTitle2: "",
-  introSubtitle2: "",
-  introTitle3: "",
-  introSubtitle3: "",
-  chairs: [] as string[],
-  professionalRoles: [] as string[],
-  serviceCategories: [] as string[],
+  introTitle1: "Estilo e Precisão",
+  introSubtitle1: "Onde cada corte é uma obra de arte.",
+  introTitle2: "Atendimento Exclusivo",
+  introSubtitle2: "Sua satisfação é nossa prioridade.",
+  introTitle3: "Planos de Assinatura",
+  introSubtitle3: "Economia e conveniência para você.",
+  chairs: ["Cadeira 01"],
+  professionalRoles: ["Barbeiro", "Proprietário"],
+  serviceCategories: ["Cabelo", "Barba", "Combo"],
 }
 
-type RevenueDay = {
-  day: string
-  weekday: string
-  gross: number
-  net: number
-  previous: number
-  appointments: number
-}
+const services: ServiceCatalogItem[] = [
+  {
+    id: 1,
+    name: "Corte Simetria",
+    category: "Cabelo",
+    duration: "45 min",
+    durationMinutes: 45,
+    price: 60,
+    credits: 1,
+    repurchaseDays: 20,
+    professionals: "Paulo Jean jr",
+    status: "Ativo",
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-01",
+    hidden: false,
+    fitIn: true,
+    startingFrom: false,
+    featured: true,
+    order: 1,
+  },
+  {
+    id: 2,
+    name: "Barba Terapia",
+    category: "Barba",
+    duration: "30 min",
+    durationMinutes: 30,
+    price: 45,
+    credits: 1,
+    repurchaseDays: 15,
+    professionals: "Paulo Jean jr",
+    status: "Ativo",
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-01",
+    hidden: false,
+    fitIn: true,
+    startingFrom: false,
+    featured: false,
+    order: 2,
+  },
+]
 
-type PeakHour = {
-  time: string
-  appointments: number
-  revenue: number
-  occupancy: number
-}
+const plans: Plan[] = [
+  {
+    id: 1,
+    name: "Essencial",
+    benefit: "2 Cortes por mês",
+    price: 80,
+    status: "Ativo",
+    recurrence: "Mensal",
+    servicesLimit: 2,
+    churnRisk: "Baixo",
+  },
+  {
+    id: 2,
+    name: "Vip Simetria",
+    benefit: "Corte e Barba Ilimitados",
+    price: 120,
+    status: "Destaque",
+    recurrence: "Mensal",
+    servicesLimit: 8,
+    churnRisk: "Baixo",
+  },
+]
+
+const professionals: Professional[] = [
+  {
+    id: 1,
+    name: "Paulo Jean jr",
+    role: "Proprietário / Barbeiro",
+    commission: "100%",
+    scheduleStart: "09:00",
+    scheduleEnd: "19:00",
+    status: "Ativo",
+  },
+]
+
+// Gerando 45 assinantes
+const firstNames = ["Gabriel", "Lucas", "Mateus", "Felipe", "Thiago", "Ricardo", "Anderson", "Bruno", "Caio", "Daniel", "Eduardo", "Fabio", "Gustavo", "Henrique", "Igor", "João", "Kevin", "Leonardo", "Marcos", "Nathan", "Otavio", "Pedro", "Rafael", "Samuel", "Vitor", "Yuri", "Willian", "Zeca", "Alex", "Beto", "Cristiano", "Diego", "Erick", "Fernando", "Gilberto", "Hugo", "Italo", "Jorge", "Luiz", "Marcelo", "Nilton", "Osmar", "Paulo", "Quirino", "Renato"]
+const lastNames = ["Silva", "Santos", "Oliveira", "Souza", "Rodrigues", "Ferreira", "Alves", "Pereira", "Lima", "Gomes", "Costa", "Ribeiro", "Martins", "Carvalho", "Almeida", "Lopes", "Soares", "Fernandes", "Vieira", "Barbosa", "Rocha", "Dias", "Nascimento", "Andrade", "Moreira", "Nunes", "Marques", "Machado", "Mendes", "Freitas", "Cardoso", "Ramos", "Santana", "Teixeira", "Moura", "Cavalcante", "Dias", "Castro", "Borges", "Campos"]
+
+const clients: Client[] = firstNames.slice(0, 45).map((firstName, i) => ({
+  id: i + 1,
+  name: `${firstName} ${lastNames[i % lastNames.length]}`,
+  phone: `(11) 9${Math.floor(10000000 + Math.random() * 90000000)}`,
+  email: `${firstName.toLowerCase()}@email.com`,
+  visits: 12 + i,
+  averageTicket: i % 2 === 0 ? 80 : 120,
+  status: "recorrente",
+  lastVisit: toDateInputValue(addDays(new Date(), -Math.floor(Math.random() * 15))),
+  favoriteService: i % 3 === 0 ? "Barba Terapia" : "Corte Simetria",
+  active: true,
+  createdAt: "2023-05-01",
+  planName: i % 2 === 0 ? "Essencial" : "Vip Simetria",
+}))
+
+const subscriptions: Subscription[] = clients.map((client, i) => ({
+  id: i + 1,
+  clientId: client.id,
+  client: client.name,
+  phone: client.phone,
+  plan: client.planName!,
+  value: client.averageTicket,
+  nextCharge: toDateInputValue(addDays(new Date(), Math.floor(Math.random() * 20))),
+  startedAt: "2023-06-01",
+  status: "Ativa",
+}))
+
+const todayInput = toDateInputValue(new Date())
+
+const agendaEvents: AgendaEvent[] = [
+  {
+    id: 1,
+    barber: "Paulo Jean jr",
+    date: todayInput,
+    start: "09:00",
+    end: "09:45",
+    title: "Gabriel Silva",
+    detail: "Corte Simetria",
+    type: "appointment",
+  },
+  {
+    id: 2,
+    barber: "Paulo Jean jr",
+    date: todayInput,
+    start: "10:00",
+    end: "10:30",
+    title: "Lucas Santos",
+    detail: "Barba Terapia",
+    type: "appointment",
+  },
+  {
+    id: 3,
+    barber: "Paulo Jean jr",
+    date: todayInput,
+    start: "11:00",
+    end: "11:45",
+    title: "Mateus Oliveira",
+    detail: "Corte Simetria",
+    type: "appointment",
+  },
+]
+
+const comandas: Comanda[] = [
+  {
+    id: "CMD-001",
+    time: "09:45",
+    client: "Gabriel Silva",
+    barber: "Paulo Jean jr",
+    chair: "Cadeira 01",
+    status: "paga",
+    payment: "Pix",
+    items: [{ name: "Corte Simetria", quantity: 1, unitPrice: 60, category: "servico" }],
+  },
+]
+
+const paymentMethods: PaymentMethod[] = [
+  {
+    id: 1,
+    name: "Dinheiro",
+    description: "Pagamento em especie",
+    status: "Ativo",
+    fee: 0,
+    settlement: "Imediato",
+    amount: 150,
+    transactions: 3,
+  },
+  {
+    id: 2,
+    name: "Pix",
+    description: "Transferencia instantanea",
+    status: "Ativo",
+    fee: 0,
+    settlement: "Imediato",
+    amount: 850,
+    transactions: 12,
+  },
+  {
+    id: 3,
+    name: "Cartão de Crédito",
+    description: "Maquininha Stone",
+    status: "Ativo",
+    fee: 3.5,
+    settlement: "D+1",
+    amount: 1200,
+    transactions: 15,
+  },
+]
+
+const revenueWeek: RevenueDay[] = [
+  { day: "01/05", weekday: "Seg", gross: 120, net: 115, previous: 110, appointments: 2 },
+  { day: "02/05", weekday: "Ter", gross: 180, net: 175, previous: 150, appointments: 3 },
+  { day: "03/05", weekday: "Qua", gross: 150, net: 145, previous: 160, appointments: 3 },
+  { day: "04/05", weekday: "Qui", gross: 200, net: 190, previous: 180, appointments: 4 },
+  { day: "05/05", weekday: "Sex", gross: 250, net: 240, previous: 230, appointments: 5 },
+  { day: "06/05", weekday: "Sab", gross: 350, net: 335, previous: 320, appointments: 7 },
+  { day: "07/05", weekday: "Dom", gross: 0, net: 0, previous: 0, appointments: 0 },
+]
+
+const peakHours: PeakHour[] = [
+  { time: "09:00", appointments: 4, revenue: 240, occupancy: 80 },
+  { time: "10:00", appointments: 3, revenue: 180, occupancy: 65 },
+  { time: "11:00", appointments: 5, revenue: 300, occupancy: 95 },
+  { time: "14:00", appointments: 2, revenue: 120, occupancy: 55 },
+  { time: "15:00", appointments: 4, revenue: 240, occupancy: 75 },
+  { time: "16:00", appointments: 5, revenue: 300, occupancy: 100 },
+  { time: "17:00", appointments: 4, revenue: 240, occupancy: 85 },
+  { time: "18:00", appointments: 3, revenue: 180, occupancy: 65 },
+]
 
 export const database = {
   company,
-  services: [] as ServiceCatalogItem[],
-  plans: [] as Plan[],
-  clients: [] as Client[],
-  subscriptions: [] as Subscription[],
+  services,
+  plans,
+  clients,
+  subscriptions,
   overdueSubscriptions: [] as OverdueSubscription[],
-  professionals: [] as Professional[],
+  professionals,
   products: [] as Product[],
-  agendaEvents: [] as AgendaEvent[],
-  comandas: [] as Comanda[],
+  agendaEvents,
+  comandas,
   cashMovements: [] as CashMovement[],
   bankAccounts: [] as BankAccount[],
   financialCategories: [] as FinancialCategory[],
   financialMovements: [] as FinancialMovement[],
-  paymentMethods: [] as PaymentMethod[],
+  paymentMethods,
   analytics: {
-    activeClients: 0,
-    newClientsThisMonth: 0,
-    recurringClients: 0,
-    clientsWithoutPlan: 0,
-    activeSubscriptions: 0,
-    servicesCompletedThisMonth: 0,
-    averageTicket: 0,
-    monthlyServiceRevenue: 0,
-    monthlyRecurringRevenue: 0,
-    monthlyProductRevenue: 0,
-    monthlyGrossRevenue: 0,
-    monthlyExpenses: 0,
-    monthlyNetRevenue: 0,
-    paymentFeesEstimated: 0,
-    overdueAmount: 0,
-    revenueWeek: [] as RevenueDay[],
+    activeClients: 85,
+    newClientsThisMonth: 8,
+    recurringClients: 45,
+    clientsWithoutPlan: 40,
+    activeSubscriptions: 45,
+    servicesCompletedThisMonth: 65,
+    averageTicket: 95,
+    monthlyServiceRevenue: 1500,
+    monthlyRecurringRevenue: 4300,
+    monthlyProductRevenue: 200,
+    monthlyGrossRevenue: 6000,
+    monthlyExpenses: 2800,
+    monthlyNetRevenue: 3200,
+    paymentFeesEstimated: 120,
+    overdueAmount: 80,
+    revenueWeek,
     revenuePeriod: {
-      label: "",
-      comparison: "",
+      label: "Esta semana",
+      comparison: "Semana passada",
     },
-    peakHours: [] as PeakHour[],
+    peakHours,
   },
 }
 

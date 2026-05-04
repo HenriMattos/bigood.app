@@ -51,10 +51,23 @@ export function getClientStatusTone(status: ClientStatus) {
   return tones[status]
 }
 
-function getDueDate(displayDate: string, days: number) {
-  const [day, month, year] = displayDate.split("/").map(Number)
-  const date = new Date(year, month - 1, day)
-  date.setDate(date.getDate() + days)
+function getDueDate(dateStr: string, days: number) {
+  let date: Date
 
+  if (dateStr.includes("-")) {
+    // Caso seja YYYY-MM-DD
+    const [year, month, day] = dateStr.split("-").map(Number)
+    date = new Date(year, month - 1, day)
+  } else {
+    // Caso seja DD/MM/YYYY
+    const [day, month, year] = dateStr.split("/").map(Number)
+    date = new Date(year, month - 1, day)
+  }
+
+  if (isNaN(date.getTime())) {
+    return "Data invalida"
+  }
+
+  date.setDate(date.getDate() + days)
   return new Intl.DateTimeFormat("pt-BR").format(date)
 }

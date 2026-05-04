@@ -120,24 +120,32 @@ export function getClientPortalTheme(themeId?: string) {
 export function getStoredClientPortalSettings(
   fallback: ClientPortalSettings
 ): ClientPortalSettings {
-  const storedSettings = {
-    ...fallback,
-    ...readStorage<ClientPortalSettings>(
-      CLIENT_PORTAL_SETTINGS_STORAGE_KEY,
-      fallback
-    ),
+  const stored = readStorage<ClientPortalSettings | null>(
+    CLIENT_PORTAL_SETTINGS_STORAGE_KEY,
+    null
+  )
+
+  // Se os dados salvos forem de outra empresa (nome diferente), ignoramos para usar o banco de dados atual
+  if (stored && stored.tradeName !== fallback.tradeName) {
+    return fallback
   }
+
+  const settings = {
+    ...fallback,
+    ...(stored || {}),
+  }
+
   const fallbackTheme =
-    storedSettings.mode === "dark"
+    settings.mode === "dark"
       ? clientPortalThemes.find((theme) => theme.mode === "dark") ??
         clientPortalThemes[0]
       : clientPortalThemes[0]
   const theme =
-    clientPortalThemes.find((item) => item.id === storedSettings.themeId) ??
+    clientPortalThemes.find((item) => item.id === settings.themeId) ??
     fallbackTheme
 
   return {
-    ...storedSettings,
+    ...settings,
     themeId: theme.id,
     mode: theme.mode,
   }
@@ -151,7 +159,16 @@ export function saveClientPortalSettings(settings: ClientPortalSettings) {
 }
 
 export function getStoredClientPlans<T extends Plan>(fallback: T[]) {
-  return readStorage<T[]>(CLIENT_PORTAL_PLANS_STORAGE_KEY, fallback)
+  const stored = readStorage<T[] | null>(CLIENT_PORTAL_PLANS_STORAGE_KEY, null)
+
+  // Se o primeiro plano salvo for diferente do banco atual, ignoramos
+  if (stored && stored.length > 0 && fallback.length > 0) {
+    if (stored[0].name !== fallback[0].name) {
+      return fallback
+    }
+  }
+
+  return stored || fallback
 }
 
 export function saveClientPlans<T extends Plan>(plans: T[]) {
@@ -161,7 +178,19 @@ export function saveClientPlans<T extends Plan>(plans: T[]) {
 export function getStoredClientSubscriptions<T extends Subscription>(
   fallback: T[]
 ) {
-  return readStorage<T[]>(CLIENT_PORTAL_SUBSCRIPTIONS_STORAGE_KEY, fallback)
+  const stored = readStorage<T[] | null>(
+    CLIENT_PORTAL_SUBSCRIPTIONS_STORAGE_KEY,
+    null
+  )
+
+  // Se o primeiro assinante for diferente, ignoramos
+  if (stored && stored.length > 0 && fallback.length > 0) {
+    if (stored[0].client !== fallback[0].client) {
+      return fallback
+    }
+  }
+
+  return stored || fallback
 }
 
 export function saveClientSubscriptions<T extends Subscription>(
