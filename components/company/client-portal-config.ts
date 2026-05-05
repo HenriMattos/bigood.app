@@ -77,17 +77,6 @@ export const clientPortalThemes: ClientPortalTheme[] = [
     accent: "#f8fafc",
     previewTextClass: "text-white",
   },
-  {
-    id: "gold-luxury",
-    name: "Luxury Gold",
-    description: "O máximo do luxo com toques dourados",
-    mode: "dark",
-    gradient: "linear-gradient(135deg, #1a1a1a 0%, #262626 50%, #d4af37 100%)",
-    primary: "#d4af37",
-    primaryForeground: "#1a1a1a",
-    accent: "#fdfc00",
-    previewTextClass: "text-[#d4af37]",
-  },
 ]
 
 export function createDefaultClientPortalSettings(company: {
@@ -240,12 +229,14 @@ export function getClientPortalCssVariables(
   const dark = theme.mode === "dark"
   
   // Cores baseadas no globals.css do admin
-  const background = dark ? "oklch(0.1288 0.0406 264.6952)" : "oklch(0.9842 0.0034 247.8575)"
+  const background = dark ? "oklch(0.1980 0.0300 264.6600)" : "oklch(0.9842 0.0034 247.8575)"
   const foreground = dark ? "oklch(0.9842 0.0034 247.8575)" : "oklch(0.235 0.055 145)"
-  const card = dark ? "oklch(0.2077 0.0398 265.7549)" : "oklch(1 0 0)"
-  const muted = dark ? "oklch(0.2795 0.0368 260.031)" : "oklch(0.9683 0.0069 247.8956)"
+  const card = dark ? "oklch(0.2520 0.0340 261.2000)" : "oklch(1 0 0)"
+  const popover = dark ? "oklch(0.2380 0.0340 262.5000)" : "oklch(1 0 0)"
+  const secondary = dark ? "oklch(0.3340 0.0300 260.2000)" : "oklch(0.9683 0.0069 247.8956)"
+  const muted = dark ? "oklch(0.2960 0.0280 260.2000)" : "oklch(0.9683 0.0069 247.8956)"
   const mutedForeground = dark ? "oklch(0.7107 0.0351 256.7878)" : "oklch(0.47 0.035 150)"
-  const border = dark ? "oklch(0.2795 0.0368 260.031)" : "oklch(0.9288 0.0126 255.5078)"
+  const border = dark ? "oklch(0.3920 0.0220 259.9000)" : "oklch(0.9288 0.0126 255.5078)"
 
   return {
     "--primary": theme.primary,
@@ -265,16 +256,20 @@ export function getClientPortalCssVariables(
     "--color-card": card,
     "--card-foreground": foreground,
     "--color-card-foreground": foreground,
-    "--popover": card,
-    "--color-popover": card,
+    "--popover": popover,
+    "--color-popover": popover,
     "--popover-foreground": foreground,
     "--color-popover-foreground": foreground,
+    "--secondary": secondary,
+    "--color-secondary": secondary,
+    "--secondary-foreground": foreground,
+    "--color-secondary-foreground": foreground,
     "--muted": muted,
     "--color-muted": muted,
     "--muted-foreground": mutedForeground,
     "--color-muted-foreground": mutedForeground,
-    "--accent": muted,
-    "--color-accent": muted,
+    "--accent": secondary,
+    "--color-accent": secondary,
     "--accent-foreground": foreground,
     "--color-accent-foreground": foreground,
     "--border": border,

@@ -37,59 +37,6 @@ type ProductItem = {
   value: number
 }
 
-type PlanTheme = {
-  id: string
-  name: string
-  description: string
-  gradient: string
-  textClass: string
-}
-
-const planThemes: PlanTheme[] = [
-  {
-    id: "verde-ouro",
-    name: "Verde ouro",
-    description: "Energia premium, crescimento e alto valor",
-    gradient: "linear-gradient(135deg, #059447 0%, #37d367 42%, #ffd43d 100%)",
-    textClass: "text-[#082814]",
-  },
-  {
-    id: "esmeralda-azul",
-    name: "Esmeralda azul",
-    description: "Moderno, limpo e tecnológico",
-    gradient: "linear-gradient(135deg, #00a86b 0%, #24c6dc 48%, #2f80ed 100%)",
-    textClass: "text-white",
-  },
-  {
-    id: "roxo-lima",
-    name: "Roxo lima",
-    description: "Criativo, jovem e chamativo",
-    gradient: "linear-gradient(135deg, #4c1d95 0%, #8b5cf6 46%, #bef264 100%)",
-    textClass: "text-white",
-  },
-  {
-    id: "por-do-sol",
-    name: "Pôr do sol",
-    description: "Quente, elegante e comercial",
-    gradient: "linear-gradient(135deg, #f97316 0%, #facc15 45%, #16a34a 100%)",
-    textClass: "text-[#251204]",
-  },
-  {
-    id: "grafite-neon",
-    name: "Grafite neon",
-    description: "Sofisticado, escuro e premium",
-    gradient: "linear-gradient(135deg, #111827 0%, #14532d 52%, #a3e635 100%)",
-    textClass: "text-white",
-  },
-  {
-    id: "rose-champagne",
-    name: "Rose champagne",
-    description: "Leve, refinado e diferente",
-    gradient: "linear-gradient(135deg, #be185d 0%, #f9a8d4 48%, #fde68a 100%)",
-    textClass: "text-white",
-  },
-]
-
 const serviceCategories = Array.from(
   new Set(serviceCatalog.map((service) => service.category))
 )
@@ -116,7 +63,6 @@ export default function CriarPlanosPage() {
   const [planBenefit, setPlanBenefit] = useState("")
   const [planValue, setPlanValue] = useState(0)
   const [servicesLimit, setServicesLimit] = useState(1)
-  const [selectedThemeId, setSelectedThemeId] = useState(planThemes[0].id)
   const [feedback, setFeedback] = useState("Plano ainda nao criado.")
   const [serviceCategoryDraft, setServiceCategoryDraft] = useState({
     name: "",
@@ -144,8 +90,6 @@ export default function CriarPlanosPage() {
   >([])
   const [productItems, setProductItems] = useState<ProductItem[]>([])
   const totalValue = useMemo(() => formatCurrency(planValue), [planValue])
-  const selectedTheme =
-    planThemes.find((theme) => theme.id === selectedThemeId) ?? planThemes[0]
 
   function createPlan() {
     if (!planName.trim() || planValue <= 0) {
@@ -244,13 +188,6 @@ export default function CriarPlanosPage() {
           <Field label="Valor do plano *">
             <MoneyInput value={planValue} onChange={setPlanValue} />
           </Field>
-          <Field className="md:col-span-2" label="Tema do card *">
-            <ThemePicker
-              themes={planThemes}
-              selectedTheme={selectedTheme}
-              onSelect={setSelectedThemeId}
-            />
-          </Field>
           <Field label="Taxa Cashback">
             <NumberInput suffix="%" />
           </Field>
@@ -288,10 +225,8 @@ export default function CriarPlanosPage() {
       <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <SectionCard title="Valores" description="Valores do plano">
           <div
-            className={`relative overflow-hidden rounded-md border p-4 ${selectedTheme.textClass}`}
-            style={{ background: selectedTheme.gradient }}
+            className="plan-premium-card relative overflow-hidden rounded-md border p-4"
           >
-            <div className="absolute inset-0 bg-white/16" />
             <div className="relative">
               <p className="text-sm font-medium opacity-75">
                 Valor total do plano
@@ -460,7 +395,7 @@ export default function CriarPlanosPage() {
                 setProductDraft((current) => ({ ...current, value }))
               }
             />
-          </Field>
+</Field>
           <Button onClick={addProduct}>Adicionar</Button>
         </div>
         <AddedProductList items={productItems} />
@@ -469,72 +404,6 @@ export default function CriarPlanosPage() {
   )
 }
 
-function ThemePicker({
-  themes,
-  selectedTheme,
-  onSelect,
-}: {
-  themes: PlanTheme[]
-  selectedTheme: PlanTheme
-  onSelect: (themeId: string) => void
-}) {
-  return (
-    <div className="grid gap-3">
-      <div
-        className={`relative min-h-32 overflow-hidden rounded-lg border p-4 ${selectedTheme.textClass}`}
-        style={{ background: selectedTheme.gradient }}
-      >
-        <div className="absolute inset-0 bg-white/14" />
-        <div className="absolute inset-y-[-40%] left-[-24%] w-24 rotate-12 bg-white/70 blur-sm" />
-        <div className="relative">
-          <p className="text-xs font-semibold uppercase opacity-70">
-            Tema selecionado
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold">{selectedTheme.name}</h3>
-          <p className="mt-1 max-w-md text-sm font-medium opacity-75">
-            {selectedTheme.description}
-          </p>
-        </div>
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        {themes.map((theme) => {
-          const selected = theme.id === selectedTheme.id
-
-          return (
-            <button
-              key={theme.id}
-              type="button"
-              aria-pressed={selected}
-              className={`min-w-0 rounded-md border p-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                selected
-                  ? "border-primary ring-2 ring-primary/25"
-                  : "border-border"
-              }`}
-              onClick={() => onSelect(theme.id)}
-            >
-              <span
-                className={`relative block h-20 overflow-hidden rounded-md ${theme.textClass}`}
-                style={{ background: theme.gradient }}
-              >
-                <span className="absolute inset-0 bg-white/10" />
-                <span className="absolute inset-y-[-35%] left-[-22%] w-14 rotate-12 bg-white/65 blur-sm" />
-                <span className="relative block p-3 text-sm font-semibold">
-                  {theme.name}
-                </span>
-              </span>
-              <span className="mt-2 block truncate text-sm font-medium">
-                {theme.name}
-              </span>
-              <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                {theme.description}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
 
 function Field({
   label,

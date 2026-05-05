@@ -112,6 +112,7 @@ const initialCompanyForm = {
 
 export function EmpresaView() {
   const [mounted, setMounted] = useState(false)
+  const [uploadResetToken, setUploadResetToken] = useState(0)
   const [form, setForm] = useState({
     ...initialCompanyForm,
     tradeName: database.company.tradeName,
@@ -242,6 +243,56 @@ export function EmpresaView() {
 
     persistPortalSettings()
     setFeedback("Dados salvos e portal do cliente atualizado.")
+  }
+
+  function restoreDefaults() {
+    const defaultSettings = createDefaultClientPortalSettings(database.company)
+
+    window.localStorage.removeItem(COMPANY_LOGO_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_ICON_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY)
+
+    setUploadResetToken((current) => current + 1)
+
+    setForm((current) => ({
+      ...current,
+      corporateName: database.company.corporateName,
+      tradeName: defaultSettings.tradeName,
+      cnpj: database.company.cnpj,
+      email: database.company.email,
+      timezone: database.company.timezone,
+      phone: database.company.phone,
+      slug: defaultSettings.slug,
+      logoUrl: defaultSettings.logoUrl ?? "",
+      iconUrl: defaultSettings.iconUrl ?? "",
+      carouselImage1: defaultSettings.carouselImage1 ?? "",
+      carouselImage2: defaultSettings.carouselImage2 ?? "",
+      carouselImage3: defaultSettings.carouselImage3 ?? "",
+      introTitle1: defaultSettings.introTitle1 ?? "",
+      introSubtitle1: defaultSettings.introSubtitle1 ?? "",
+      introTitle2: defaultSettings.introTitle2 ?? "",
+      introSubtitle2: defaultSettings.introSubtitle2 ?? "",
+      introTitle3: defaultSettings.introTitle3 ?? "",
+      introSubtitle3: defaultSettings.introSubtitle3 ?? "",
+      street: defaultSettings.address?.street ?? "",
+      number: defaultSettings.address?.number ?? "",
+      neighborhood: defaultSettings.address?.neighborhood ?? "",
+      city: defaultSettings.address?.city ?? "",
+      state: defaultSettings.address?.state ?? "",
+      zip: defaultSettings.address?.zip ?? "",
+      mapsUrl: defaultSettings.address?.mapsUrl ?? "",
+      instagram: defaultSettings.social?.instagram ?? "",
+      whatsapp: defaultSettings.social?.whatsapp ?? "",
+      facebook: defaultSettings.social?.facebook ?? "",
+      clientThemeId: defaultSettings.themeId,
+      clientMode: defaultSettings.mode,
+    }))
+
+    saveClientPortalSettings(defaultSettings)
+    window.dispatchEvent(new Event(CLIENT_PORTAL_SYNC_EVENT))
+    setFeedback("Dados restaurados ao padrÃ£o. Uploads removidos.")
   }
 
   return (
@@ -404,37 +455,49 @@ export function EmpresaView() {
         </label>
       </SectionCard>
 
-      <SectionCard title="Imagens da empresa">
+      <SectionCard
+        title="Imagens da empresa"
+        action={
+          <Button size="sm" variant="outline" onClick={restoreDefaults}>
+            Restaurar padrao
+          </Button>
+        }
+      >
         <div className="grid gap-3 lg:grid-cols-3">
           <UploadField
             label="Logo"
             description="A logo deve possuir as dimensões de 1024 x 1024 pixels."
             previewUrl={form.logoUrl}
             storageKey={COMPANY_LOGO_STORAGE_KEY}
+            resetToken={uploadResetToken}
           />
           <UploadField
             label="Ícone"
             description="O ícone deve possuir as dimensões de 512x512 pixels."
             previewUrl={form.iconUrl}
             storageKey={COMPANY_ICON_STORAGE_KEY}
+            resetToken={uploadResetToken}
           />
           <UploadField
             label="Carrossel 1"
             description="As imagens devem possuir as dimensões de 512 x 590 pixels."
             previewUrl={form.carouselImage1}
             storageKey={COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY}
+            resetToken={uploadResetToken}
           />
           <UploadField
             label="Carrossel 2"
             description="As imagens devem possuir as dimensões de 512 x 590 pixels."
             previewUrl={form.carouselImage2}
             storageKey={COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY}
+            resetToken={uploadResetToken}
           />
           <UploadField
             label="Carrossel 3"
             description="As imagens devem possuir as dimensões de 512 x 590 pixels."
             previewUrl={form.carouselImage3}
             storageKey={COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY}
+            resetToken={uploadResetToken}
           />
         </div>
       </SectionCard>
@@ -657,7 +720,7 @@ export function EmpresaView() {
           </FormField>
         </FormGrid>
         <ResponsiveActions className="mt-5 border-t pt-5">
-          <Button variant="outline" onClick={() => setForm(initialCompanyForm)}>
+          <Button variant="outline" onClick={restoreDefaults}>
             Restaurar dados
           </Button>
           <Button onClick={saveCompany}>
@@ -726,18 +789,33 @@ function UploadField({
   multiple,
   previewUrl,
   storageKey,
+  resetToken,
 }: {
   label: string
   description: string
   multiple?: boolean
   previewUrl?: string
   storageKey?: string
+  resetToken?: number
 }) {
   const [preview, setPreview] = useState(() => {
     if (typeof window === "undefined" || !storageKey) return previewUrl
 
     return window.localStorage.getItem(storageKey) || previewUrl
   })
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      if (!storageKey) {
+        setPreview(previewUrl)
+        return
+      }
+
+      setPreview(window.localStorage.getItem(storageKey) || previewUrl)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [previewUrl, resetToken, storageKey])
 
   function updatePreview(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]

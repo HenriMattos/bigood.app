@@ -65,37 +65,37 @@
 }
 
 .dark {
-  --background: oklch(0.1288 0.0406 264.6952);
+  --background: oklch(0.1980 0.0300 264.6600);
   --foreground: oklch(0.9842 0.0034 247.8575);
-  --card: oklch(0.2077 0.0398 265.7549);
+  --card: oklch(0.2520 0.0340 261.2000);
   --card-foreground: oklch(0.9842 0.0034 247.8575);
-  --popover: oklch(0.2077 0.0398 265.7549);
+  --popover: oklch(0.2380 0.0340 262.5000);
   --popover-foreground: oklch(0.9842 0.0034 247.8575);
   --primary: oklch(0.857 0.1698 134.5554);
   --primary-foreground: oklch(0.2869 0.0839 135.0504);
-  --secondary: oklch(0.2795 0.0368 260.031);
+  --secondary: oklch(0.3340 0.0300 260.2000);
   --secondary-foreground: oklch(0.9842 0.0034 247.8575);
-  --muted: oklch(0.2795 0.0368 260.031);
+  --muted: oklch(0.2960 0.0280 260.2000);
   --muted-foreground: oklch(0.7107 0.0351 256.7878);
-  --accent: oklch(0.2795 0.0368 260.031);
+  --accent: oklch(0.3340 0.0300 260.2000);
   --accent-foreground: oklch(0.9842 0.0034 247.8575);
   --destructive: oklch(0.3958 0.1331 25.723);
   --destructive-foreground: oklch(0.9842 0.0034 247.8575);
-  --border: oklch(0.2795 0.0368 260.031);
-  --input: oklch(0.2795 0.0368 260.031);
+  --border: oklch(0.3920 0.0220 259.9000);
+  --input: oklch(0.3920 0.0220 259.9000);
   --ring: oklch(0.857 0.1698 134.5554);
   --chart-1: oklch(0.857 0.1698 134.5554);
   --chart-2: oklch(0.2869 0.0839 135.0504);
   --chart-3: oklch(0.4455 0.0374 257.2808);
   --chart-4: oklch(0.5544 0.0407 257.4166);
-  --chart-5: oklch(0.2795 0.0368 260.031);
-  --sidebar: oklch(0.1288 0.0406 264.6952);
+  --chart-5: oklch(0.2960 0.0280 260.2000);
+  --sidebar: oklch(0.2460 0.0340 261.2000);
   --sidebar-foreground: oklch(0.7107 0.0351 256.7878);
   --sidebar-primary: oklch(0.857 0.1698 134.5554);
   --sidebar-primary-foreground: oklch(0.2869 0.0839 135.0504);
-  --sidebar-accent: oklch(0.2795 0.0368 260.031);
+  --sidebar-accent: oklch(0.2960 0.0280 260.2000);
   --sidebar-accent-foreground: oklch(0.9842 0.0034 247.8575);
-  --sidebar-border: oklch(0.2795 0.0368 260.031);
+  --sidebar-border: oklch(0.3920 0.0220 259.9000);
   --sidebar-ring: oklch(0.857 0.1698 134.5554);
   --font-sans: Plus Jakarta Sans, Inter, system-ui, sans-serif;
   --font-serif: Georgia, serif;
@@ -314,12 +314,18 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    border-radius: 1.5rem;
+    border-radius: 1.25rem;
     background: white;
     border: 2px solid oklch(0.857 0.1698 134.5554 / 0.4);
     box-shadow: 0 4px 6px -1px oklch(0 0 0 / 0.05);
     color: var(--foreground);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (max-width: 640px) {
+    .plan-premium-card {
+      border-radius: 1rem;
+    }
   }
 
   .plan-premium-card:hover {
@@ -585,7 +591,9 @@
 
   .client-portal {
     width: 100%;
+    max-width: 100vw;
     min-height: 100dvh;
+    overflow-x: hidden;
     color: var(--foreground);
     background: linear-gradient(
       160deg,
@@ -599,6 +607,19 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .client-portal-main-scroll {
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+    overscroll-behavior-x: none;
+  }
+
+  .client-portal main,
+  .client-portal section,
+  .client-portal article {
+    min-width: 0;
+  }
+
   .client-card {
     position: relative;
     overflow: hidden;
@@ -610,6 +631,15 @@
 
   .client-card:hover {
     border-color: var(--primary);
+  }
+
+  .client-portal.dark .client-card,
+  .dark .client-card {
+    border-color: color-mix(in oklch, var(--border), white 14%);
+    background: color-mix(in oklch, var(--card), black 6%);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.03) inset,
+      0 8px 18px rgb(0 0 0 / 0.24);
   }
 
   .client-premium-card {
@@ -675,56 +705,44 @@
     position: relative;
     overflow: hidden;
     border-radius: 12px;
-    border: 1px solid color-mix(in oklch, var(--border), var(--primary) 16%);
-    background:
-      linear-gradient(var(--card), var(--card)) padding-box,
-      linear-gradient(
-          135deg,
-          color-mix(in oklch, var(--border), white 28%),
-          color-mix(in oklch, var(--border), var(--primary) 18%),
-          var(--border)
-        )
-        border-box;
-    box-shadow: 0 16px 38px rgb(0 0 0 / 0.08);
+    border: 1px solid oklch(0.857 0.1698 134.5554);
+    background: var(--card);
+    box-shadow: none;
   }
 
   .client-plan-option-card:hover {
-    border-color: color-mix(in oklch, var(--primary), var(--border) 36%);
-    background:
-      linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--card), var(--primary) 5%),
-        var(--card)
-      )
-      padding-box,
-      linear-gradient(135deg, var(--primary), var(--border)) border-box;
-    box-shadow: 0 22px 48px rgb(0 0 0 / 0.12);
+    border-color: oklch(0.857 0.1698 134.5554);
+    background: color-mix(in oklch, var(--card), var(--primary) 4%);
+    box-shadow: none;
+  }
+
+  .client-portal.dark .client-plan-option-card,
+  .dark .client-plan-option-card {
+    border-color: color-mix(in oklch, var(--border), white 10%);
+    background: color-mix(in oklch, var(--card), black 5%);
   }
 
   .client-dialog {
     color: var(--foreground);
-    border-color: color-mix(in oklch, var(--border), var(--primary) 16%);
-    background:
-      radial-gradient(
-        circle at 18% 0%,
-        color-mix(in oklch, var(--primary), transparent 78%) 0%,
-        transparent 34%
-      ),
-      linear-gradient(
-        160deg,
-        color-mix(in oklch, var(--background), var(--card) 38%) 0%,
-        var(--background) 52%,
-        color-mix(in oklch, var(--card), var(--background) 40%) 100%
-      );
-    box-shadow:
-      0 30px 80px rgb(0 0 0 / 0.28),
-      0 1px 0 rgb(255 255 255 / 0.18) inset;
+    border-color: oklch(0.857 0.1698 134.5554);
+    background: var(--background);
+    box-shadow: none;
   }
 
   .client-dialog [data-slot="dialog-header"],
   .client-dialog [data-slot="dialog-footer"] {
-    border-color: color-mix(in oklch, var(--border), var(--primary) 12%);
-    background: color-mix(in oklch, var(--background), var(--card) 42%);
+    border-color: oklch(0.857 0.1698 134.5554 / 0.45);
+    background: var(--background);
+  }
+
+  .client-dialog [data-slot="dialog-header"] {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+  }
+
+  .client-dialog [data-slot="dialog-footer"] {
+    border-top-width: 1px;
+    border-top-style: solid;
   }
 
   .client-dialog [data-slot="dialog-title"] {
@@ -733,6 +751,20 @@
 
   .client-dialog [data-slot="button"] {
     border-radius: 10px;
+  }
+
+  .client-portal.dark .client-dialog,
+  .dark .client-dialog {
+    border-color: color-mix(in oklch, var(--border), white 16%);
+    background: color-mix(in oklch, var(--background), black 8%);
+  }
+
+  .client-portal.dark .client-dialog [data-slot="dialog-header"],
+  .client-portal.dark .client-dialog [data-slot="dialog-footer"],
+  .dark .client-dialog [data-slot="dialog-header"],
+  .dark .client-dialog [data-slot="dialog-footer"] {
+    border-color: color-mix(in oklch, var(--border), white 12%);
+    background: color-mix(in oklch, var(--background), black 8%);
   }
 
   .client-choice-card {
@@ -748,6 +780,18 @@
   .client-choice-card:hover {
     border-color: color-mix(in oklch, var(--primary), var(--border) 40%);
     background: color-mix(in oklch, var(--primary), var(--card) 98%);
+  }
+
+  .client-portal.dark .client-choice-card,
+  .dark .client-choice-card {
+    border-color: color-mix(in oklch, var(--border), white 12%);
+    background: color-mix(in oklch, var(--card), black 5%);
+  }
+
+  .client-portal.dark .client-choice-card:hover,
+  .dark .client-choice-card:hover {
+    border-color: color-mix(in oklch, var(--primary), var(--border) 58%);
+    background: color-mix(in oklch, var(--primary), var(--card) 91%);
   }
 
   .client-choice-card[data-selected="true"] {

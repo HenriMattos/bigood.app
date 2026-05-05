@@ -12,7 +12,6 @@ import {
   UserMultipleIcon,
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database, toDateInputValue, toDisplayDate } from "@/components/admin/database"
 import { EmptyState } from "@/components/admin/empty-state"
@@ -455,7 +454,7 @@ function WeeklyRevenueChart() {
     totalPrevious > 0
       ? Math.round(((totalGross - totalPrevious) / totalPrevious) * 100)
       : 0
-  const weeklyPaymentMix = buildWeeklyPaymentMix(totalGross)
+  const weeklyPaymentMix = buildWeeklyPaymentMix()
   const totalPayments = weeklyPaymentMix.reduce(
     (sum, item) => sum + item.value,
     0
@@ -752,7 +751,7 @@ function PeakHoursChart() {
   )
 }
 
-function buildWeeklyPaymentMix(totalGross: number) {
+function buildWeeklyPaymentMix() {
   return database.paymentMethods.map((method, index) => {
     return {
       label: method.name,

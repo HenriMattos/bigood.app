@@ -1,5 +1,5 @@
-import { ClientPortal } from "@/components/client/client-portal"
+import { PortalHomeView } from "@/components/client-portal/portal-home-view"
 
-export default function ClientePage() {
-  return <ClientPortal />
+export default function ClienteHomePage() {
+  return <PortalHomeView />
 }

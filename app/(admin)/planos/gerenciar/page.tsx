@@ -13,8 +13,6 @@ import {
   Search01Icon,
 } from "@hugeicons/core-free-icons"
 
-import { cn } from "@/lib/utils"
-
 import {
   database,
   type Plan as DatabasePlan,
