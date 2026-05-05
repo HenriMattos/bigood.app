@@ -104,7 +104,7 @@ export function PortalAppointmentsView() {
 
   const nextSlot =
     appointments[0] &&
-    `${formatShortDate(appointments[0].date)} Â· ${appointments[0].start}`
+    `${formatShortDate(appointments[0].date)} | ${appointments[0].start}`
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6 sm:max-w-2xl sm:py-10">
@@ -117,7 +117,7 @@ export function PortalAppointmentsView() {
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <MetricCard
           icon={Calendar03Icon}
-          label="PrÃ³ximo"
+          label="Proximo"
           value={nextSlot ?? "Sem reserva"}
         />
         <MetricCard
@@ -136,7 +136,7 @@ export function PortalAppointmentsView() {
         <EmptyState
           icon={Calendar03Icon}
           title="Nenhum agendamento"
-          description="Marque um horÃ¡rio para ver aqui."
+          description="Marque um horario para ver aqui."
           className="client-card"
           actionLabel="Agendar"
           href="/cliente/agendar"
@@ -154,7 +154,7 @@ export function PortalAppointmentsView() {
                 </p>
                 <p className="mt-1 text-lg font-semibold">{appointment.detail}</p>
                 <p className="text-sm text-muted-foreground">
-                  {appointment.start} â€“ {appointment.end} Â· {appointment.barber}
+                  {appointment.start} - {appointment.end} | {appointment.barber}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 px-4 py-3">
@@ -254,8 +254,8 @@ export function PortalAppointmentsView() {
           <DialogHeader>
             <DialogTitle>Cancelar agendamento</DialogTitle>
             <DialogDescription>
-              Cancelamento liberado atÃ© 1 hora apÃ³s criar o agendamento (regra
-              de demonstraÃ§Ã£o).
+              Cancelamento liberado ate 1 hora apos criar o agendamento (regra
+              de demonstracao).
             </DialogDescription>
           </DialogHeader>
           <DialogBody>
@@ -328,7 +328,7 @@ function AppointmentDetailsDialog({
       <DialogContent className="client-dialog">
         <DialogHeader>
           <DialogTitle>Detalhes</DialogTitle>
-          <DialogDescription>Sua reserva (dados de demonstraÃ§Ã£o).</DialogDescription>
+          <DialogDescription>Sua reserva (dados de demonstracao).</DialogDescription>
         </DialogHeader>
         {appointment ? (
           <DialogBody className="grid gap-3 sm:grid-cols-2">
@@ -339,17 +339,17 @@ function AppointmentDetailsDialog({
             />
             <DetailRow
               icon={Clock01Icon}
-              label="HorÃ¡rio"
-              value={`${appointment.start} â€“ ${appointment.end}`}
+              label="Horario"
+              value={`${appointment.start} - ${appointment.end}`}
             />
             <DetailRow
               icon={Scissor01Icon}
-              label="ServiÃ§o"
+              label="Servico"
               value={appointment.detail}
             />
             <DetailRow
               icon={Clock01Icon}
-              label="DuraÃ§Ã£o"
+              label="Duracao"
               value={`${duration} min`}
             />
             <DetailRow
@@ -360,13 +360,13 @@ function AppointmentDetailsDialog({
             <DetailRow
               icon={Wallet02Icon}
               label="Valor"
-              value={service ? formatCurrency(service.price) : "â€”"}
+              value={service ? formatCurrency(service.price) : "-"}
             />
             <DetailRow
               icon={CheckmarkCircle01Icon}
-              label="Cancelar atÃ©"
+              label="Cancelar ate"
               value={
-                deadline ? formatDateTime(deadline) : "IndisponÃ­vel"
+                deadline ? formatDateTime(deadline) : "Indisponivel"
               }
             />
           </DialogBody>
@@ -415,12 +415,12 @@ function CancelBody({ appointment }: { appointment: AgendaEvent }) {
       >
         <p className="text-sm font-medium">{appointment.detail}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {formatLongDate(appointment.date)} Â· {appointment.start}
+          {formatLongDate(appointment.date)} | {appointment.start}
         </p>
         <p className="mt-2 text-xs">
           {canCancel
-            ? `VocÃª pode cancelar atÃ© ${deadline ? formatDateTime(deadline) : ""}.`
-            : "O prazo para cancelamento jÃ¡ expirou."}
+            ? `Voce pode cancelar ate ${deadline ? formatDateTime(deadline) : ""}.`
+            : "O prazo para cancelamento ja expirou."}
         </p>
       </div>
     </div>

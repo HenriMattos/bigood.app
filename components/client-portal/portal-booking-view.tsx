@@ -20,6 +20,15 @@ import {
   type ServiceCatalogItem,
 } from "@/components/admin/database"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
 import {
@@ -74,6 +83,8 @@ export function PortalBookingView() {
   )
   const [dateId, setDateId] = useState(dateOptions[0]?.id ?? "")
   const [time, setTime] = useState("10:00")
+  const [cartOpen, setCartOpen] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
 
   const planServiceIds = useMemo(
     () => getPlanServiceIds(activeServices, currentPlan?.name),
@@ -127,6 +138,11 @@ export function PortalBookingView() {
         .map((id) => activeServices.find((s) => s.id === id))
         .filter(Boolean),
     [selectedServiceIds, activeServices]
+  )
+
+  const selectedServiceItems = useMemo(
+    () => selectedServices.filter((s): s is ServiceCatalogItem => Boolean(s)),
+    [selectedServices]
   )
 
   const selectedProfessional = useMemo(
@@ -230,13 +246,13 @@ export function PortalBookingView() {
       end: getEndTime(time, duration || 30),
       title: clientProfile?.name || portalCustomer?.name || "",
       detail:
-        selectedServices.map((s) => s?.name).filter(Boolean).join(" + ") ||
+        selectedServiceItems.map((s) => s.name).join(" + ") ||
         "Atendimento",
       type: "appointment",
     }
 
     addBooking(event)
-    router.push("/cliente/agendamentos")
+    setSuccessOpen(true)
   }
 
   const stepIndex = bookingFlow.findIndex((s) => s.id === bookingStep)
@@ -331,9 +347,7 @@ export function PortalBookingView() {
             selectedDate={selectedDate}
             time={time}
             total={bookingTotal}
-            services={selectedServices.filter(
-              (s): s is ServiceCatalogItem => Boolean(s)
-            )}
+            services={selectedServiceItems}
           />
         ) : null}
       </div>
@@ -370,7 +384,136 @@ export function PortalBookingView() {
           </Button>
         )}
       </div>
+
+      {selectedServiceItems.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          className="fixed bottom-[5.7rem] right-4 z-40 flex items-center gap-2 rounded-full border border-primary/45 bg-background/95 px-4 py-2 text-sm font-semibold text-foreground shadow-lg backdrop-blur-md"
+        >
+          <CartIcon />
+          <span>{selectedServiceItems.length} selecionado(s)</span>
+          <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+            {selectedServiceItems.length}
+          </span>
+        </button>
+      ) : null}
+
+      <Dialog open={cartOpen} onOpenChange={setCartOpen}>
+        <DialogContent className="client-dialog sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Carrinho de servicos</DialogTitle>
+            <DialogDescription>
+              Itens selecionados para este agendamento.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-3">
+            <ul className="space-y-2">
+              {selectedServiceItems.map((service) => (
+                <li
+                  key={service.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-3 text-sm"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{service.name}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {service.duration}
+                    </span>
+                  </span>
+                  <span className="shrink-0 font-medium text-muted-foreground">
+                    {formatCurrency(service.price)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-3 text-sm">
+              <span className="text-muted-foreground">Total estimado</span>
+              <span className="font-semibold">
+                {formatCurrency(
+                  selectedServiceItems.reduce((sum, service) => sum + service.price, 0)
+                )}
+              </span>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" onClick={() => setCartOpen(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
+        <DialogContent className="client-dialog overflow-hidden sm:max-w-md">
+          <DialogHeader className="border-b border-border/80 bg-[linear-gradient(135deg,color-mix(in_oklch,var(--primary),white_75%)_0%,color-mix(in_oklch,var(--background),var(--primary)_12%)_100%)]">
+            <div className="mx-auto mb-2 flex size-16 items-center justify-center rounded-full border border-primary/30 bg-primary/15 text-primary">
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={34} />
+            </div>
+            <DialogTitle className="text-center text-xl">Pagamento aprovado</DialogTitle>
+            <DialogDescription className="text-center">
+              Agendamento confirmado com sucesso.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-3 text-sm">
+            <div className="rounded-xl border border-border/80 bg-muted/25 p-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Resumo da reserva
+              </p>
+              <div className="mt-3 grid gap-2">
+                <p className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Data</span>
+                  <span className="font-medium">
+                    {selectedDate ? formatShortDate(selectedDate.id) : "-"}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Horario</span>
+                  <span className="font-medium">{time}</span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Servicos</span>
+                  <span className="font-medium">{selectedServiceItems.length}</span>
+                </p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-xs text-primary-contrast">
+              Seu atendimento ja esta na sua agenda.
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              type="button"
+              className="green-shine w-full"
+              onClick={() => {
+                setSuccessOpen(false)
+                router.push("/cliente/agendamentos")
+              }}
+            >
+              Ver meus horarios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  )
+}
+
+function CartIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="size-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="9" cy="20" r="1.4" />
+      <circle cx="18" cy="20" r="1.4" />
+      <path d="M3 4h2.1a1 1 0 0 1 .97.75l.48 1.85m0 0 1.5 5.9a1.8 1.8 0 0 0 1.75 1.35h7.95a1.8 1.8 0 0 0 1.75-1.35L21 8.2a1 1 0 0 0-.96-1.25H6.55Z" />
+    </svg>
   )
 }
 

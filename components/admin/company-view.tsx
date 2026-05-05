@@ -292,7 +292,7 @@ export function EmpresaView() {
 
     saveClientPortalSettings(defaultSettings)
     window.dispatchEvent(new Event(CLIENT_PORTAL_SYNC_EVENT))
-    setFeedback("Dados restaurados ao padrÃ£o. Uploads removidos.")
+    setFeedback("Dados restaurados ao padrao. Uploads removidos.")
   }
 
   return (

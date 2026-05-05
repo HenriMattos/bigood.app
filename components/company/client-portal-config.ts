@@ -53,6 +53,14 @@ export const CLIENT_PORTAL_PLANS_STORAGE_KEY = "mydashbarber.v1.plans"
 export const CLIENT_PORTAL_SUBSCRIPTIONS_STORAGE_KEY =
   "mydashbarber.v1.subscriptions"
 export const CLIENT_PORTAL_SYNC_EVENT = "mydashbarber.v1.sync"
+const LEGACY_CAROUSEL_IMAGE_MAP: Record<string, string> = {
+  "https://media.gettyimages.com/id/1960448357/photo/barber-giving-a-haircut-in-his-shop.jpg":
+    "/1mg/1.png",
+  "https://media.gettyimages.com/id/872361244/photo/man-getting-his-beard-trimmed-with-electric-razor.jpg":
+    "/1mg/2.png",
+  "https://media.gettyimages.com/id/1677718095/photo/young-man-having-a-haircut-at-barber-shop.jpg":
+    "/1mg/3.png",
+}
 
 export const clientPortalThemes: ClientPortalTheme[] = [
   {
@@ -165,6 +173,15 @@ export function getStoredClientPortalSettings(
 
   return {
     ...settings,
+    carouselImage1:
+      LEGACY_CAROUSEL_IMAGE_MAP[settings.carouselImage1 ?? ""] ??
+      settings.carouselImage1,
+    carouselImage2:
+      LEGACY_CAROUSEL_IMAGE_MAP[settings.carouselImage2 ?? ""] ??
+      settings.carouselImage2,
+    carouselImage3:
+      LEGACY_CAROUSEL_IMAGE_MAP[settings.carouselImage3 ?? ""] ??
+      settings.carouselImage3,
     themeId: theme.id,
     mode: theme.mode,
   }

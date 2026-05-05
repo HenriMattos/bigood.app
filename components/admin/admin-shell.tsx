@@ -11,7 +11,7 @@ import {
   Notification03Icon,
   Search01Icon,
 } from "@hugeicons/core-free-icons"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { database } from "@/components/admin/database"
 import {
   createDefaultClientPortalSettings,
@@ -29,10 +29,30 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchIndex, setSearchIndex] = useState(0)
+  const searchRef = useRef<HTMLDivElement | null>(null)
+  const mobileSearchRef = useRef<HTMLDivElement | null>(null)
   const [companyData, setCompanyData] = useState({
     tradeName: database.company.tradeName,
     logoUrl: database.company.logoUrl || "",
   })
+  const searchItems = useMemo(() => buildSearchItems(), [])
+  const searchResults = useMemo(() => {
+    const query = normalizeText(searchQuery)
+
+    if (!query) {
+      return searchItems.slice(0, 8)
+    }
+
+    return searchItems
+      .filter((item) => normalizeText(item.searchBlob).includes(query))
+      .slice(0, 8)
+  }, [searchItems, searchQuery])
+  const activeSearchIndex = searchResults.length
+    ? Math.min(searchIndex, searchResults.length - 1)
+    : 0
 
   useEffect(() => {
     function sync() {
@@ -56,6 +76,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener(CLIENT_PORTAL_SYNC_EVENT, sync)
     }
   }, [])
+
+  useEffect(() => {
+    if (!searchOpen) return
+
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target as Node
+      const insideDesktop = searchRef.current?.contains(target)
+      const insideMobile = mobileSearchRef.current?.contains(target)
+
+      if (!insideDesktop && !insideMobile) {
+        setSearchOpen(false)
+      }
+    }
+
+    window.addEventListener("pointerdown", onPointerDown)
+    return () => window.removeEventListener("pointerdown", onPointerDown)
+  }, [searchOpen])
+
   const activeItem =
     navItems.find((item) => pathname.startsWith(item.href)) ?? navItems[0]
 
@@ -63,6 +101,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     await fetch("/api/auth/logout", { method: "POST" })
     router.replace("/")
     router.refresh()
+  }
+
+  function navigateFromSearch(href: string) {
+    router.push(href)
+    setSearchOpen(false)
+    setSearchQuery("")
+    setSearchIndex(0)
   }
 
   if (!mounted) return null
@@ -139,13 +184,96 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 </h1>
               </div>
 
-              <label className="hidden h-9 w-full max-w-xs items-center gap-2 rounded-full border bg-background px-3 text-sm text-muted-foreground md:flex xl:max-w-sm">
-                <HugeiconsIcon icon={Search01Icon} size={17} />
-                <input
-                  className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-                  placeholder="Buscar cliente, horario..."
-                />
-              </label>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="md:hidden"
+                aria-label="Buscar"
+                onClick={() => setSearchOpen((current) => !current)}
+              >
+                <HugeiconsIcon icon={Search01Icon} size={18} />
+              </Button>
+
+              <div ref={searchRef} className="relative hidden w-full max-w-xs md:block xl:max-w-sm">
+                <label className="flex h-9 w-full items-center gap-2 rounded-full border bg-background px-3 text-sm text-muted-foreground">
+                  <HugeiconsIcon icon={Search01Icon} size={17} />
+                  <input
+                    value={searchQuery}
+                    onFocus={() => setSearchOpen(true)}
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value)
+                      setSearchOpen(true)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault()
+                        setSearchIndex((current) =>
+                          Math.min(current + 1, Math.max(searchResults.length - 1, 0))
+                        )
+                        return
+                      }
+                      if (event.key === "ArrowUp") {
+                        event.preventDefault()
+                        setSearchIndex((current) => Math.max(current - 1, 0))
+                        return
+                      }
+                      if (event.key === "Escape") {
+                        setSearchOpen(false)
+                        return
+                      }
+                      if (event.key === "Enter" && searchResults.length) {
+                        event.preventDefault()
+                        navigateFromSearch(
+                          searchResults[activeSearchIndex]?.href ?? searchResults[0].href
+                        )
+                      }
+                    }}
+                    className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+                    placeholder="Buscar cliente, servico, pagina..."
+                  />
+                </label>
+
+                {searchOpen ? (
+                  <div className="absolute top-11 z-40 w-full rounded-xl border bg-background p-1 shadow-lg">
+                    {searchResults.length ? (
+                      <ul className="max-h-72 overflow-y-auto">
+                        {searchResults.map((item, index) => (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() => navigateFromSearch(item.href)}
+                              className={cn(
+                                "flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left",
+                                index === activeSearchIndex
+                                  ? "bg-muted text-foreground"
+                                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                              )}
+                            >
+                              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/12 text-primary">
+                                <HugeiconsIcon icon={Search01Icon} size={12} />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-medium">{item.title}</span>
+                                <span className="block truncate text-xs">{item.subtitle}</span>
+                              </span>
+                              {item.actionLabel ? (
+                                <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                  {item.actionLabel}
+                                </span>
+                              ) : null}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="px-2 py-3 text-xs text-muted-foreground">
+                        Nenhum resultado encontrado.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
 
               <Button
                 variant="outline"
@@ -169,6 +297,88 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <HugeiconsIcon icon={Logout03Icon} size={19} />
               </Button>
             </div>
+
+            {searchOpen ? (
+              <div ref={mobileSearchRef} className="admin-container pb-2 md:hidden">
+                <div className="relative">
+                  <label className="flex h-10 w-full items-center gap-2 rounded-full border bg-background px-3 text-sm text-muted-foreground">
+                    <HugeiconsIcon icon={Search01Icon} size={17} />
+                    <input
+                      autoFocus
+                      value={searchQuery}
+                      onChange={(event) => {
+                        setSearchQuery(event.target.value)
+                        setSearchOpen(true)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "ArrowDown") {
+                          event.preventDefault()
+                          setSearchIndex((current) =>
+                            Math.min(current + 1, Math.max(searchResults.length - 1, 0))
+                          )
+                          return
+                        }
+                        if (event.key === "ArrowUp") {
+                          event.preventDefault()
+                          setSearchIndex((current) => Math.max(current - 1, 0))
+                          return
+                        }
+                        if (event.key === "Escape") {
+                          setSearchOpen(false)
+                          return
+                        }
+                        if (event.key === "Enter" && searchResults.length) {
+                          event.preventDefault()
+                          navigateFromSearch(
+                            searchResults[activeSearchIndex]?.href ?? searchResults[0].href
+                          )
+                        }
+                      }}
+                      className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+                      placeholder="Buscar cliente, servico, pagina..."
+                    />
+                  </label>
+
+                  <div className="absolute top-11 z-40 w-full rounded-xl border bg-background p-1 shadow-lg">
+                    {searchResults.length ? (
+                      <ul className="max-h-72 overflow-y-auto">
+                        {searchResults.map((item, index) => (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() => navigateFromSearch(item.href)}
+                              className={cn(
+                                "flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left",
+                                index === activeSearchIndex
+                                  ? "bg-muted text-foreground"
+                                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                              )}
+                            >
+                              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/12 text-primary">
+                                <HugeiconsIcon icon={Search01Icon} size={12} />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-medium">{item.title}</span>
+                                <span className="block truncate text-xs">{item.subtitle}</span>
+                              </span>
+                              {item.actionLabel ? (
+                                <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                  {item.actionLabel}
+                                </span>
+                              ) : null}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="px-2 py-3 text-xs text-muted-foreground">
+                        Nenhum resultado encontrado.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </header>
 
           <ScrollArea className="min-h-0 flex-1 overflow-x-hidden">
@@ -180,6 +390,164 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   )
+}
+
+type SearchItem = {
+  id: string
+  title: string
+  subtitle: string
+  href: string
+  searchBlob: string
+  actionLabel?: string
+  kind?: "acao" | "pagina" | "dado"
+}
+
+function buildSearchItems(): SearchItem[] {
+  const navigationItems = navItems.flatMap((item) => {
+    const parent: SearchItem = {
+      id: `nav:${item.href}`,
+      title: item.title,
+      subtitle: item.description,
+      href: item.href,
+      searchBlob: `${item.title} ${item.description} ${item.href}`,
+      kind: "pagina",
+    }
+
+    if (!("children" in item) || !item.children?.length) return [parent]
+
+    const children = item.children.map((child) => ({
+      id: `nav:${child.href}`,
+      title: child.title,
+      subtitle: item.title,
+      href: child.href,
+      searchBlob: `${child.title} ${item.title} ${child.href}`,
+      kind: "pagina" as const,
+    }))
+
+    return [parent, ...children]
+  })
+
+  const clientItems: SearchItem[] = database.clients.slice(0, 20).map((client) => ({
+    id: `client:${client.id}`,
+    title: client.name,
+    subtitle: `Cliente | ${client.phone}`,
+    href: "/clientes/listagem",
+    searchBlob: `${client.name} ${client.phone} ${client.email ?? ""}`,
+    kind: "dado",
+  }))
+
+  const serviceItems: SearchItem[] = database.services
+    .filter((service) => !service.hidden)
+    .slice(0, 20)
+    .map((service) => ({
+      id: `service:${service.id}`,
+      title: service.name,
+      subtitle: "Servico",
+      href: "/servicos/listagem",
+      searchBlob: `${service.name} ${service.category} ${service.professionals}`,
+      kind: "dado" as const,
+    }))
+
+  const professionalItems: SearchItem[] = database.professionals.slice(0, 20).map((pro) => ({
+    id: `pro:${pro.id}`,
+    title: pro.name,
+    subtitle: "Profissional",
+    href: "/profissionais/gerenciar",
+    searchBlob: `${pro.name} ${pro.role} ${pro.commission}`,
+    kind: "dado",
+  }))
+
+  const quickActionItems: SearchItem[] = [
+    {
+      id: "action:new-appointment",
+      title: "Novo agendamento",
+      subtitle: "Acao rapida | Agenda",
+      href: "/agenda",
+      searchBlob:
+        "novo agendamento agendar agendamento criar agendamento nova reserva agenda",
+      actionLabel: "Agendar",
+      kind: "acao",
+    },
+    {
+      id: "action:new-client",
+      title: "Cadastrar cliente",
+      subtitle: "Acao rapida | Clientes",
+      href: "/clientes/cadastrar",
+      searchBlob: "novo cliente cadastrar cliente criar cliente",
+      actionLabel: "Cadastrar",
+      kind: "acao",
+    },
+    {
+      id: "action:new-service",
+      title: "Cadastrar servico",
+      subtitle: "Acao rapida | Servicos",
+      href: "/servicos/cadastrar",
+      searchBlob: "novo servico cadastrar servico criar servico",
+      actionLabel: "Cadastrar",
+      kind: "acao",
+    },
+    {
+      id: "action:new-professional",
+      title: "Cadastrar profissional",
+      subtitle: "Acao rapida | Profissionais",
+      href: "/profissionais/cadastrar",
+      searchBlob: "novo profissional cadastrar profissional criar profissional",
+      actionLabel: "Cadastrar",
+      kind: "acao",
+    },
+    {
+      id: "action:new-plan",
+      title: "Criar plano",
+      subtitle: "Acao rapida | Planos",
+      href: "/planos/criar",
+      searchBlob: "novo plano criar plano cadastrar plano assinatura",
+      actionLabel: "Criar",
+      kind: "acao",
+    },
+    {
+      id: "action:open-cash",
+      title: "Abrir caixa",
+      subtitle: "Acao rapida | Caixa",
+      href: "/caixa",
+      searchBlob: "abrir caixa iniciar caixa novo caixa",
+      actionLabel: "Abrir",
+      kind: "acao",
+    },
+    {
+      id: "action:finance",
+      title: "Receber pagamento",
+      subtitle: "Acao rapida | Financeiro",
+      href: "/financeiro",
+      searchBlob: "receber pagamento cobrar pagamento nova cobranca",
+      actionLabel: "Receber",
+      kind: "acao",
+    },
+    {
+      id: "action:comandas",
+      title: "Nova comanda",
+      subtitle: "Acao rapida | Comandas",
+      href: "/caixa/comandas",
+      searchBlob: "nova comanda abrir comanda criar comanda",
+      actionLabel: "Abrir",
+      kind: "acao",
+    },
+  ]
+
+  return [
+    ...quickActionItems,
+    ...navigationItems,
+    ...clientItems,
+    ...serviceItems,
+    ...professionalItems,
+  ]
+}
+
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
 }
 
 function SidebarContent({
@@ -330,3 +698,4 @@ function getParentHref(pathname: string) {
       "children" in item && item.children && pathname.startsWith(item.href)
   )?.href
 }
+
