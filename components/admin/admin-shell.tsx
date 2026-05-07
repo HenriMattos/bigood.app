@@ -13,15 +13,12 @@ import {
 } from "@hugeicons/core-free-icons"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { database } from "@/components/admin/database"
-import {
-  createDefaultClientPortalSettings,
-  getStoredClientPortalSettings,
-  CLIENT_PORTAL_SYNC_EVENT,
-} from "@/components/company/client-portal-config"
+import { COMPANY_LOGO_STORAGE_KEY } from "@/components/company/company-assets"
 
 import { navItems } from "@/components/admin/nav-items"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { BIGOOD_MARK_DARK } from "@/lib/brand-assets"
 import { cn } from "@/lib/utils"
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -56,12 +53,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     function sync() {
-      const settings = getStoredClientPortalSettings(
-        createDefaultClientPortalSettings(database.company)
-      )
       setCompanyData({
-        tradeName: settings.tradeName,
-        logoUrl: settings.logoUrl || "",
+        tradeName: database.company.tradeName,
+        logoUrl:
+          window.localStorage.getItem(COMPANY_LOGO_STORAGE_KEY) ||
+          database.company.logoUrl ||
+          "",
       })
     }
 
@@ -70,10 +67,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       setMounted(true)
     })
     window.addEventListener("storage", sync)
-    window.addEventListener(CLIENT_PORTAL_SYNC_EVENT, sync)
     return () => {
       window.removeEventListener("storage", sync)
-      window.removeEventListener(CLIENT_PORTAL_SYNC_EVENT, sync)
     }
   }, [])
 
@@ -99,6 +94,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" })
+    window.dispatchEvent(new Event("bigood_auth_sync"))
     router.replace("/")
     router.refresh()
   }
@@ -195,7 +191,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <HugeiconsIcon icon={Search01Icon} size={18} />
               </Button>
 
-              <div ref={searchRef} className="relative hidden w-full max-w-xs md:block xl:max-w-sm">
+              <div
+                ref={searchRef}
+                className="relative hidden w-full max-w-xs md:block xl:max-w-sm"
+              >
                 <label className="flex h-9 w-full items-center gap-2 rounded-full border bg-background px-3 text-sm text-muted-foreground">
                   <HugeiconsIcon icon={Search01Icon} size={17} />
                   <input
@@ -209,7 +208,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       if (event.key === "ArrowDown") {
                         event.preventDefault()
                         setSearchIndex((current) =>
-                          Math.min(current + 1, Math.max(searchResults.length - 1, 0))
+                          Math.min(
+                            current + 1,
+                            Math.max(searchResults.length - 1, 0)
+                          )
                         )
                         return
                       }
@@ -225,7 +227,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       if (event.key === "Enter" && searchResults.length) {
                         event.preventDefault()
                         navigateFromSearch(
-                          searchResults[activeSearchIndex]?.href ?? searchResults[0].href
+                          searchResults[activeSearchIndex]?.href ??
+                            searchResults[0].href
                         )
                       }
                     }}
@@ -254,8 +257,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                                 <HugeiconsIcon icon={Search01Icon} size={12} />
                               </span>
                               <span className="min-w-0">
-                                <span className="block truncate text-sm font-medium">{item.title}</span>
-                                <span className="block truncate text-xs">{item.subtitle}</span>
+                                <span className="block truncate text-sm font-medium">
+                                  {item.title}
+                                </span>
+                                <span className="block truncate text-xs">
+                                  {item.subtitle}
+                                </span>
                               </span>
                               {item.actionLabel ? (
                                 <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -299,7 +306,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {searchOpen ? (
-              <div ref={mobileSearchRef} className="admin-container pb-2 md:hidden">
+              <div
+                ref={mobileSearchRef}
+                className="admin-container pb-2 md:hidden"
+              >
                 <div className="relative">
                   <label className="flex h-10 w-full items-center gap-2 rounded-full border bg-background px-3 text-sm text-muted-foreground">
                     <HugeiconsIcon icon={Search01Icon} size={17} />
@@ -314,7 +324,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         if (event.key === "ArrowDown") {
                           event.preventDefault()
                           setSearchIndex((current) =>
-                            Math.min(current + 1, Math.max(searchResults.length - 1, 0))
+                            Math.min(
+                              current + 1,
+                              Math.max(searchResults.length - 1, 0)
+                            )
                           )
                           return
                         }
@@ -330,7 +343,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         if (event.key === "Enter" && searchResults.length) {
                           event.preventDefault()
                           navigateFromSearch(
-                            searchResults[activeSearchIndex]?.href ?? searchResults[0].href
+                            searchResults[activeSearchIndex]?.href ??
+                              searchResults[0].href
                           )
                         }
                       }}
@@ -358,8 +372,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                                 <HugeiconsIcon icon={Search01Icon} size={12} />
                               </span>
                               <span className="min-w-0">
-                                <span className="block truncate text-sm font-medium">{item.title}</span>
-                                <span className="block truncate text-xs">{item.subtitle}</span>
+                                <span className="block truncate text-sm font-medium">
+                                  {item.title}
+                                </span>
+                                <span className="block truncate text-xs">
+                                  {item.subtitle}
+                                </span>
                               </span>
                               {item.actionLabel ? (
                                 <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -427,14 +445,16 @@ function buildSearchItems(): SearchItem[] {
     return [parent, ...children]
   })
 
-  const clientItems: SearchItem[] = database.clients.slice(0, 20).map((client) => ({
-    id: `client:${client.id}`,
-    title: client.name,
-    subtitle: `Cliente | ${client.phone}`,
-    href: "/clientes/listagem",
-    searchBlob: `${client.name} ${client.phone} ${client.email ?? ""}`,
-    kind: "dado",
-  }))
+  const clientItems: SearchItem[] = database.clients
+    .slice(0, 20)
+    .map((client) => ({
+      id: `client:${client.id}`,
+      title: client.name,
+      subtitle: `Cliente | ${client.phone}`,
+      href: "/clientes/listagem",
+      searchBlob: `${client.name} ${client.phone} ${client.email ?? ""}`,
+      kind: "dado",
+    }))
 
   const serviceItems: SearchItem[] = database.services
     .filter((service) => !service.hidden)
@@ -448,14 +468,16 @@ function buildSearchItems(): SearchItem[] {
       kind: "dado" as const,
     }))
 
-  const professionalItems: SearchItem[] = database.professionals.slice(0, 20).map((pro) => ({
-    id: `pro:${pro.id}`,
-    title: pro.name,
-    subtitle: "Profissional",
-    href: "/profissionais/gerenciar",
-    searchBlob: `${pro.name} ${pro.role} ${pro.commission}`,
-    kind: "dado",
-  }))
+  const professionalItems: SearchItem[] = database.professionals
+    .slice(0, 20)
+    .map((pro) => ({
+      id: `pro:${pro.id}`,
+      title: pro.name,
+      subtitle: "Profissional",
+      href: "/profissionais/gerenciar",
+      searchBlob: `${pro.name} ${pro.role} ${pro.commission}`,
+      kind: "dado",
+    }))
 
   const quickActionItems: SearchItem[] = [
     {
@@ -588,8 +610,13 @@ function SidebarContent({
             />
           </div>
         ) : (
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
-            <HugeiconsIcon icon={DashboardSquare01Icon} size={20} />
+          <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={BIGOOD_MARK_DARK}
+              alt="Bigood"
+              className="h-full w-full object-contain"
+            />
           </span>
         )}
         <span className="min-w-0">
@@ -698,4 +725,3 @@ function getParentHref(pathname: string) {
       "children" in item && item.children && pathname.startsWith(item.href)
   )?.href
 }
-

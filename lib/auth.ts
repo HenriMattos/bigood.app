@@ -4,24 +4,31 @@ const decoder = new TextDecoder()
 export const AUTH_COOKIE_NAME = "mydashbarber.session"
 export const AUTH_SESSION_MAX_AGE = 60 * 60 * 8
 
-type SessionPayload = {
+export type AuthUser = {
+  email: string
+  name?: string
+  companyName?: string
+  hasActivePlan: boolean
+  planKey?: string
+}
+
+export type SessionPayload = AuthUser & {
   sub: string
   exp: number
 }
 
 export function getAdminCredentials() {
-  // Em produção, as variáveis devem ser definidas no dashboard.
-  // Retornamos valores padrão de desenvolvimento se não existirem.
-
+  // Em producao, as variaveis devem ser definidas no ambiente.
   return {
     email: process.env.ADMIN_EMAIL ?? "admin@empresa.com",
     password: process.env.ADMIN_PASSWORD ?? "admin123",
   }
 }
 
-export async function createAuthSession(email: string) {
+export async function createAuthSession(user: AuthUser) {
   const payload: SessionPayload = {
-    sub: email,
+    ...user,
+    sub: user.email,
     exp: Math.floor(Date.now() / 1000) + AUTH_SESSION_MAX_AGE,
   }
   const encodedPayload = base64UrlEncode(
@@ -32,26 +39,39 @@ export async function createAuthSession(email: string) {
   return `${encodedPayload}.${signature}`
 }
 
-export async function verifyAuthSession(token?: string) {
-  if (!token) return false
+export async function getAuthSession(token?: string) {
+  if (!token) return null
 
   const [encodedPayload, signature] = token.split(".")
 
-  if (!encodedPayload || !signature) return false
+  if (!encodedPayload || !signature) return null
 
   const expectedSignature = await sign(encodedPayload)
 
-  if (!safeEqual(signature, expectedSignature)) return false
+  if (!safeEqual(signature, expectedSignature)) return null
 
   try {
     const payload = JSON.parse(
       decoder.decode(base64UrlDecode(encodedPayload))
     ) as SessionPayload
 
-    return Boolean(payload.sub && payload.exp > Math.floor(Date.now() / 1000))
+    if (!payload.sub || payload.exp <= Math.floor(Date.now() / 1000)) {
+      return null
+    }
+
+    return payload
   } catch {
-    return false
+    return null
   }
+}
+
+export async function verifyAuthSession(token?: string) {
+  return Boolean(await getAuthSession(token))
+}
+
+export async function verifyActiveSubscription(token?: string) {
+  const session = await getAuthSession(token)
+  return Boolean(session?.hasActivePlan)
 }
 
 async function sign(value: string) {
@@ -68,8 +88,7 @@ async function sign(value: string) {
 }
 
 function getAuthSecret() {
-  // AUTH_SECRET deve ser definido em produção.
-
+  // AUTH_SECRET deve ser definido em producao.
   return process.env.AUTH_SECRET ?? "dev-only-change-this-secret"
 }
 
@@ -88,7 +107,10 @@ function base64UrlEncode(bytes: Uint8Array) {
 
 function base64UrlDecode(value: string) {
   const base64 = value.replace(/-/g, "+").replace(/_/g, "/")
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=")
+  const padded = base64.padEnd(
+    base64.length + ((4 - (base64.length % 4)) % 4),
+    "="
+  )
   const binary = atob(padded)
   const bytes = new Uint8Array(binary.length)
 

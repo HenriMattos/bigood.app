@@ -6,10 +6,10 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database, type Subscription } from "@/components/admin/database"
 import {
-  getStoredClientPlans,
-  getStoredClientSubscriptions,
-  saveClientSubscriptions,
-} from "@/components/company/client-portal-config"
+  getStoredCommercialPlans,
+  getStoredCommercialSubscriptions,
+  saveCommercialSubscriptions,
+} from "@/components/company/commercial-storage"
 import {
   formatDateForDisplay,
   toDateInputValue,
@@ -49,9 +49,9 @@ const subscriptionClientOptions = Array.from(
 
 export default function GerenciarAssinaturasPage() {
   const [items, setItems] = useState(() =>
-    getStoredClientSubscriptions(initialSubscriptions)
+    getStoredCommercialSubscriptions(initialSubscriptions)
   )
-  const [plans] = useState(() => getStoredClientPlans(database.plans))
+  const [plans] = useState(() => getStoredCommercialPlans(database.plans))
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState("todas")
   const [modalOpen, setModalOpen] = useState(false)
@@ -110,7 +110,7 @@ export default function GerenciarAssinaturasPage() {
       const nextItems = editing
         ? current.map((item) => (item.id === draft.id ? savedDraft : item))
         : [{ ...savedDraft, id: Date.now() }, ...current]
-      saveClientSubscriptions(nextItems)
+      saveCommercialSubscriptions(nextItems)
       return nextItems
     })
     setFeedback(
@@ -129,7 +129,7 @@ export default function GerenciarAssinaturasPage() {
       const nextItems = current.map((item) =>
         item.id === subscription.id ? { ...item, status: nextStatus } : item
       )
-      saveClientSubscriptions(nextItems)
+      saveCommercialSubscriptions(nextItems)
       return nextItems
     })
     setFeedback(`${subscription.client}: status alterado para ${nextStatus}.`)

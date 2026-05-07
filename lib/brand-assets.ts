@@ -1,0 +1,6 @@
+export const BIGOOD_LOGO = "/brand/bigood-logo.svg?v=3"
+export const BIGOOD_LOGO_WHITE = "/brand/bigood-logo-white.svg?v=3"
+export const BIGOOD_MARK = "/brand/bigood-mark.svg?v=3"
+export const BIGOOD_MARK_DARK = "/brand/bigood-mark-dark.svg?v=3"
+export const BIGOOD_PORTAL_LOGO = "/brand/bigood-portal-logo.svg?v=3"
+export const BIGOOD_PORTAL_ICON = "/brand/bigood-portal-icon.png?v=3"

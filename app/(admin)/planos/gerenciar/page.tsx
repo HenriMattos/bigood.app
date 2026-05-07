@@ -18,11 +18,11 @@ import {
   type Plan as DatabasePlan,
 } from "@/components/admin/database"
 import {
-  getStoredClientPlans,
-  getStoredClientSubscriptions,
-  saveClientPlans,
-  saveClientSubscriptions,
-} from "@/components/company/client-portal-config"
+  getStoredCommercialPlans,
+  getStoredCommercialSubscriptions,
+  saveCommercialPlans,
+  saveCommercialSubscriptions,
+} from "@/components/company/commercial-storage"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import {
@@ -55,7 +55,7 @@ const initialPlans: Plan[] = database.plans.map((plan) => ({
 const statusOptions = ["Todos", "Ativo", "Destaque", "Rascunho", "Inativo"]
 
 export default function GerenciarPlanosPage() {
-  const [plans, setPlans] = useState(() => getStoredClientPlans(initialPlans))
+  const [plans, setPlans] = useState(() => getStoredCommercialPlans(initialPlans))
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("Todos")
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
@@ -97,18 +97,18 @@ export default function GerenciarPlanosPage() {
       const nextPlans = current.map((plan) =>
         plan.id === draft.id ? draft : plan
       )
-      saveClientPlans(nextPlans)
+      saveCommercialPlans(nextPlans)
       return nextPlans
     })
     if (editingPlan && editingPlan.name !== draft.name) {
-      const nextSubscriptions = getStoredClientSubscriptions(
+      const nextSubscriptions = getStoredCommercialSubscriptions(
         database.subscriptions
       ).map((subscription) =>
         subscription.plan === editingPlan.name
           ? { ...subscription, plan: draft.name, value: draft.price }
           : subscription
       )
-      saveClientSubscriptions(nextSubscriptions)
+      saveCommercialSubscriptions(nextSubscriptions)
     }
     closeEditor()
   }
@@ -118,7 +118,7 @@ export default function GerenciarPlanosPage() {
 
     setPlans((current) => {
       const nextPlans = current.filter((plan) => plan.id !== editingPlan.id)
-      saveClientPlans(nextPlans)
+      saveCommercialPlans(nextPlans)
       return nextPlans
     })
     closeEditor()
@@ -134,7 +134,7 @@ export default function GerenciarPlanosPage() {
           ? { ...item, status: nextStatus }
           : item
       )
-      saveClientPlans(nextPlans)
+      saveCommercialPlans(nextPlans)
       return nextPlans
     })
   }

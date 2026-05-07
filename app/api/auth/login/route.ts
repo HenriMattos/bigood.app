@@ -15,16 +15,24 @@ export async function POST(request: Request) {
 
   if (email !== credentials.email || password.trim() !== credentials.password) {
     return NextResponse.json(
-      { message: "Credenciais administrativas inválidas." },
+      { message: "Credenciais administrativas invalidas." },
       { status: 401 }
     )
   }
 
-  const response = NextResponse.json({ ok: true })
+  const user = {
+    email,
+    name: "Administrador Bigood",
+    companyName: "Bigood",
+    hasActivePlan: true,
+    planKey: "pro-anual",
+  }
+
+  const response = NextResponse.json({ ok: true, user })
 
   response.cookies.set({
     name: AUTH_COOKIE_NAME,
-    value: await createAuthSession(email),
+    value: await createAuthSession(user),
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

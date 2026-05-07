@@ -1,29 +1,29 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react"
 import {
   Building02Icon,
   CheckmarkCircle01Icon,
   File01Icon,
+  GlobeIcon,
+  Link01Icon,
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { database } from "@/components/admin/database"
 import {
-  COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY,
-  COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY,
-  COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY,
   COMPANY_ICON_STORAGE_KEY,
   COMPANY_LOGO_STORAGE_KEY,
+  COMPANY_PORTAL_BANNER_STORAGE_KEY,
+  COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY,
+  COMPANY_PORTAL_ENABLED_STORAGE_KEY,
+  COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY,
+  COMPANY_PORTAL_SLOGAN_STORAGE_KEY,
+  COMPANY_PORTAL_SLUG_STORAGE_KEY,
+  COMPANY_PORTAL_SYNC_EVENT,
 } from "@/components/company/company-assets"
-import {
-  clientPortalThemes,
-  CLIENT_PORTAL_SYNC_EVENT,
-  createDefaultClientPortalSettings,
-  getStoredClientPortalSettings,
-  saveClientPortalSettings,
-} from "@/components/company/client-portal-config"
 import { MetricCard } from "@/components/admin/metric-card"
 import {
   FormField,
@@ -42,7 +42,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 
 const timezones = [
   "America/Manaus",
@@ -67,6 +66,27 @@ const voucherDiscountOptions = [
   "Não descontar",
 ]
 
+const portalOpeningFallback = {
+  days: "Seg a Sab",
+  start: "09:00",
+  end: "19:00",
+}
+
+const portalDayRangeOptions = [
+  "Seg a Sex",
+  "Seg a Sab",
+  "Ter a Sab",
+  "Todos os dias",
+]
+
+const portalTimeOptions = Array.from({ length: 31 }, (_, index) => {
+  const totalMinutes = 7 * 60 + index * 30
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+})
+
 const initialCompanyForm = {
   corporateName: database.company.corporateName,
   tradeName: database.company.tradeName,
@@ -74,25 +94,24 @@ const initialCompanyForm = {
   email: database.company.email,
   timezone: database.company.timezone,
   phone: database.company.phone,
-  slug: database.company.slug,
   logoUrl: database.company.logoUrl,
   iconUrl: database.company.iconUrl,
-  carouselImage1: "",
-  carouselImage2: "",
-  carouselImage3: "",
-  clientThemeId: clientPortalThemes[0].id,
-  clientMode: clientPortalThemes[0].mode,
+  slug: database.company.slug,
+  portalBannerUrl: "",
+  portalDescription:
+    "Experiencia premium para agendar, acompanhar planos e cuidar do visual sem mensagens soltas.",
+  portalEnabled: true,
+  portalOpeningDays: portalOpeningFallback.days,
+  portalOpeningEnd: portalOpeningFallback.end,
+  portalOpeningHours: "Seg a Sab, 09:00 as 19:00",
+  portalOpeningStart: portalOpeningFallback.start,
+  portalSlug: database.company.slug,
+  portalSlogan: "Cabelo, barba e cuidado no seu tempo.",
   pixWithdrawal: "",
   fixedTransactionFee: "R$ 0,00",
   variableTransactionFee: "0,00%",
   cashbackFee: "R$ 0,00",
   advancePayments: false,
-  introTitle1: "",
-  introSubtitle1: "",
-  introTitle2: "",
-  introSubtitle2: "",
-  introTitle3: "",
-  introSubtitle3: "",
   street: database.company.address.street,
   number: database.company.address.number,
   neighborhood: database.company.address.neighborhood,
@@ -110,13 +129,91 @@ const initialCompanyForm = {
   voucherDiscountFrom: voucherDiscountOptions[0],
 }
 
+function normalizePortalSlug(value: string) {
+  return (
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .replace(/-{2,}/g, "-") || "bigood"
+  )
+}
+
+function buildPortalOpeningHours(days: string, start: string, end: string) {
+  return `${days}, ${start} as ${end}`
+}
+
+function parsePortalOpeningHours(value: string) {
+  const match = value.match(/^(.+),\s*(\d{2}:\d{2})\s+as\s+(\d{2}:\d{2})$/)
+
+  if (!match) {
+    return portalOpeningFallback
+  }
+
+  return {
+    days: portalDayRangeOptions.includes(match[1])
+      ? match[1]
+      : portalOpeningFallback.days,
+    start: portalTimeOptions.includes(match[2])
+      ? match[2]
+      : portalOpeningFallback.start,
+    end: portalTimeOptions.includes(match[3])
+      ? match[3]
+      : portalOpeningFallback.end,
+  }
+}
+
+function notifyClientPortalSync() {
+  window.dispatchEvent(new Event(COMPANY_PORTAL_SYNC_EVENT))
+}
+
+function createImagePreview(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onerror = () => reject(reader.error)
+    reader.onload = () => {
+      const rawPreview = String(reader.result)
+      const image = new Image()
+
+      image.onerror = () => resolve(rawPreview)
+      image.onload = () => {
+        const maxSize = 1400
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height))
+
+        if (scale === 1 && rawPreview.length < 1_500_000) {
+          resolve(rawPreview)
+          return
+        }
+
+        const canvas = document.createElement("canvas")
+        canvas.width = Math.max(1, Math.round(image.width * scale))
+        canvas.height = Math.max(1, Math.round(image.height * scale))
+
+        const context = canvas.getContext("2d")
+
+        if (!context) {
+          resolve(rawPreview)
+          return
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL("image/jpeg", 0.84))
+      }
+      image.src = rawPreview
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 export function EmpresaView() {
   const [mounted, setMounted] = useState(false)
   const [uploadResetToken, setUploadResetToken] = useState(0)
   const [form, setForm] = useState({
     ...initialCompanyForm,
     tradeName: database.company.tradeName,
-    slug: database.company.slug,
     logoUrl: database.company.logoUrl,
     iconUrl: database.company.iconUrl,
   })
@@ -125,43 +222,41 @@ export function EmpresaView() {
   )
 
   useEffect(() => {
-    window.requestAnimationFrame(() => setMounted(true))
-    const timer = window.setTimeout(() => {
-      const settings = getStoredClientPortalSettings(
-        createDefaultClientPortalSettings(database.company)
-      )
+    const frame = window.requestAnimationFrame(() => {
+      const storedOpeningHours =
+        window.localStorage.getItem(COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY) ||
+        buildPortalOpeningHours(
+          portalOpeningFallback.days,
+          portalOpeningFallback.start,
+          portalOpeningFallback.end
+        )
+      const parsedOpeningHours = parsePortalOpeningHours(storedOpeningHours)
 
       setForm((current) => ({
         ...current,
-        tradeName: settings.tradeName,
-        slug: settings.slug,
-        logoUrl: settings.logoUrl ?? current.logoUrl,
-        iconUrl: settings.iconUrl ?? current.iconUrl,
-        carouselImage1: settings.carouselImage1 ?? current.carouselImage1,
-        carouselImage2: settings.carouselImage2 ?? current.carouselImage2,
-        carouselImage3: settings.carouselImage3 ?? current.carouselImage3,
-        introTitle1: settings.introTitle1 ?? current.introTitle1,
-        introSubtitle1: settings.introSubtitle1 ?? current.introSubtitle1,
-        introTitle2: settings.introTitle2 ?? current.introTitle2,
-        introSubtitle2: settings.introSubtitle2 ?? current.introSubtitle2,
-        introTitle3: settings.introTitle3 ?? current.introTitle3,
-        introSubtitle3: settings.introSubtitle3 ?? current.introSubtitle3,
-        street: settings.address?.street ?? current.street,
-        number: settings.address?.number ?? current.number,
-        neighborhood: settings.address?.neighborhood ?? current.neighborhood,
-        city: settings.address?.city ?? current.city,
-        state: settings.address?.state ?? current.state,
-        zip: settings.address?.zip ?? current.zip,
-        mapsUrl: settings.address?.mapsUrl ?? current.mapsUrl,
-        instagram: settings.social?.instagram ?? current.instagram,
-        whatsapp: settings.social?.whatsapp ?? current.whatsapp,
-        facebook: settings.social?.facebook ?? current.facebook,
-        clientThemeId: settings.themeId,
-        clientMode: settings.mode,
+        portalBannerUrl:
+          window.localStorage.getItem(COMPANY_PORTAL_BANNER_STORAGE_KEY) || "",
+        portalDescription:
+          window.localStorage.getItem(COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY) ||
+          current.portalDescription,
+        portalEnabled:
+          window.localStorage.getItem(COMPANY_PORTAL_ENABLED_STORAGE_KEY) !==
+          "false",
+        portalOpeningDays: parsedOpeningHours.days,
+        portalOpeningEnd: parsedOpeningHours.end,
+        portalOpeningHours: storedOpeningHours,
+        portalOpeningStart: parsedOpeningHours.start,
+        portalSlug:
+          window.localStorage.getItem(COMPANY_PORTAL_SLUG_STORAGE_KEY) ||
+          current.portalSlug,
+        portalSlogan:
+          window.localStorage.getItem(COMPANY_PORTAL_SLOGAN_STORAGE_KEY) ||
+          current.portalSlogan,
       }))
-    }, 0)
+      setMounted(true)
+    })
 
-    return () => window.clearTimeout(timer)
+    return () => window.cancelAnimationFrame(frame)
   }, [])
 
   if (!mounted) return null
@@ -172,8 +267,16 @@ export function EmpresaView() {
     form.cnpj.trim().length > 0 &&
     form.email.trim().length > 0 &&
     form.timezone.trim().length > 0 &&
-    form.phone.trim().length > 0 &&
-    form.slug.trim().length > 0
+    form.phone.trim().length > 0
+  const portalSlug = normalizePortalSlug(
+    form.portalSlug || database.company.slug
+  )
+  const portalUrl = `/barbearia/${portalSlug}`
+  const portalOpeningHours = buildPortalOpeningHours(
+    form.portalOpeningDays,
+    form.portalOpeningStart,
+    form.portalOpeningEnd
+  )
 
   function update<Key extends keyof typeof form>(
     key: Key,
@@ -182,117 +285,86 @@ export function EmpresaView() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  function persistPortalSettings(nextForm = form) {
-    const logoUrl =
-      window.localStorage.getItem(COMPANY_LOGO_STORAGE_KEY) || nextForm.logoUrl
-    const iconUrl =
-      window.localStorage.getItem(COMPANY_ICON_STORAGE_KEY) || nextForm.iconUrl
-
-    saveClientPortalSettings({
-      tradeName: nextForm.tradeName,
-      slug: nextForm.slug,
-      logoUrl,
-      iconUrl,
-      carouselImage1: window.localStorage.getItem(COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY) || nextForm.carouselImage1,
-      carouselImage2: window.localStorage.getItem(COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY) || nextForm.carouselImage2,
-      carouselImage3: window.localStorage.getItem(COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY) || nextForm.carouselImage3,
-      introTitle1: nextForm.introTitle1,
-      introSubtitle1: nextForm.introSubtitle1,
-      introTitle2: nextForm.introTitle2,
-      introSubtitle2: nextForm.introSubtitle2,
-      introTitle3: nextForm.introTitle3,
-      introSubtitle3: nextForm.introSubtitle3,
-      address: {
-        street: nextForm.street,
-        number: nextForm.number,
-        neighborhood: nextForm.neighborhood,
-        city: nextForm.city,
-        state: nextForm.state,
-        zip: nextForm.zip,
-        mapsUrl: nextForm.mapsUrl,
-      },
-      social: {
-        instagram: nextForm.instagram,
-        whatsapp: nextForm.whatsapp,
-        facebook: nextForm.facebook,
-      },
-      themeId: nextForm.clientThemeId,
-      mode: nextForm.clientMode,
-    })
-  }
-
-  function updatePortalTheme(themeId: string) {
-    const selectedTheme =
-      clientPortalThemes.find((theme) => theme.id === themeId) ??
-      clientPortalThemes[0]
-
-    const nextForm = {
-      ...form,
-      clientThemeId: selectedTheme.id,
-      clientMode: selectedTheme.mode,
-    }
-    setForm(nextForm)
-    persistPortalSettings(nextForm)
-  }
-
   function saveCompany() {
     if (!requiredFilled) {
       setFeedback("Revise os campos obrigatórios antes de salvar.")
       return
     }
 
-    persistPortalSettings()
-    setFeedback("Dados salvos e portal do cliente atualizado.")
+    window.localStorage.setItem(
+      COMPANY_PORTAL_ENABLED_STORAGE_KEY,
+      String(form.portalEnabled)
+    )
+    window.localStorage.setItem(COMPANY_PORTAL_SLUG_STORAGE_KEY, portalSlug)
+    window.localStorage.setItem(
+      COMPANY_PORTAL_SLOGAN_STORAGE_KEY,
+      form.portalSlogan.trim()
+    )
+    window.localStorage.setItem(
+      COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY,
+      form.portalDescription.trim()
+    )
+    window.localStorage.setItem(
+      COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY,
+      portalOpeningHours
+    )
+
+    setForm((current) => ({
+      ...current,
+      portalOpeningHours,
+      portalSlug,
+    }))
+    notifyClientPortalSync()
+    setFeedback("Dados da empresa salvos.")
   }
 
   function restoreDefaults() {
-    const defaultSettings = createDefaultClientPortalSettings(database.company)
-
     window.localStorage.removeItem(COMPANY_LOGO_STORAGE_KEY)
     window.localStorage.removeItem(COMPANY_ICON_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_PORTAL_BANNER_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_PORTAL_ENABLED_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_PORTAL_SLOGAN_STORAGE_KEY)
+    window.localStorage.removeItem(COMPANY_PORTAL_SLUG_STORAGE_KEY)
 
     setUploadResetToken((current) => current + 1)
 
     setForm((current) => ({
       ...current,
       corporateName: database.company.corporateName,
-      tradeName: defaultSettings.tradeName,
+      tradeName: database.company.tradeName,
       cnpj: database.company.cnpj,
       email: database.company.email,
       timezone: database.company.timezone,
       phone: database.company.phone,
-      slug: defaultSettings.slug,
-      logoUrl: defaultSettings.logoUrl ?? "",
-      iconUrl: defaultSettings.iconUrl ?? "",
-      carouselImage1: defaultSettings.carouselImage1 ?? "",
-      carouselImage2: defaultSettings.carouselImage2 ?? "",
-      carouselImage3: defaultSettings.carouselImage3 ?? "",
-      introTitle1: defaultSettings.introTitle1 ?? "",
-      introSubtitle1: defaultSettings.introSubtitle1 ?? "",
-      introTitle2: defaultSettings.introTitle2 ?? "",
-      introSubtitle2: defaultSettings.introSubtitle2 ?? "",
-      introTitle3: defaultSettings.introTitle3 ?? "",
-      introSubtitle3: defaultSettings.introSubtitle3 ?? "",
-      street: defaultSettings.address?.street ?? "",
-      number: defaultSettings.address?.number ?? "",
-      neighborhood: defaultSettings.address?.neighborhood ?? "",
-      city: defaultSettings.address?.city ?? "",
-      state: defaultSettings.address?.state ?? "",
-      zip: defaultSettings.address?.zip ?? "",
-      mapsUrl: defaultSettings.address?.mapsUrl ?? "",
-      instagram: defaultSettings.social?.instagram ?? "",
-      whatsapp: defaultSettings.social?.whatsapp ?? "",
-      facebook: defaultSettings.social?.facebook ?? "",
-      clientThemeId: defaultSettings.themeId,
-      clientMode: defaultSettings.mode,
+      logoUrl: database.company.logoUrl ?? "",
+      iconUrl: database.company.iconUrl ?? "",
+      slug: database.company.slug,
+      portalBannerUrl: "",
+      portalDescription:
+        "Experiencia premium para agendar, acompanhar planos e cuidar do visual sem mensagens soltas.",
+      portalEnabled: true,
+      portalOpeningDays: portalOpeningFallback.days,
+      portalOpeningEnd: portalOpeningFallback.end,
+      portalOpeningHours: "Seg a Sab, 09:00 as 19:00",
+      portalOpeningStart: portalOpeningFallback.start,
+      portalSlug: database.company.slug,
+      portalSlogan: "Cabelo, barba e cuidado no seu tempo.",
+      street: database.company.address.street,
+      number: database.company.address.number,
+      neighborhood: database.company.address.neighborhood,
+      city: database.company.address.city,
+      state: database.company.address.state,
+      zip: database.company.address.zip,
+      mapsUrl: database.company.address.mapsUrl,
+      instagram: database.company.social.instagram,
+      whatsapp: database.company.social.whatsapp,
+      facebook: database.company.social.facebook,
     }))
 
-    saveClientPortalSettings(defaultSettings)
-    window.dispatchEvent(new Event(CLIENT_PORTAL_SYNC_EVENT))
     setFeedback("Dados restaurados ao padrao. Uploads removidos.")
+    notifyClientPortalSync()
   }
 
   return (
@@ -304,13 +376,6 @@ export function EmpresaView() {
           change="Cadastro principal ativo"
           icon={Building02Icon}
           tone="green"
-        />
-        <MetricCard
-          title="URL"
-          value={form.slug}
-          change="Alterações de slug levam até 24h"
-          icon={File01Icon}
-          tone="blue"
         />
         <MetricCard
           title="Pagamentos"
@@ -387,42 +452,147 @@ export function EmpresaView() {
         <FeedbackMessage>{feedback}</FeedbackMessage>
       </SectionCard>
 
-      <SectionCard title="Personalização">
+      <SectionCard
+        title="Portal do cliente"
+        description="Personalize a pagina publica mobile usada pelos clientes."
+        action={
+          <Button size="sm" asChild>
+            <Link href={portalUrl} target="_blank">
+              <HugeiconsIcon icon={GlobeIcon} size={16} />
+              Acessar portal
+            </Link>
+          </Button>
+        }
+      >
         <FormGrid>
-          <FormField label="Slug de Url *">
-            <div className="flex items-center gap-3">
-              <Input
-                value={form.slug}
-                onChange={(event) => update("slug", event.target.value)}
+          <FormField label="Portal ativo">
+            <label className="flex min-h-10 items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">
+              <Checkbox
+                checked={form.portalEnabled}
+                onCheckedChange={(checked) =>
+                  update("portalEnabled", Boolean(checked))
+                }
               />
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="shrink-0 h-10 px-4"
-              >
-                <a
-                  href={`/cliente?slug=${form.slug}`}
+              <span>Permitir acesso publico ao portal do cliente</span>
+            </label>
+          </FormField>
+          <FormField label="URL publica">
+            <div className="flex min-w-0 gap-2">
+              <Input
+                value={form.portalSlug}
+                placeholder="bigood"
+                onChange={(event) =>
+                  update("portalSlug", normalizePortalSlug(event.target.value))
+                }
+              />
+              <Button size="icon" variant="outline" asChild>
+                <Link
+                  href={portalUrl}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
+                  aria-label="Abrir portal"
                 >
-                  <HugeiconsIcon icon={File01Icon} size={16} />
-                  Acessar Portal
-                </a>
+                  <HugeiconsIcon icon={Link01Icon} size={16} />
+                </Link>
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              * Alterações de Slug levam até 24h para serem processadas
+            <p className="mt-2 text-xs break-all text-muted-foreground">
+              {portalUrl}
             </p>
           </FormField>
-          <FormField label="Tema premium do portal">
-            <ClientThemePicker
-              selectedThemeId={form.clientThemeId}
-              onSelect={updatePortalTheme}
+          <FormField label="Slogan do portal">
+            <Input
+              value={form.portalSlogan}
+              onChange={(event) => update("portalSlogan", event.target.value)}
             />
           </FormField>
+          <FormField label="Dias de funcionamento">
+            <Select
+              value={form.portalOpeningDays}
+              onValueChange={(value) => update("portalOpeningDays", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {portalDayRangeOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+          <FormField label="Abre as">
+            <Select
+              value={form.portalOpeningStart}
+              onValueChange={(value) => update("portalOpeningStart", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {portalTimeOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+          <FormField label="Fecha as">
+            <Select
+              value={form.portalOpeningEnd}
+              onValueChange={(value) => update("portalOpeningEnd", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {portalTimeOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+          <FormField label="Horario exibido no portal">
+            <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium text-foreground">
+              {portalOpeningHours}
+            </div>
+          </FormField>
+          <div className="col-span-full">
+            <FormField label="Descricao curta">
+              <Input
+                value={form.portalDescription}
+                onChange={(event) =>
+                  update("portalDescription", event.target.value)
+                }
+              />
+            </FormField>
+          </div>
         </FormGrid>
+        <div className="mt-4">
+          <UploadField
+            label="Banner do portal"
+            description="Imagem horizontal do topo do portal mobile. Se ficar vazio, o Bigood usa o fundo verde padrao."
+            previewUrl={form.portalBannerUrl}
+            storageKey={COMPANY_PORTAL_BANNER_STORAGE_KEY}
+            resetToken={uploadResetToken}
+          />
+        </div>
+        <ResponsiveActions className="mt-5 border-t pt-5">
+          <Button variant="outline" asChild>
+            <Link href={portalUrl} target="_blank">
+              <HugeiconsIcon icon={GlobeIcon} size={16} />
+              Ver portal do cliente
+            </Link>
+          </Button>
+          <Button onClick={saveCompany}>
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} />
+            Salvar portal
+          </Button>
+        </ResponsiveActions>
       </SectionCard>
 
       <SectionCard
@@ -463,7 +633,7 @@ export function EmpresaView() {
           </Button>
         }
       >
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           <UploadField
             label="Logo"
             description="A logo deve possuir as dimensões de 1024 x 1024 pixels."
@@ -476,27 +646,6 @@ export function EmpresaView() {
             description="O ícone deve possuir as dimensões de 512x512 pixels."
             previewUrl={form.iconUrl}
             storageKey={COMPANY_ICON_STORAGE_KEY}
-            resetToken={uploadResetToken}
-          />
-          <UploadField
-            label="Carrossel 1"
-            description="As imagens devem possuir as dimensões de 512 x 590 pixels."
-            previewUrl={form.carouselImage1}
-            storageKey={COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY}
-            resetToken={uploadResetToken}
-          />
-          <UploadField
-            label="Carrossel 2"
-            description="As imagens devem possuir as dimensões de 512 x 590 pixels."
-            previewUrl={form.carouselImage2}
-            storageKey={COMPANY_CAROUSEL_IMAGE_2_STORAGE_KEY}
-            resetToken={uploadResetToken}
-          />
-          <UploadField
-            label="Carrossel 3"
-            description="As imagens devem possuir as dimensões de 512 x 590 pixels."
-            previewUrl={form.carouselImage3}
-            storageKey={COMPANY_CAROUSEL_IMAGE_3_STORAGE_KEY}
             resetToken={uploadResetToken}
           />
         </div>
@@ -577,50 +726,6 @@ export function EmpresaView() {
               value={form.facebook}
               placeholder="sua.pagina"
               onChange={(event) => update("facebook", event.target.value)}
-            />
-          </FormField>
-        </FormGrid>
-      </SectionCard>
-
-      <SectionCard
-        title="Títulos e Subtítulos de introdução"
-        description="Informações exibidas nas telas de introdução ao estabelecimento."
-      >
-        <FormGrid>
-          <FormField label="1º Título">
-            <Textarea
-              value={form.introTitle1}
-              onChange={(event) => update("introTitle1", event.target.value)}
-            />
-          </FormField>
-          <FormField label="1º Subtítulo">
-            <Textarea
-              value={form.introSubtitle1}
-              onChange={(event) => update("introSubtitle1", event.target.value)}
-            />
-          </FormField>
-          <FormField label="2º Título">
-            <Textarea
-              value={form.introTitle2}
-              onChange={(event) => update("introTitle2", event.target.value)}
-            />
-          </FormField>
-          <FormField label="2º Subtítulo">
-            <Textarea
-              value={form.introSubtitle2}
-              onChange={(event) => update("introSubtitle2", event.target.value)}
-            />
-          </FormField>
-          <FormField label="3º Título">
-            <Textarea
-              value={form.introTitle3}
-              onChange={(event) => update("introTitle3", event.target.value)}
-            />
-          </FormField>
-          <FormField label="3º Subtítulo">
-            <Textarea
-              value={form.introSubtitle3}
-              onChange={(event) => update("introSubtitle3", event.target.value)}
             />
           </FormField>
         </FormGrid>
@@ -744,45 +849,6 @@ function ReadonlyInfo({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ClientThemePicker({
-  selectedThemeId,
-  onSelect,
-}: {
-  selectedThemeId: string
-  onSelect: (themeId: string) => void
-}) {
-  return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {clientPortalThemes.map((theme) => {
-        const selected = theme.id === selectedThemeId
-
-        return (
-          <button
-            key={theme.id}
-            type="button"
-            onClick={() => onSelect(theme.id)}
-            className={`min-w-0 rounded-md border p-2 text-left transition ${
-              selected ? "border-primary ring-2 ring-primary/25" : "hover:bg-muted/40"
-            }`}
-          >
-            <span
-              className={`block h-16 rounded ${theme.previewTextClass}`}
-              style={{ background: theme.gradient }}
-            >
-              <span className="flex h-full items-end p-2 text-xs font-black uppercase tracking-widest">
-                {theme.name}
-              </span>
-            </span>
-            <span className="mt-2 block text-xs font-semibold">
-              {theme.description}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 function UploadField({
   label,
   description,
@@ -803,6 +869,7 @@ function UploadField({
 
     return window.localStorage.getItem(storageKey) || previewUrl
   })
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -817,18 +884,21 @@ function UploadField({
     return () => window.cancelAnimationFrame(frame)
   }, [previewUrl, resetToken, storageKey])
 
-  function updatePreview(event: ChangeEvent<HTMLInputElement>) {
+  async function updatePreview(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file || !storageKey) return
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const nextPreview = String(reader.result)
+    setMessage("Preparando imagem...")
+
+    try {
+      const nextPreview = await createImagePreview(file)
       setPreview(nextPreview)
       window.localStorage.setItem(storageKey, nextPreview)
-      window.dispatchEvent(new Event(CLIENT_PORTAL_SYNC_EVENT))
+      setMessage("Imagem salva.")
+      notifyClientPortalSync()
+    } catch {
+      setMessage("Nao foi possivel salvar a imagem. Tente uma imagem menor.")
     }
-    reader.readAsDataURL(file)
   }
 
   return (
@@ -861,6 +931,11 @@ function UploadField({
         onChange={updatePreview}
         className="h-auto py-2 file:mr-3 file:rounded-full file:border-0 file:bg-primary/15 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary"
       />
+      {message && (
+        <span className="text-xs font-semibold text-muted-foreground">
+          {message}
+        </span>
+      )}
     </label>
   )
 }

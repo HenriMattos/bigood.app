@@ -3,6 +3,7 @@ import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -16,8 +17,15 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Painel administrativo",
-  description: "Sistema administrativo",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
+  title: {
+    default: "Bigood | Sistema de Gestao para Barbearias",
+    template: "%s | Bigood",
+  },
+  description:
+    "Sistema de gestao para barbearias com agenda, clientes, caixa, financeiro, planos e recorrencia.",
 }
 
 export default function RootLayout({
@@ -36,7 +44,9 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

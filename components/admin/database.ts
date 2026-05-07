@@ -1,3 +1,6 @@
+import { BIGOOD_PORTAL_ICON, BIGOOD_PORTAL_LOGO } from "@/lib/brand-assets"
+
+
 export type ClientStatus = "ativo" | "novo" | "recorrente" | "sem-plano"
 export type ServiceStatus = "Ativo" | "Inativo"
 export type PlanStatus = "Ativo" | "Destaque" | "Rascunho" | "Inativo"
@@ -180,42 +183,33 @@ export type CashMovement = {
 }
 
 const company = {
-  corporateName: "Studio Simetria ME",
-  tradeName: "Studio Simetria",
+  corporateName: "Bigood Tecnologia LTDA",
+  tradeName: "Bigood",
   cnpj: "12.345.678/0001-90",
-  email: "contato@studiosimetria.com.br",
+  email: "contato@bigood.com.br",
   timezone: "America/Sao_Paulo",
   phone: "(11) 98765-4321",
-  slug: "studio-simetria",
+  slug: "bigood",
   primaryColor: { r: 145, g: 230, b: 104 },
-  logoUrl: "",
-  logoAlt: "Studio Simetria Logo",
-  iconUrl: "",
-  carouselImage1: "/1mg/1.png",
-  carouselImage2: "/1mg/2.png",
-  carouselImage3: "/1mg/3.png",
-  introTitle1: "Estilo e Precisão",
-  introSubtitle1: "Onde cada corte é uma obra de arte.",
-  introTitle2: "Atendimento Exclusivo",
-  introSubtitle2: "Sua satisfação é nossa prioridade.",
-  introTitle3: "Planos de Assinatura",
-  introSubtitle3: "Economia e conveniência para você.",
+  logoUrl: BIGOOD_PORTAL_LOGO,
+  logoAlt: "Bigood Logo",
+  iconUrl: BIGOOD_PORTAL_ICON,
   chairs: ["Cadeira 01"],
-  professionalRoles: ["Barbeiro", "Proprietário"],
+  professionalRoles: ["Barbeiro", "Proprietario"],
   serviceCategories: ["Cabelo", "Barba", "Combo"],
   address: {
     street: "Av. Paulista",
     number: "1000",
     neighborhood: "Bela Vista",
-    city: "São Paulo",
+    city: "Sao Paulo",
     state: "SP",
     zip: "01310-100",
     mapsUrl: "https://maps.google.com",
   },
   social: {
-    instagram: "studiosimetria",
+    instagram: "bigood.app",
     whatsapp: "11987654321",
-    facebook: "studiosimetria",
+    facebook: "bigood.app",
   },
 }
 
@@ -280,7 +274,7 @@ const plans: Plan[] = [
   {
     id: 1,
     name: "Essencial",
-    benefit: "2 Cortes por mês",
+    benefit: "2 cortes por mes",
     price: 80,
     status: "Ativo",
     recurrence: "Mensal",
@@ -303,7 +297,7 @@ const professionals: Professional[] = [
   {
     id: 1,
     name: "Paulo Jean jr",
-    role: "Proprietário / Barbeiro",
+    role: "Proprietario / Barbeiro",
     commission: "100%",
     scheduleStart: "09:00",
     scheduleEnd: "19:00",
@@ -312,8 +306,95 @@ const professionals: Professional[] = [
 ]
 
 // Gerando 45 assinantes
-const firstNames = ["Gabriel", "Lucas", "Mateus", "Felipe", "Thiago", "Ricardo", "Anderson", "Bruno", "Caio", "Daniel", "Eduardo", "Fabio", "Gustavo", "Henrique", "Igor", "João", "Kevin", "Leonardo", "Marcos", "Nathan", "Otavio", "Pedro", "Rafael", "Samuel", "Vitor", "Yuri", "Willian", "Zeca", "Alex", "Beto", "Cristiano", "Diego", "Erick", "Fernando", "Gilberto", "Hugo", "Italo", "Jorge", "Luiz", "Marcelo", "Nilton", "Osmar", "Paulo", "Quirino", "Renato"]
-const lastNames = ["Silva", "Santos", "Oliveira", "Souza", "Rodrigues", "Ferreira", "Alves", "Pereira", "Lima", "Gomes", "Costa", "Ribeiro", "Martins", "Carvalho", "Almeida", "Lopes", "Soares", "Fernandes", "Vieira", "Barbosa", "Rocha", "Dias", "Nascimento", "Andrade", "Moreira", "Nunes", "Marques", "Machado", "Mendes", "Freitas", "Cardoso", "Ramos", "Santana", "Teixeira", "Moura", "Cavalcante", "Dias", "Castro", "Borges", "Campos"]
+const firstNames = [
+  "Gabriel",
+  "Lucas",
+  "Mateus",
+  "Felipe",
+  "Thiago",
+  "Ricardo",
+  "Anderson",
+  "Bruno",
+  "Caio",
+  "Daniel",
+  "Eduardo",
+  "Fabio",
+  "Gustavo",
+  "Henrique",
+  "Igor",
+  "Joao",
+  "Kevin",
+  "Leonardo",
+  "Marcos",
+  "Nathan",
+  "Otavio",
+  "Pedro",
+  "Rafael",
+  "Samuel",
+  "Vitor",
+  "Yuri",
+  "Willian",
+  "Zeca",
+  "Alex",
+  "Beto",
+  "Cristiano",
+  "Diego",
+  "Erick",
+  "Fernando",
+  "Gilberto",
+  "Hugo",
+  "Italo",
+  "Jorge",
+  "Luiz",
+  "Marcelo",
+  "Nilton",
+  "Osmar",
+  "Paulo",
+  "Quirino",
+  "Renato",
+]
+const lastNames = [
+  "Silva",
+  "Santos",
+  "Oliveira",
+  "Souza",
+  "Rodrigues",
+  "Ferreira",
+  "Alves",
+  "Pereira",
+  "Lima",
+  "Gomes",
+  "Costa",
+  "Ribeiro",
+  "Martins",
+  "Carvalho",
+  "Almeida",
+  "Lopes",
+  "Soares",
+  "Fernandes",
+  "Vieira",
+  "Barbosa",
+  "Rocha",
+  "Dias",
+  "Nascimento",
+  "Andrade",
+  "Moreira",
+  "Nunes",
+  "Marques",
+  "Machado",
+  "Mendes",
+  "Freitas",
+  "Cardoso",
+  "Ramos",
+  "Santana",
+  "Teixeira",
+  "Moura",
+  "Cavalcante",
+  "Dias",
+  "Castro",
+  "Borges",
+  "Campos",
+]
 
 const clients: Client[] = firstNames.slice(0, 45).map((firstName, i) => ({
   id: i + 1,
@@ -323,7 +404,9 @@ const clients: Client[] = firstNames.slice(0, 45).map((firstName, i) => ({
   visits: 12 + i,
   averageTicket: i % 2 === 0 ? 80 : 120,
   status: "recorrente",
-  lastVisit: toDateInputValue(addDays(new Date(), -Math.floor(Math.random() * 15))),
+  lastVisit: toDateInputValue(
+    addDays(new Date(), -Math.floor(Math.random() * 15))
+  ),
   favoriteService: i % 3 === 0 ? "Barba Terapia" : "Corte Simetria",
   active: true,
   createdAt: "2023-05-01",
@@ -337,7 +420,9 @@ const subscriptions: Subscription[] = clients.map((client, i) => ({
   phone: client.phone,
   plan: client.planName!,
   value: client.averageTicket,
-  nextCharge: toDateInputValue(addDays(new Date(), Math.floor(Math.random() * 20))),
+  nextCharge: toDateInputValue(
+    addDays(new Date(), Math.floor(Math.random() * 20))
+  ),
   startedAt: "2023-06-01",
   status: "Ativa",
 }))
@@ -386,7 +471,14 @@ const comandas: Comanda[] = [
     chair: "Cadeira 01",
     status: "paga",
     payment: "Pix",
-    items: [{ name: "Corte Simetria", quantity: 1, unitPrice: 60, category: "servico" }],
+    items: [
+      {
+        name: "Corte Simetria",
+        quantity: 1,
+        unitPrice: 60,
+        category: "servico",
+      },
+    ],
   },
 ]
 
@@ -413,7 +505,7 @@ const paymentMethods: PaymentMethod[] = [
   },
   {
     id: 3,
-    name: "Cartão de Crédito",
+    name: "Cartao de credito",
     description: "Maquininha Stone",
     status: "Ativo",
     fee: 3.5,
@@ -424,13 +516,62 @@ const paymentMethods: PaymentMethod[] = [
 ]
 
 const revenueWeek: RevenueDay[] = [
-  { day: "01/05", weekday: "Seg", gross: 120, net: 115, previous: 110, appointments: 2 },
-  { day: "02/05", weekday: "Ter", gross: 180, net: 175, previous: 150, appointments: 3 },
-  { day: "03/05", weekday: "Qua", gross: 150, net: 145, previous: 160, appointments: 3 },
-  { day: "04/05", weekday: "Qui", gross: 200, net: 190, previous: 180, appointments: 4 },
-  { day: "05/05", weekday: "Sex", gross: 250, net: 240, previous: 230, appointments: 5 },
-  { day: "06/05", weekday: "Sab", gross: 350, net: 335, previous: 320, appointments: 7 },
-  { day: "07/05", weekday: "Dom", gross: 0, net: 0, previous: 0, appointments: 0 },
+  {
+    day: "01/05",
+    weekday: "Seg",
+    gross: 120,
+    net: 115,
+    previous: 110,
+    appointments: 2,
+  },
+  {
+    day: "02/05",
+    weekday: "Ter",
+    gross: 180,
+    net: 175,
+    previous: 150,
+    appointments: 3,
+  },
+  {
+    day: "03/05",
+    weekday: "Qua",
+    gross: 150,
+    net: 145,
+    previous: 160,
+    appointments: 3,
+  },
+  {
+    day: "04/05",
+    weekday: "Qui",
+    gross: 200,
+    net: 190,
+    previous: 180,
+    appointments: 4,
+  },
+  {
+    day: "05/05",
+    weekday: "Sex",
+    gross: 250,
+    net: 240,
+    previous: 230,
+    appointments: 5,
+  },
+  {
+    day: "06/05",
+    weekday: "Sab",
+    gross: 350,
+    net: 335,
+    previous: 320,
+    appointments: 7,
+  },
+  {
+    day: "07/05",
+    weekday: "Dom",
+    gross: 0,
+    net: 0,
+    previous: 0,
+    appointments: 0,
+  },
 ]
 
 const peakHours: PeakHour[] = [

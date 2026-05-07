@@ -5,9 +5,9 @@ import { useMemo, useState, type ReactNode } from "react"
 import { serviceCatalog, serviceNames } from "@/components/admin/catalog-data"
 import { database } from "@/components/admin/database"
 import {
-  getStoredClientPlans,
-  saveClientPlans,
-} from "@/components/company/client-portal-config"
+  getStoredCommercialPlans,
+  saveCommercialPlans,
+} from "@/components/company/commercial-storage"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -97,7 +97,7 @@ export default function CriarPlanosPage() {
       return
     }
 
-    const currentPlans = getStoredClientPlans(database.plans)
+    const currentPlans = getStoredCommercialPlans(database.plans)
     const nextPlan = {
       id: Date.now(),
       name: planName.trim(),
@@ -112,8 +112,8 @@ export default function CriarPlanosPage() {
       subscribers: 0,
     }
 
-    saveClientPlans([nextPlan, ...currentPlans])
-    setFeedback(`Plano ${nextPlan.name} criado e disponivel no portal do cliente.`)
+    saveCommercialPlans([nextPlan, ...currentPlans])
+    setFeedback(`Plano ${nextPlan.name} criado e disponivel para venda.`)
   }
 
   function addServiceCategory() {
