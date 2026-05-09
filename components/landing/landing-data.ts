@@ -5,12 +5,10 @@ import {
   ChartIncreaseIcon,
   CreditCardIcon,
   DashboardSquare03Icon,
-  Login01Icon,
   PaintBoardIcon,
   ScissorIcon,
   SmartPhone01Icon,
   StoreManagement01Icon,
-  UserAdd01Icon,
   UserGroupIcon,
   UserMultipleIcon,
 } from "@hugeicons/core-free-icons"
@@ -25,185 +23,155 @@ export const planLabels: Record<PlanKey, string> = {
 }
 
 export const navLinks = [
-  { label: "Produto", href: "#produto" },
+  { label: "Como funciona", href: "#como-funciona" },
   { label: "Recursos", href: "#recursos" },
-  { label: "Planos", href: "#planos" },
-  { label: "Duvidas", href: "#duvidas" },
+  { label: "Dashboard", href: "#dashboard" },
+  { label: "Portal", href: "#portal-cliente" },
+  { label: "Preço", href: "#planos" },
+  { label: "Dúvidas", href: "#duvidas" },
 ]
 
 export const trustItems = [
   "Agenda online",
-  "Clientes e historico",
-  "Profissionais e servicos",
-  "Financeiro",
-  "Assinaturas",
-  "Multiunidades",
+  "Caixa e comandas",
+  "Planos recorrentes",
+  "Portal do cliente",
 ]
 
 export const painPoints = [
   {
-    title: "Agenda desorganizada",
+    title: "Agenda no improviso",
     description:
-      "Horarios perdidos, remarcacoes manuais e clientes dependendo de mensagens para confirmar atendimento.",
+      "Horário perdido, remarcação manual e cliente esperando no WhatsApp.",
     icon: Calendar03Icon,
   },
   {
-    title: "Financeiro sem clareza",
-    description:
-      "Entradas, saidas, comandas e formas de pagamento sem uma visao real do resultado da barbearia.",
+    title: "Caixa sem visão clara",
+    description: "Comanda, pagamento e fechamento espalhados no fim do dia.",
     icon: CashierIcon,
   },
   {
-    title: "Receita sem recorrencia",
+    title: "Clientes sem recorrência",
     description:
-      "Sem planos e assinaturas bem controlados, a barbearia fica presa ao faturamento avulso.",
+      "Sem assinatura, a barbearia depende só do atendimento avulso.",
     icon: CreditCardIcon,
   },
   {
-    title: "Equipe sem controle",
+    title: "Sistema que não entende barbearia",
     description:
-      "Profissionais, servicos, horarios e comissoes funcionando sem uma gestao centralizada.",
-    icon: UserMultipleIcon,
-  },
-] satisfies Array<{ title: string; description: string; icon: IconSvgElement }>
-
-export const productPillars = [
-  {
-    title: "Painel central da operacao",
-    description:
-      "Agenda, clientes, caixa, financeiro e desempenho em uma unica visao para decidir rapido.",
+      "Tela demais, rotina pesada e pouco foco no dia a dia do barbeiro.",
     icon: DashboardSquare03Icon,
   },
-  {
-    title: "Agenda online",
-    description:
-      "Agendamento, consulta de horarios e acompanhamento de planos em uma experiencia simples e bonita.",
-    icon: SmartPhone01Icon,
-  },
-  {
-    title: "Recorrencia no controle",
-    description:
-      "Venda planos, acompanhe beneficios e ganhe previsibilidade sem depender de planilhas.",
-    icon: CreditCardIcon,
-  },
 ] satisfies Array<{ title: string; description: string; icon: IconSvgElement }>
 
-export const features = [
+export const clientPlanExamples = [
   {
-    title: "Agendamento online",
-    description:
-      "Organize horarios, bloqueios, profissionais e servicos em uma agenda clara para o dia a dia.",
-    icon: Calendar03Icon,
+    name: "Plano Corte Mensal",
+    benefit: "1 ou 2 cortes por mês com valor fixo.",
+    frequency: "Renovação mensal",
+    status: "Ativo",
+    subscriber: "Cliente: Rafael M.",
   },
   {
-    title: "Gestao de clientes",
-    description:
-      "Cadastre clientes, acompanhe historico e identifique oportunidades de recompra e fidelizacao.",
-    icon: UserGroupIcon,
+    name: "Plano Corte + Barba",
+    benefit: "2 cortes + 1 barba por mês.",
+    frequency: "Renova em 12 dias",
+    status: "Renovando",
+    subscriber: "Cliente: Diego S.",
   },
   {
-    title: "Controle de equipe",
-    description:
-      "Gerencie barbeiros, horarios, comissoes, funcoes e exibicao dos servicos da equipe.",
-    icon: ScissorIcon,
+    name: "Plano Premium",
+    benefit: "Prioridade de horário e serviços inclusos.",
+    frequency: "Ciclo mensal",
+    status: "Ativo",
+    subscriber: "Cliente: Marcos A.",
   },
   {
-    title: "Planos e assinaturas",
-    description:
-      "Venda recorrencia, acompanhe inadimplencia e aumente previsibilidade de receita.",
-    icon: CreditCardIcon,
+    name: "Plano Fidelidade",
+    benefit: "Vantagens para clientes recorrentes.",
+    frequency: "Vence em breve",
+    status: "Vence em breve",
+    subscriber: "Cliente: Lucas P.",
   },
-  {
-    title: "Financeiro completo",
-    description:
-      "Veja receitas, despesas, caixa, comandas, categorias e relatorios importantes da operacao.",
-    icon: ChartIncreaseIcon,
-  },
-  {
-    title: "Agenda online",
-    description:
-      "Entregue uma experiencia moderna para agendar, consultar horarios e acompanhar planos.",
-    icon: SmartPhone01Icon,
-  },
-  {
-    title: "Caixa e comandas",
-    description:
-      "Registre pagamentos, entradas, saidas e acompanhe a movimentacao financeira do dia.",
-    icon: CashierIcon,
-  },
-  {
-    title: "Personalizacao da marca",
-    description:
-      "Configure dados da empresa, contatos, logo, icone e imagens comerciais.",
-    icon: PaintBoardIcon,
-  },
-  {
-    title: "Multiunidades",
-    description:
-      "Gerencie ate 3 unidades no Plano Pro e fale com a equipe para operacoes maiores.",
-    icon: Building03Icon,
-  },
-] satisfies Array<{ title: string; description: string; icon: IconSvgElement }>
+]
 
 export const flowSteps = [
   {
-    title: "Escolha o plano",
+    title: "Configure sua barbearia",
     description:
-      "Compare as opcoes e siga com o Pro Mensal, Pro Anual ou Personalizado.",
-    icon: Calendar03Icon,
-    href: "#planos",
-    cta: "Ver planos",
+      "Cadastre serviços, profissionais, horários, unidades e identidade do portal do cliente.",
+    icon: PaintBoardIcon,
   },
   {
-    title: "Cadastre a barbearia",
+    title: "Receba agendamentos",
     description:
-      "A tela de cadastro ja recebe o plano escolhido e coleta os dados comerciais.",
-    icon: UserAdd01Icon,
-    href: "/cadastro?plan=pro-anual",
-    cta: "Abrir cadastro",
+      "O cliente agenda pelo portal, escolhe serviço, profissional, data e horário.",
+    icon: SmartPhone01Icon,
   },
   {
-    title: "Confirme no checkout",
+    title: "Controle o atendimento",
     description:
-      "Revise plano, pagamento e regra de transicao de sistema antes de concluir.",
+      "Acompanhe agenda, comandas, caixa, clientes e histórico em um painel único.",
+    icon: CashierIcon,
+  },
+  {
+    title: "Venda planos recorrentes",
+    description:
+      "Crie planos de assinatura, controle benefícios, acompanhe renovações e aumente previsibilidade.",
     icon: CreditCardIcon,
-    href: "/checkout?plan=pro-anual",
-    cta: "Ver checkout",
   },
   {
-    title: "Entre no painel",
+    title: "Acompanhe o crescimento",
     description:
-      "Depois da confirmacao, o acesso fica sempre na landing em Conta > Meu painel.",
-    icon: Login01Icon,
-    href: "/login",
-    cta: "Meu painel",
+      "Veja receita, clientes ativos, assinaturas, agendamentos e desempenho da operação.",
+    icon: ChartIncreaseIcon,
   },
 ] satisfies Array<{
   title: string
   description: string
   icon: IconSvgElement
-  href: string
-  cta: string
 }>
 
-export const multiUnitCards = [
+export const features = [
   {
-    title: "1 a 3 unidades",
-    description:
-      "Use o Plano Pro para operar pequenas e medias barbearias com uma estrutura profissional.",
-    icon: Building03Icon,
+    title: "Agenda online",
+    description: "Clientes agendam pelo celular e a barbearia acompanha tudo.",
+    icon: Calendar03Icon,
   },
   {
-    title: "4 ou mais unidades",
-    description:
-      "Fale com a equipe para montar um plano personalizado para redes, franquias ou operacoes maiores.",
-    icon: StoreManagement01Icon,
+    title: "Portal do cliente",
+    description: "Serviços, horários, planos e agendamentos em um portal.",
+    icon: SmartPhone01Icon,
   },
   {
-    title: "Condicoes especiais",
-    description:
-      "Pix, boleto, transferencia, contrato, migracao assistida e suporte prioritario entram no Personalizado.",
+    title: "Planos e assinaturas",
+    description: "Controle benefícios, status, início e renovação.",
     icon: CreditCardIcon,
+  },
+  {
+    title: "Caixa e comandas",
+    description: "Atendimentos, pagamentos e fechamento com mais clareza.",
+    icon: CashierIcon,
+  },
+  {
+    title: "Gestão de clientes",
+    description: "Histórico, preferências, planos ativos e relacionamento.",
+    icon: UserGroupIcon,
+  },
+  {
+    title: "Profissionais e serviços",
+    description: "Equipe, horários, valores, serviços e disponibilidade.",
+    icon: ScissorIcon,
+  },
+  {
+    title: "Financeiro",
+    description: "Faturamento, pagamentos, recorrência e visão geral.",
+    icon: ChartIncreaseIcon,
+  },
+  {
+    title: "Multiunidades",
+    description: "Até 3 unidades no Pro e operações maiores no Personalizado.",
+    icon: Building03Icon,
   },
 ] satisfies Array<{ title: string; description: string; icon: IconSvgElement }>
 
@@ -213,23 +181,23 @@ export const plans = [
     name: "Pro Mensal",
     badge: "Entrada mensal",
     price: "R$ 220",
-    period: "/mes",
+    period: "/mês",
     description:
-      "Para barbearias que querem comecar com uma gestao profissional sem compromisso anual.",
+      "Para barbearias que querem começar com gestão profissional sem compromisso anual.",
     highlighted: false,
     cta: "Assinar mensal",
-    payment: "Pagamento padrao por cartao de credito.",
-    transition: "Taxa de transicao de sistema pode ser aplicada.",
+    payment: "Pagamento padrão por cartão de crédito.",
+    transition: "Taxa de transição de sistema pode ser aplicada.",
     features: [
-      "Ate 3 unidades",
       "Agenda online",
-      "Agenda online para clientes",
-      "Gestao de clientes",
+      "Portal do cliente",
+      "Gestão de clientes",
       "Caixa e comandas",
       "Financeiro",
-      "Planos e assinaturas",
-      "Gestao de profissionais e servicos",
-      "Suporte padrao",
+      "Planos de assinatura para seus clientes",
+      "Gestão de profissionais e serviços",
+      "Até 3 unidades no Plano Pro",
+      "Suporte padrão",
     ],
   },
   {
@@ -239,43 +207,44 @@ export const plans = [
     price: "R$ 2.100",
     period: "/ano",
     description:
-      "A melhor opcao para economizar, ter mais flexibilidade de pagamento e migrar sem custo adicional.",
+      "Equivalente a R$ 175 por mês. A melhor opção para economizar e migrar sem custo adicional.",
     highlighted: true,
     cta: "Assinar anual",
-    payment: "Cartao, Pix, boleto, transferencia ou contrato aprovado.",
-    transition: "Transicao de sistema gratis.",
+    payment: "Cartão, Pix, boleto, transferência ou contrato aprovado.",
+    transition: "Transição de sistema grátis.",
     features: [
       "Tudo do Plano Pro",
-      "Ate 3 unidades",
+      "Agenda online",
+      "Portal do cliente",
+      "Controle de clientes assinantes",
+      "Planos de assinatura para seus clientes",
+      "Transição de sistema grátis",
       "Economia de R$ 540 por ano",
-      "Equivalente a R$ 175/mes",
-      "Transicao de sistema gratis",
-      "Outras formas de pagamento",
-      "Melhor custo-beneficio",
-      "Suporte padrao",
+      "Até 3 unidades no Plano Pro",
+      "Suporte padrão",
     ],
   },
   {
     key: "personalizado",
     name: "Personalizado",
-    badge: "Para redes e franquias",
+    badge: "Para 4+ unidades",
     price: "Sob consulta",
     period: "",
     description:
-      "Para barbearias com mais de 3 unidades, necessidades comerciais especiais ou operacao avancada.",
+      "Para barbearias com 4 ou mais unidades, operação maior, contrato especial ou necessidades avançadas.",
     highlighted: false,
-    cta: "Falar com especialista",
+    cta: "Falar conosco",
     payment:
-      "Cartao, Pix, boleto, transferencia, contrato ou condicao comercial personalizada.",
-    transition: "Transicao de sistema personalizada conforme operacao.",
+      "Cartão, Pix, boleto, transferência, contrato ou condição comercial personalizada.",
+    transition: "Transição de sistema personalizada conforme operação.",
     features: [
       "4 ou mais unidades",
-      "Condicoes comerciais personalizadas",
-      "Pagamento por Pix, boleto, transferencia, cartao ou contrato",
-      "Suporte prioritario",
-      "Transicao de sistema personalizada",
+      "Condições comerciais personalizadas",
+      "Controle de clientes assinantes",
+      "Suporte prioritário",
+      "Transição de sistema personalizada",
       "Treinamento da equipe",
-      "Solucao para clientes sem limite no cartao",
+      "Contrato especial para operações maiores",
     ],
   },
 ] satisfies Array<{
@@ -292,58 +261,41 @@ export const plans = [
   features: string[]
 }>
 
-export const comparisonRows = [
-  ["Preco", "R$ 220/mes", "R$ 2.100/ano", "Sob consulta"],
-  ["Equivalente mensal", "R$ 220/mes", "R$ 175/mes", "Sob consulta"],
-  ["Unidades inclusas", "Ate 3", "Ate 3", "4 ou mais"],
-  ["Agenda online", "Sim", "Sim", "Sim"],
-  ["Agenda online para clientes", "Sim", "Sim", "Sim"],
-  ["Gestao de clientes", "Sim", "Sim", "Sim"],
-  ["Caixa e comandas", "Sim", "Sim", "Sim"],
-  ["Financeiro", "Sim", "Sim", "Sim"],
-  ["Planos e assinaturas", "Sim", "Sim", "Sim"],
-  ["Profissionais e servicos", "Sim", "Sim", "Sim"],
-  ["Personalizacao da marca", "Sim", "Sim", "Sim"],
-  ["Transicao de sistema", "Pode ser aplicada", "Gratis", "Personalizada"],
-  ["Pagamento por cartao", "Sim", "Sim", "Sim"],
-  ["Pagamento por Pix", "Nao no padrao", "Sim", "Sim"],
-  ["Pagamento por boleto", "Nao no padrao", "Sim", "Sim"],
-  ["Pagamento por transferencia", "Nao no padrao", "Sim", "Sim"],
-  ["Pagamento por contrato", "Nao no padrao", "Sob aprovacao", "Sim"],
-  ["Suporte prioritario", "Nao", "Nao", "Sim"],
-  ["Treinamento da equipe", "Nao", "Nao", "Sob consulta"],
-]
-
-export const valueMetrics = [
-  { value: "32", label: "agendamentos organizados por dia" },
-  { value: "86", label: "assinaturas ativas acompanhadas" },
-  { value: "3", label: "unidades inclusas no Plano Pro" },
-  { value: "R$ 540", label: "de economia no plano anual" },
-]
-
 export const dashboardMetrics = [
   {
-    label: "Receita mensal",
-    value: "R$ 18.420",
-    detail: "+14% no mes",
-    icon: ChartIncreaseIcon,
-  },
-  {
     label: "Agenda de hoje",
-    value: "32 horarios",
-    detail: "8 pendentes de confirmacao",
+    value: "32 horários",
+    detail: "Serviços, profissionais e confirmações em uma tela.",
     icon: Calendar03Icon,
   },
   {
-    label: "Assinaturas ativas",
-    value: "86 clientes",
-    detail: "R$ 7.920 em recorrencia",
+    label: "Clientes assinantes",
+    value: "86 ativos",
+    detail: "Planos, benefícios e status acompanhados.",
     icon: UserMultipleIcon,
   },
   {
-    label: "Plano Pro",
-    value: "Ate 3 unidades",
-    detail: "Gestao centralizada",
+    label: "Planos ativos",
+    value: "R$ 7.920",
+    detail: "Receita mensal prevista em assinaturas.",
+    icon: CreditCardIcon,
+  },
+  {
+    label: "Caixa do dia",
+    value: "R$ 2.840",
+    detail: "Comandas, pagamentos e fechamento organizados.",
+    icon: CashierIcon,
+  },
+  {
+    label: "Serviços mais vendidos",
+    value: "Corte + barba",
+    detail: "Histórico para entender demanda e equipe.",
+    icon: ScissorIcon,
+  },
+  {
+    label: "Renovações próximas",
+    value: "14 clientes",
+    detail: "Planos que precisam de acompanhamento.",
     icon: StoreManagement01Icon,
   },
 ] satisfies Array<{
@@ -355,53 +307,35 @@ export const dashboardMetrics = [
 
 export const faqs = [
   {
-    question: "O Bigood tem plano gratuito?",
+    question: "O Bigood é só uma agenda online?",
     answer:
-      "Nao. O Bigood e uma plataforma premium para barbearias que querem uma gestao profissional. Os planos comecam em R$ 220 por mes.",
+      "Não. O Bigood é um sistema completo para gerenciar agenda, clientes, profissionais, serviços, caixa, financeiro e planos de assinatura da barbearia.",
   },
   {
-    question: "Quantas unidades posso gerenciar no Plano Pro?",
+    question: "Consigo vender planos de assinatura para meus clientes?",
     answer:
-      "O Plano Pro inclui ate 3 unidades. Para barbearias com 4 ou mais unidades, oferecemos o Plano Personalizado.",
+      "Sim. A barbearia pode criar planos, definir benefícios, acompanhar clientes assinantes, controlar início, renovação e status.",
   },
   {
-    question: "Qual a diferenca entre mensal e anual?",
+    question: "O cliente consegue agendar pelo celular?",
     answer:
-      "No mensal, o valor e R$ 220 por mes. No anual, o valor e R$ 2.100 por ano, equivalente a R$ 175 por mes, com economia de R$ 540 por ano.",
+      "Sim. Cada barbearia pode ter um portal para o cliente escolher serviço, profissional, data e horário.",
   },
   {
-    question: "Existe taxa de implantacao?",
+    question: "O sistema serve para barbearias pequenas?",
     answer:
-      "Nao usamos taxa de implantacao. Quando necessario, a cobranca e referente a transicao de sistema, ou seja, ao processo de migracao de outro sistema para o Bigood.",
+      "Sim. O Bigood foi pensado para barbearias que querem sair do improviso e organizar a operação desde cedo.",
   },
   {
-    question: "A transicao de outro sistema e cobrada?",
+    question: "Tenho mais de uma unidade. Posso usar?",
     answer:
-      "No Plano Mensal, a taxa de transicao de sistema pode ser aplicada. No Plano Anual, a transicao e gratuita. No Plano Personalizado, a transicao e definida conforme a operacao.",
+      "Sim. O Plano Pro cobre até 3 unidades. Operações com 4 ou mais unidades entram no Plano Personalizado.",
   },
   {
-    question: "Quais formas de pagamento o Bigood aceita?",
+    question: "O Bigood foi criado por barbeiros?",
     answer:
-      "No Plano Mensal padrao, o pagamento e feito por cartao de credito. No Plano Anual, tambem aceitamos Pix, boleto, transferencia e contrato aprovado. No Plano Personalizado, as formas de pagamento sao definidas com a equipe.",
-  },
-  {
-    question: "E se eu nao tiver limite no cartao?",
-    answer:
-      "Nesse caso, voce pode escolher o Plano Anual com outras formas de pagamento ou falar com nossa equipe para uma condicao personalizada.",
-  },
-  {
-    question: "O sistema serve para barbearia com mais de uma filial?",
-    answer:
-      "Sim. O Plano Pro atende ate 3 unidades. Para redes, franquias ou operacoes com 4 ou mais unidades, recomendamos o Plano Personalizado.",
-  },
-  {
-    question: "O cliente da barbearia tambem acessa o sistema?",
-    answer:
-      "Sim. O Bigood tera uma experiencia de agendamento para clientes finais. Essa area sera recriada em uma etapa propria da refatoracao.",
-  },
-  {
-    question: "Posso migrar de outro sistema?",
-    answer:
-      "Sim. O Bigood permite transicao de outro sistema. No Plano Anual, essa transicao e gratuita. No Mensal, pode haver cobranca. No Personalizado, a transicao e definida conforme o tamanho da operacao.",
+      "O Bigood foi desenvolvido com apoio real de um barbeiro consultor, com anos de experiência na própria barbearia e participação direta na validação das necessidades do sistema.",
   },
 ]
+
+
