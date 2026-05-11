@@ -54,29 +54,16 @@ export function LandingHeader() {
           </nav>
 
           <div className="hidden items-center gap-4 lg:flex">
-            {user?.hasActivePlan ? (
-              <Button size="lg" className={limeButtonClass} asChild>
-                <Link href="/dashboard">
-                  Acessar painel
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    size={18}
-                    aria-hidden="true"
-                  />
-                </Link>
-              </Button>
-            ) : (
-              <Button size="lg" className={limeButtonClass} asChild>
-                <Link href="/escolher-plano">
-                  Assinar plano
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    size={18}
-                    aria-hidden="true"
-                  />
-                </Link>
-              </Button>
-            )}
+            <Button size="lg" className={limeButtonClass} asChild>
+              <Link href="/login">
+                Entrar agora
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  size={18}
+                  aria-hidden="true"
+                />
+              </Link>
+            </Button>
 
             {!isLoading && user ? (
               <div className="group relative">
@@ -161,29 +148,16 @@ export function LandingHeader() {
               </Link>
             ))}
             <div className="mt-2 grid gap-2 border-t border-[var(--landing-border)] pt-4">
-              {user?.hasActivePlan ? (
-                <Button className={limeButtonClass} asChild>
-                  <Link href="/dashboard" onClick={() => setOpen(false)}>
-                    Acessar painel
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      size={18}
-                      aria-hidden="true"
-                    />
-                  </Link>
-                </Button>
-              ) : (
-                <Button className={limeButtonClass} asChild>
-                  <Link href="/escolher-plano" onClick={() => setOpen(false)}>
-                    Assinar plano
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      size={18}
-                      aria-hidden="true"
-                    />
-                  </Link>
-                </Button>
-              )}
+              <Button className={limeButtonClass} asChild>
+                <Link href="/login" onClick={() => setOpen(false)}>
+                  Entrar agora
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    size={18}
+                    aria-hidden="true"
+                  />
+                </Link>
+              </Button>
 
               {!isLoading && user ? (
                 <>

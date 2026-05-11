@@ -99,7 +99,6 @@ export function LandingPage() {
       <CompareSection />
       <DashboardShowcaseSection />
       <PortalShowcaseSection />
-      <PricingSection />
       <FaqSection />
       <FinalCtaSection />
       <LandingFooter />
@@ -110,30 +109,30 @@ export function LandingPage() {
 function HeroSection() {
   return (
     <section className="landing-guide-section landing-clean-grid bg-[var(--landing-background)]">
-      <Container className="grid min-h-[calc(100dvh-68px)] gap-8 py-9 md:grid-cols-[0.92fr_1.08fr] md:items-center md:gap-10 md:py-12 lg:py-16">
+      <Container className="grid min-h-[calc(100dvh-68px)] gap-8 py-9 md:grid-cols-[0.9fr_0.9fr] md:items-center md:gap-14 md:py-12 lg:gap-20 lg:py-14">
         <div className="landing-reveal">
           <SectionEyebrow>Sistema completo para barbearias</SectionEyebrow>
-          <h1 className="mt-5 max-w-[680px] text-[clamp(38px,11vw,56px)] leading-[0.98] font-black text-[var(--landing-primary-dark)] md:mt-6 md:text-[clamp(46px,6vw,78px)]">
+          <h1 className="mt-5 max-w-[600px] text-[clamp(38px,11vw,56px)] leading-[0.98] font-black text-[var(--landing-primary-dark)] md:mt-6 md:text-[clamp(44px,4.9vw,68px)]">
             Barba, cabelo e gestão para o seu negócio crescer.
           </h1>
-          <p className="mt-4 max-w-[560px] text-base leading-6 text-[var(--landing-foreground-soft)] md:mt-6 md:text-lg md:leading-7">
+          <p className="mt-4 max-w-[520px] text-base leading-6 text-[var(--landing-foreground-soft)] md:mt-6 md:text-[17px] md:leading-7">
             Agenda, caixa, clientes, equipe e planos de assinatura em um painel
             simples para vender mais e perder menos tempo.
           </p>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row md:mt-8">
+<div className="mt-6 flex flex-col gap-3 sm:flex-row md:mt-8">
             <LandingLinkButton
-              href="/escolher-plano"
+              href="/login"
               className={limeButtonClass}
             >
-              Assinar plano
+              Entrar agora
             </LandingLinkButton>
             <LandingLinkButton href="#dashboard" className={lightButtonClass}>
               Ver dashboard
             </LandingLinkButton>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3 md:mt-8">
+          <div className="mt-6 flex max-w-[520px] flex-wrap gap-3 md:mt-8">
             {heroProofs.map((proof) => (
               <HeroBadge
                 key={proof.text}
@@ -157,7 +156,7 @@ function HeroSection() {
         </div>
 
         <div className="landing-reveal-delayed hidden md:block">
-          <div className="group relative min-h-[560px] md:min-h-[560px]">
+          <div className="group relative mx-auto min-h-[560px] w-full max-w-[620px] md:min-h-[520px] lg:min-h-[560px]">
             <div className="landing-hero-glow absolute inset-x-2 top-10 bottom-4 overflow-hidden rounded-[36px] bg-[var(--landing-primary-dark)] md:inset-x-8 md:top-8 md:bottom-0 md:rounded-[44px]">
               <Image
                 src={LANDING_IMAGES.hero}
@@ -175,7 +174,7 @@ function HeroSection() {
               width={760}
               height={880}
               sizes="(min-width: 1024px) 42vw, 88vw"
-              className="absolute inset-x-0 bottom-4 z-10 mx-auto h-[86%] w-auto object-contain drop-shadow-[0_28px_42px_rgba(8,47,34,0.24)] transition duration-500 group-hover:scale-[1.02] md:bottom-0 md:h-[104%]"
+              className="absolute inset-x-0 bottom-4 z-10 mx-auto h-[86%] w-auto object-contain drop-shadow-[0_28px_42px_rgba(8,47,34,0.24)] md:bottom-0 md:h-[101%] lg:h-[104%]"
               priority
             />
             <FloatingNote
@@ -450,8 +449,8 @@ function DashboardShowcaseSection() {
                 </div>
               ))}
             </div>
-            <LandingLinkButton
-              href="/escolher-plano"
+<LandingLinkButton
+              href="/login"
               className={cn(darkButtonClass, "mt-8")}
             >
               Quero esse painel
@@ -548,8 +547,8 @@ function PortalShowcaseSection() {
               ))}
             </div>
 
-            <LandingLinkButton
-              href="/escolher-plano"
+<LandingLinkButton
+              href="/login"
               className={cn(limeButtonClass, "mt-8")}
             >
               Quero meu portal
@@ -729,8 +728,8 @@ function FinalCtaSection() {
               Sua barbearia pronta para agendar, vender planos e crescer.
             </h2>
           </div>
-          <LandingLinkButton href="/escolher-plano" className={darkButtonClass}>
-            Assinar plano
+<LandingLinkButton href="/login" className={darkButtonClass}>
+            Entrar agora
           </LandingLinkButton>
         </div>
       </Container>
@@ -747,13 +746,13 @@ function LandingFooter() {
   ]
 
   const footerColumns = [
-    {
+{
       title: "Produto",
       links: [
         { label: "Como funciona", href: "#como-funciona" },
         { label: "Dashboard", href: "#dashboard" },
         { label: "Recursos", href: "#recursos" },
-        { label: "Planos", href: "#planos" },
+        { label: "Dúvidas", href: "#duvidas" },
       ],
     },
     {
@@ -761,7 +760,7 @@ function LandingFooter() {
       links: [
         { label: "Agenda online", href: "#recursos" },
         { label: "Caixa e comandas", href: "#recursos" },
-        { label: "Assinaturas", href: "#planos" },
+        { label: "Assinaturas", href: "#recursos" },
         { label: "Portal do cliente", href: "#portal-cliente" },
       ],
     },
@@ -769,8 +768,6 @@ function LandingFooter() {
       title: "Acesso",
       links: [
         { label: "Entrar", href: "/login" },
-        { label: "Assinar plano", href: "/escolher-plano" },
-        { label: "Cadastro", href: "/cadastro?plan=pro-anual" },
         { label: "Dúvidas", href: "#duvidas" },
       ],
     },
@@ -821,16 +818,16 @@ function LandingFooter() {
             ))}
           </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-white/6 p-6">
+<div className="rounded-[28px] border border-white/10 bg-white/6 p-6">
             <p className="text-sm font-black text-white">Pronto para testar?</p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              Comece pelo plano Bigood e veja sua barbearia mais organizada.
+              Comece entrando agora e veja sua barbearia mais organizada.
             </p>
             <LandingLinkButton
-              href="/escolher-plano"
+              href="/login"
               className={cn(limeButtonClass, "mt-6")}
             >
-              Assinar plano
+              Entrar agora
             </LandingLinkButton>
           </div>
         </div>

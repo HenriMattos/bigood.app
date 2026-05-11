@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(c:\\Users\\henri\\Desktop\\Bytepear\\saas layer-01\\app\\mydashbarber\\mydashbarber\\components\\admin/**)"
+    ]
+  },
+  "$version": 4
+}

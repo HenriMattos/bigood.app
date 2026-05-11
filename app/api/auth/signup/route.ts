@@ -14,9 +14,9 @@ export async function POST(request: Request) {
   const companyName =
     typeof body?.companyName === "string" ? body.companyName.trim() : ""
 
-  if (!email || !password || !name || !companyName) {
+  if (!email || !password || !name) {
     return NextResponse.json(
-      { message: "Preencha nome, barbearia, e-mail e senha." },
+      { message: "Preencha seu nome, e-mail e senha." },
       { status: 400 }
     )
   }
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const user = {
     email,
     name,
-    companyName,
+    companyName: companyName || "Minha Barbearia",
     hasActivePlan: false,
   }
 
