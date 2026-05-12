@@ -27,7 +27,6 @@ export const navLinks = [
   { label: "Recursos", href: "#recursos" },
   { label: "Dashboard", href: "#dashboard" },
   { label: "Portal", href: "#portal-cliente" },
-  { label: "Preço", href: "#planos" },
   { label: "Dúvidas", href: "#duvidas" },
 ]
 

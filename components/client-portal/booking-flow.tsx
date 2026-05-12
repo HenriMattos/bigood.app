@@ -55,6 +55,7 @@ export function BookingFlow({
   onClose,
   onConfirm,
   onViewAppointments,
+  onRequireAuth,
 }: {
   open: boolean
   services: ClientPortalService[]
@@ -63,6 +64,7 @@ export function BookingFlow({
   onClose: () => void
   onConfirm: (payload: BookingPayload) => void
   onViewAppointments: () => void
+  onRequireAuth?: (payload: BookingPayload) => void
 }) {
   const [step, setStep] = useState<BookingStep>(
     initialServiceId ? "professional" : "service"
@@ -117,12 +119,19 @@ export function BookingFlow({
         return
       }
 
-      onConfirm({
+      const payload: BookingPayload = {
         service: selectedService,
         professional: selectedProfessional,
         date: selectedDate,
         time: selectedTime,
-      })
+      }
+
+      if (onRequireAuth) {
+        onRequireAuth(payload)
+        return
+      }
+
+      onConfirm(payload)
       setSuccess(true)
       return
     }

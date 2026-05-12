@@ -51,11 +51,13 @@ export function CheckoutScreen({
   profile,
   onClose,
   onConfirm,
+  onRequireAuth,
 }: {
   plan: ClientPortalPlan | null
   profile: ClientProfile
   onClose: () => void
   onConfirm: (plan: ClientPortalPlan, paymentMethod: PaymentMethod) => void
+  onRequireAuth?: () => void
 }) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card")
   const [success, setSuccess] = useState(false)
@@ -65,6 +67,11 @@ export function CheckoutScreen({
   }
 
   function confirm() {
+    if (onRequireAuth) {
+      onRequireAuth()
+      return
+    }
+
     onConfirm(plan!, paymentMethod)
     setSuccess(true)
   }

@@ -10,7 +10,15 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import type { BarberCompany } from "@/components/client-portal/client-portal-data"
 import { useDragScroll } from "@/components/client-portal/use-drag-scroll"
 
-export function ClientPortalHeader({ company }: { company: BarberCompany }) {
+export function ClientPortalHeader({
+  company,
+  userName,
+  onAuthClick,
+}: {
+  company: BarberCompany
+  userName?: string
+  onAuthClick?: () => void
+}) {
   const infoCarousel = useDragScroll<HTMLDivElement>()
   const initials = company.name
     .split(" ")
@@ -33,7 +41,25 @@ export function ClientPortalHeader({ company }: { company: BarberCompany }) {
           <div className="h-full w-full bg-[radial-gradient(circle_at_20%_10%,rgba(216,242,58,0.34),transparent_34%),linear-gradient(135deg,#0a3f28_0%,#0f5a35_100%)]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/10 to-[#0a3f28]/70" />
-        <div className="absolute right-5 bottom-5 flex justify-end">
+        <div className="absolute right-5 bottom-5 flex justify-end gap-2">
+          {userName ? (
+            <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-3 py-1.5 backdrop-blur">
+              <span className="size-5 rounded-full bg-[var(--client-accent,#d8f23a)] text-center text-[10px] font-black leading-5 text-[var(--client-primary-dark,#0a3f28)]">
+                {userName.charAt(0).toUpperCase()}
+              </span>
+              <span className="max-w-[100px] truncate text-[11px] font-black tracking-[0.08em] text-white uppercase">
+                {userName.split(" ")[0]}
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onAuthClick}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/12 px-3 py-1.5 text-[11px] font-black tracking-[0.08em] text-white uppercase backdrop-blur transition hover:bg-white/20 active:scale-95"
+            >
+              Entrar
+            </button>
+          )}
           <p className="inline-flex rounded-full border border-white/20 bg-white/12 px-3 py-1.5 text-[11px] font-black tracking-[0.08em] text-white uppercase backdrop-blur">
             Portal do cliente
           </p>

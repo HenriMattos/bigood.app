@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type UIEvent } from "react"
+import { useEffect, useRef, useState, type UIEvent } from "react"
 import {
   Calendar03Icon,
   CheckmarkCircle02Icon,
@@ -11,6 +11,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { BookingFlow, type BookingPayload } from "./booking-flow"
+import { ClientAuthModal } from "./client-auth-modal"
 import { ClientBottomNav, type ClientPortalTab } from "./client-bottom-nav"
 import {
   formatCurrency,
@@ -30,6 +31,7 @@ import {
 } from "./client-portal-data"
 import { ClientPortalHeader } from "./client-portal-header"
 import { CheckoutScreen } from "./checkout-screen"
+import { ClientAuthProvider, useClientAuth } from "@/hooks/use-client-auth"
 import { useDragScroll } from "./use-drag-scroll"
 import { COMPANY_PORTAL_SYNC_EVENT } from "@/components/company/company-assets"
 import { cn } from "@/lib/utils"
@@ -72,6 +74,19 @@ function createEmptyClientPortalState(): ClientPortalState {
 }
 
 export function ClientPortalShell({ slug }: { slug: string }) {
+  return (
+    <ClientAuthProvider slug={slug}>
+      <PortalContent slug={slug} />
+    </ClientAuthProvider>
+  )
+}
+
+function PortalContent({ slug }: { slug: string }) {
+  const {
+    user,
+    isAuthenticated,
+    logout,
+  } = useClientAuth()
   const [data, setData] = useState<ClientPortalData>(emptyClientPortalData)
   const [portalState, setPortalState] = useState<ClientPortalState>(
     createEmptyClientPortalState
@@ -85,6 +100,11 @@ export function ClientPortalShell({ slug }: { slug: string }) {
   const [checkoutPlan, setCheckoutPlan] = useState<ClientPortalPlan | null>(
     null
   )
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authModalMode, setAuthModalMode] = useState<"login" | "register">(
+    "login"
+  )
+  const pendingBookingRef = useRef<BookingPayload | null>(null)
 
   useEffect(() => {
     function refreshPortalData() {
@@ -205,6 +225,56 @@ export function ClientPortalShell({ slug }: { slug: string }) {
     }))
   }
 
+  function openAuthModal(mode: "login" | "register") {
+    setAuthModalMode(mode)
+    setAuthModalOpen(true)
+  }
+
+  function handleAuthSuccess() {
+    if (pendingBookingRef.current) {
+      const payload = pendingBookingRef.current
+      pendingBookingRef.current = null
+      createAppointment(payload)
+      setBookingOpen(false)
+      setActiveTab("appointments")
+    }
+
+    if (checkoutPlan) {
+      setCheckoutPlan(null)
+      setActiveTab("plans")
+    }
+  }
+
+  function handleBookingRequireAuth(payload: BookingPayload) {
+    pendingBookingRef.current = payload
+    openAuthModal("login")
+  }
+
+  function handleCheckoutRequireAuth() {
+    openAuthModal("login")
+  }
+
+  async function handleLogout() {
+    await logout(slug)
+    logoutProfile()
+  }
+
+  if (!ready) {
+    return (
+      <main className="client-portal-app min-h-dvh bg-[var(--client-bg)] text-[var(--client-primary-dark)]">
+        <PortalLoading />
+      </main>
+    )
+  }
+
+  if (!data.company) {
+    return (
+      <main className="client-portal-app min-h-dvh bg-[var(--client-bg)] text-[var(--client-primary-dark)]">
+        <PortalNotFound slug={slug} />
+      </main>
+    )
+  }
+
   return (
     <main className="client-portal-app min-h-dvh bg-[var(--client-bg)] text-[var(--client-primary-dark)]">
       <div className="mx-auto min-h-dvh w-full max-w-[430px] bg-[var(--client-bg)] pb-[calc(104px+env(safe-area-inset-bottom))]">
@@ -214,6 +284,8 @@ export function ClientPortalShell({ slug }: { slug: string }) {
             state={portalState}
             onBook={openBooking}
             onViewAppointments={() => setActiveTab("appointments")}
+            userName={user?.name}
+            onAuthClick={() => openAuthModal("login")}
           />
         )}
 
@@ -221,6 +293,8 @@ export function ClientPortalShell({ slug }: { slug: string }) {
           <AppointmentsTab
             appointments={portalState.appointments}
             onBook={openBooking}
+            isAuthenticated={isAuthenticated}
+            onAuthClick={() => openAuthModal("login")}
           />
         )}
 
@@ -233,13 +307,25 @@ export function ClientPortalShell({ slug }: { slug: string }) {
         )}
 
         {activeTab === "profile" && (
-          <ProfileTab
-            profile={portalState.profile}
-            onSave={updateProfile}
-            onLogout={logoutProfile}
-          />
+          isAuthenticated ? (
+            <ProfileTab
+              profile={portalState.profile}
+              onSave={updateProfile}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <ProfileGuestTab onAuthClick={() => openAuthModal("login")} />
+          )
         )}
       </div>
+
+      {user && (
+        <div className="relative z-40 mx-auto w-full max-w-[430px] px-5 pb-1">
+          <p className="text-center text-[10px] font-semibold text-[#6f8178]">
+            Conectado como {user.name}
+          </p>
+        </div>
+      )}
 
       <ClientBottomNav
         activeTab={activeTab}
@@ -255,6 +341,7 @@ export function ClientPortalShell({ slug }: { slug: string }) {
           initialServiceId={initialBookingServiceId}
           onClose={() => setBookingOpen(false)}
           onConfirm={createAppointment}
+          onRequireAuth={handleBookingRequireAuth}
           onViewAppointments={() => {
             setBookingOpen(false)
             setActiveTab("appointments")
@@ -270,6 +357,18 @@ export function ClientPortalShell({ slug }: { slug: string }) {
           setActiveTab("plans")
         }}
         onConfirm={subscribe}
+        onRequireAuth={handleCheckoutRequireAuth}
+      />
+
+      <ClientAuthModal
+        slug={slug}
+        open={authModalOpen}
+        onClose={() => {
+          setAuthModalOpen(false)
+          pendingBookingRef.current = null
+        }}
+        onSuccess={handleAuthSuccess}
+        initialMode={authModalMode}
       />
     </main>
   )
@@ -280,11 +379,15 @@ function HomeTab({
   state,
   onBook,
   onViewAppointments,
+  userName,
+  onAuthClick,
 }: {
   data: ClientPortalData
   state: ClientPortalState
   onBook: (serviceId?: string) => void
   onViewAppointments: () => void
+  userName?: string
+  onAuthClick?: () => void
 }) {
   const recentAppointment = state.appointments[0]
 
@@ -294,7 +397,11 @@ function HomeTab({
 
   return (
     <>
-      <ClientPortalHeader company={data.company} />
+      <ClientPortalHeader
+        company={data.company}
+        userName={userName}
+        onAuthClick={onAuthClick}
+      />
 
       <section className="px-5 pt-6">
         <RecentAppointmentCard
@@ -434,9 +541,13 @@ function RecentAppointmentCard({
 function AppointmentsTab({
   appointments,
   onBook,
+  isAuthenticated,
+  onAuthClick,
 }: {
   appointments: ClientPortalAppointment[]
   onBook: (serviceId?: string) => void
+  isAuthenticated?: boolean
+  onAuthClick?: () => void
 }) {
   const [filter, setFilter] = useState("Todos")
   const [selectedAppointment, setSelectedAppointment] =
@@ -460,54 +571,65 @@ function AppointmentsTab({
       title="Agendamentos"
       description="Acompanhe proximos atendimentos, passados e cancelados."
     >
-      <div className="client-scroll-frame">
-        <div
-          {...filtersCarousel}
-          className="client-carousel flex gap-2 overflow-x-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {appointmentFilters.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setFilter(item)}
-              className={cn(
-                "h-10 min-w-max rounded-full border px-4 text-xs font-black transition active:scale-95",
-                filter === item ? "client-filter-active" : "client-filter-idle"
-              )}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-4">
-        {filteredAppointments.length === 0 ? (
-          <EmptyState
-            title="Seu historico aparecera aqui."
-            description="Quando voce fizer um agendamento, ele sera listado nesta tela."
-          />
-        ) : (
-          filteredAppointments.map((appointment) => (
-            <AppointmentHistoryCard
-              key={appointment.id}
-              appointment={appointment}
-              onDetails={setSelectedAppointment}
-              onReschedule={(serviceId) => onBook(serviceId)}
-            />
-          ))
-        )}
-      </div>
-
-      {selectedAppointment && (
-        <AppointmentDetails
-          appointment={selectedAppointment}
-          onClose={() => setSelectedAppointment(null)}
-          onReschedule={(serviceId) => {
-            setSelectedAppointment(null)
-            onBook(serviceId)
-          }}
+      {!isAuthenticated ? (
+        <EmptyState
+          title="Entre para ver seus agendamentos."
+          description="Faça login ou crie uma conta para acompanhar seus atendimentos."
+          actionLabel="Entrar"
+          onAction={onAuthClick}
         />
+      ) : (
+        <>
+          <div className="client-scroll-frame">
+            <div
+              {...filtersCarousel}
+              className="client-carousel flex gap-2 overflow-x-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {appointmentFilters.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setFilter(item)}
+                  className={cn(
+                    "h-10 min-w-max rounded-full border px-4 text-xs font-black transition active:scale-95",
+                    filter === item ? "client-filter-active" : "client-filter-idle"
+                  )}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4">
+            {filteredAppointments.length === 0 ? (
+              <EmptyState
+                title="Seu historico aparecera aqui."
+                description="Quando voce fizer um agendamento, ele sera listado nesta tela."
+              />
+            ) : (
+              filteredAppointments.map((appointment) => (
+                <AppointmentHistoryCard
+                  key={appointment.id}
+                  appointment={appointment}
+                  onDetails={setSelectedAppointment}
+                  onReschedule={(serviceId) => onBook(serviceId)}
+                />
+              ))
+            )}
+          </div>
+
+          {selectedAppointment && (
+            <AppointmentDetails
+              appointment={selectedAppointment}
+              onClose={() => setSelectedAppointment(null)}
+              onReschedule={(serviceId) => {
+                setSelectedAppointment(null)
+                onBook(serviceId)
+              }}
+            />
+          )}
+        </>
       )}
     </PageFrame>
   )
@@ -1064,9 +1186,13 @@ function InfoRow({
 function EmptyState({
   title,
   description,
+  actionLabel,
+  onAction,
 }: {
   title: string
   description: string
+  actionLabel?: string
+  onAction?: () => void
 }) {
   return (
     <div className="rounded-[26px] border border-dashed border-[rgba(11,51,36,0.14)] bg-white p-5 text-center">
@@ -1074,7 +1200,48 @@ function EmptyState({
       <p className="mt-2 text-sm leading-6 font-medium text-[#6f8178]">
         {description}
       </p>
+      {actionLabel && onAction && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="client-button-lime mt-4 h-11 px-6 text-xs uppercase"
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
+  )
+}
+
+function ProfileGuestTab({
+  onAuthClick,
+}: {
+  onAuthClick: () => void
+}) {
+  return (
+    <PageFrame
+      eyebrow="Minha conta"
+      title="Perfil"
+      description="Entre ou crie uma conta para gerenciar seus dados."
+    >
+      <div className="rounded-[28px] border border-[rgba(11,51,36,0.12)] bg-white p-6 text-center">
+        <div className="mx-auto grid size-16 place-items-center rounded-full bg-[rgba(11,51,36,0.06)] text-[#0a3f28]">
+          <HugeiconsIcon icon={UserIcon} size={28} aria-hidden />
+        </div>
+        <h3 className="mt-4 text-lg font-black">Voce ainda nao entrou.</h3>
+        <p className="mt-2 text-sm leading-6 font-medium text-[#6f8178]">
+          Entre com sua conta para ver e editar seus dados pessoais,
+          preferencias e historico.
+        </p>
+        <button
+          type="button"
+          onClick={onAuthClick}
+          className="client-button-lime mt-6 h-14 w-full uppercase"
+        >
+          Entrar ou criar conta
+        </button>
+      </div>
+    </PageFrame>
   )
 }
 
