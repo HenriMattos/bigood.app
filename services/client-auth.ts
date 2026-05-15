@@ -18,12 +18,38 @@ function getSessionStorageKey(slug: string) {
 
 type StoredUser = ClientAuthUser & { password: string }
 
+const DEMO_BARBERSHOP_SLUG = "barbearia-vip"
+const DEMO_CLIENT_USER: StoredUser = {
+  id: "client_demo_001",
+  name: "Henrique Demo",
+  email: "cliente@barbeariavip.com",
+  phone: "(11) 98888-0101",
+  barbershopSlug: DEMO_BARBERSHOP_SLUG,
+  createdAt: "2026-01-15T10:00:00.000Z",
+  password: "cliente123",
+}
+
+function getSeedUsers(slug: string): StoredUser[] {
+  return slug === DEMO_BARBERSHOP_SLUG ? [DEMO_CLIENT_USER] : []
+}
+
 function readUsers(slug: string): StoredUser[] {
   try {
     const raw = localStorage.getItem(getUsersStorageKey(slug))
-    return raw ? JSON.parse(raw) : []
+    const storedUsers = raw ? (JSON.parse(raw) as StoredUser[]) : []
+    const seedUsers = getSeedUsers(slug)
+    const storedUsersWithoutSeedDuplicates = storedUsers.filter(
+      (storedUser) =>
+        !seedUsers.some(
+          (seedUser) =>
+            storedUser.email === seedUser.email ||
+            storedUser.phone === seedUser.phone
+        )
+    )
+
+    return [...seedUsers, ...storedUsersWithoutSeedDuplicates]
   } catch {
-    return []
+    return getSeedUsers(slug)
   }
 }
 
@@ -31,7 +57,9 @@ function writeUsers(slug: string, users: StoredUser[]) {
   localStorage.setItem(getUsersStorageKey(slug), JSON.stringify(users))
 }
 
-function readSession(slug: string): { user: ClientAuthUser; token: string } | null {
+function readSession(
+  slug: string
+): { user: ClientAuthUser; token: string } | null {
   try {
     const raw = localStorage.getItem(getSessionStorageKey(slug))
     return raw ? JSON.parse(raw) : null
@@ -59,6 +87,14 @@ function generateToken() {
   return `tok_${Date.now()}_${Math.random().toString(36).slice(2, 16)}`
 }
 
+function normalizeIdentifier(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "")
+}
+
 export async function registerClient(
   slug: string,
   input: ClientRegisterInput
@@ -72,7 +108,9 @@ export async function registerClient(
   )
 
   if (exists) {
-    throw new Error("Este e-mail ou WhatsApp já está cadastrado nesta barbearia.")
+    throw new Error(
+      "Este e-mail ou WhatsApp já está cadastrado nesta barbearia."
+    )
   }
 
   const user: ClientAuthUser = {
@@ -101,16 +139,21 @@ export async function loginClient(
   await new Promise((r) => setTimeout(r, 600))
 
   const users = readUsers(slug)
-  const identifier = input.identifier.trim().toLowerCase()
+  const identifier = normalizeIdentifier(input.identifier)
+  const identifierDigits = onlyDigits(identifier)
 
   const found = users.find(
     (u) =>
-      (u.email.toLowerCase() === identifier || u.phone === identifier) &&
-      u.password === input.password
+      (u.email.toLowerCase() === identifier ||
+        u.phone === identifier ||
+        onlyDigits(u.phone) === identifierDigits) &&
+      u.password === input.password.trim()
   )
 
   if (!found) {
-    throw new Error("Credenciais inválidas. Verifique seus dados e tente novamente.")
+    throw new Error(
+      "Credenciais inválidas. Verifique seus dados e tente novamente."
+    )
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

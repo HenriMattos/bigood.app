@@ -1,8 +1,9 @@
-import { database, type Client, type ClientStatus } from "./database"
+export type { Client, ClientStatus } from "@/types"
 
-export type { Client, ClientStatus }
+import { adminService } from "@/services/admin"
+import type { Client } from "@/types"
 
-export const clients: Client[] = database.clients
+export const clients: Client[] = adminService.clients
 
 export const loyalClients = clients
   .filter((client) => client.active && client.visits >= 10)
@@ -13,7 +14,7 @@ export const repurchaseClients = clients
   .filter((client) => client.active)
   .slice(0, 12)
   .map((client) => {
-    const service = database.services.find(
+    const service = adminService.services.find(
       (item) => item.name === client.favoriteService
     )
     const interval = service?.repurchaseDays ?? 30
@@ -29,45 +30,38 @@ export const repurchaseClients = clients
     }
   })
 
-export function getClientStatusLabel(status: ClientStatus) {
-  const labels = {
+export function getClientStatusLabel(status: import("@/types").ClientStatus) {
+  const labels: Record<import("@/types").ClientStatus, string> = {
     ativo: "Ativo",
     novo: "Novo",
     recorrente: "Recorrente",
     "sem-plano": "Sem plano",
   }
-
   return labels[status]
 }
 
-export function getClientStatusTone(status: ClientStatus) {
+export function getClientStatusTone(
+  status: import("@/types").ClientStatus
+): "amber" | "green" | "blue" | "red" | "neutral" {
   const tones = {
-    ativo: "green",
-    novo: "blue",
-    recorrente: "amber",
-    "sem-plano": "neutral",
-  } as const
-
+    ativo: "green" as const,
+    novo: "blue" as const,
+    recorrente: "amber" as const,
+    "sem-plano": "neutral" as const,
+  }
   return tones[status]
 }
 
 function getDueDate(dateStr: string, days: number) {
   let date: Date
-
   if (dateStr.includes("-")) {
-    // Caso seja YYYY-MM-DD
     const [year, month, day] = dateStr.split("-").map(Number)
     date = new Date(year, month - 1, day)
   } else {
-    // Caso seja DD/MM/YYYY
     const [day, month, year] = dateStr.split("/").map(Number)
     date = new Date(year, month - 1, day)
   }
-
-  if (isNaN(date.getTime())) {
-    return "Data invalida"
-  }
-
+  if (isNaN(date.getTime())) return "Data invalida"
   date.setDate(date.getDate() + days)
   return new Intl.DateTimeFormat("pt-BR").format(date)
 }

@@ -19,6 +19,7 @@ export function SectionCard({
     <section
       className={cn(
         "premium-card motion-rise min-w-0 rounded-lg border bg-card shadow-sm",
+        "admin-section-card",
         className
       )}
     >

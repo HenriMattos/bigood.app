@@ -17,12 +17,30 @@ export type SessionPayload = AuthUser & {
   exp: number
 }
 
+export const DEMO_ADMIN_CREDENTIALS = {
+  email: "admin@barbeariavip.com",
+  password: "bigood123",
+}
+
 export function getAdminCredentials() {
   // Em producao, as variaveis devem ser definidas no ambiente.
   return {
-    email: process.env.ADMIN_EMAIL ?? "admin@empresa.com",
-    password: process.env.ADMIN_PASSWORD ?? "admin123",
+    email: process.env.ADMIN_EMAIL ?? DEMO_ADMIN_CREDENTIALS.email,
+    password: process.env.ADMIN_PASSWORD ?? DEMO_ADMIN_CREDENTIALS.password,
   }
+}
+
+export function isAdminCredential(email: string, password: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  const normalizedPassword = password.trim()
+  const envAdmin = getAdminCredentials()
+  const candidates = [envAdmin, DEMO_ADMIN_CREDENTIALS]
+
+  return candidates.some(
+    (candidate) =>
+      candidate.email.trim().toLowerCase() === normalizedEmail &&
+      candidate.password === normalizedPassword
+  )
 }
 
 export async function createAuthSession(user: AuthUser) {

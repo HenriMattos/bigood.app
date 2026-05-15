@@ -5,11 +5,14 @@ import { usePathname, useRouter } from "next/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   ArrowDown01Icon,
+  Calendar03Icon,
   DashboardSquare01Icon,
   Logout03Icon,
   Menu01Icon,
   Notification03Icon,
   Search01Icon,
+  UserMultipleIcon,
+  Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { database } from "@/components/admin/database"
@@ -25,7 +28,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchIndex, setSearchIndex] = useState(0)
@@ -36,6 +39,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     logoUrl: database.company.logoUrl || "",
   })
   const searchItems = useMemo(() => buildSearchItems(), [])
+  const adminRouteHrefs = useMemo(() => getAdminRouteHrefs(), [])
   const searchResults = useMemo(() => {
     const query = normalizeText(searchQuery)
 
@@ -71,6 +75,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener("storage", sync)
     }
   }, [])
+
+  useEffect(() => {
+    adminRouteHrefs.forEach((href) => router.prefetch(href))
+  }, [adminRouteHrefs, router])
 
   useEffect(() => {
     if (!searchOpen) return
@@ -129,53 +137,34 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         }
       }}
     >
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            aria-label="Fechar menu"
-            className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="relative h-full w-[min(18rem,calc(100vw-2rem))] border-r border-sidebar-border bg-sidebar px-4 py-5 shadow-xl">
-            <SidebarContent
-              key={pathname}
-              pathname={pathname}
-              companyData={companyData}
-              onNavigate={() => setMobileOpen(false)}
-            />
-          </aside>
-        </div>
-      ) : null}
-
       <div className="admin-app grid h-svh min-w-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside className="z-30 hidden h-full min-h-0 border-r border-sidebar-border bg-sidebar px-4 py-5 lg:flex lg:flex-col">
           <SidebarContent
-            key={pathname}
             pathname={pathname}
             companyData={companyData}
+            onPrefetch={(href) => router.prefetch(href)}
           />
         </aside>
 
         <div className="flex h-full min-h-0 min-w-0 flex-col">
-          <header className="z-20 shrink-0 border-b bg-background/95 backdrop-blur">
+          <header className="admin-mobile-header z-20 shrink-0 border-b bg-background/95 backdrop-blur">
             <div className="admin-container flex h-14 items-center gap-2 px-0 sm:h-16 sm:gap-3">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="lg:hidden"
+                className="admin-mobile-menu-button lg:hidden"
                 aria-label="Abrir menu"
-                onClick={() => setMobileOpen(true)}
+                onClick={() => setMobileMoreOpen(true)}
               >
                 <HugeiconsIcon icon={Menu01Icon} size={20} />
               </Button>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-muted-foreground">
+                <p className="admin-mobile-kicker truncate text-xs font-medium text-muted-foreground">
                   Painel administrativo
                 </p>
-                <h1 className="truncate text-base font-semibold md:text-lg">
+                <h1 className="admin-mobile-title truncate text-base font-semibold md:text-lg">
                   {activeItem.title}
                 </h1>
               </div>
@@ -400,10 +389,369 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </header>
 
           <ScrollArea className="min-h-0 flex-1 overflow-x-hidden">
-            <main className="admin-container flex min-w-0 flex-col gap-2 overflow-x-hidden py-2 sm:gap-5 sm:py-5 lg:gap-6 lg:py-6">
+            <main className="admin-shell-main admin-container flex min-w-0 flex-col gap-2 overflow-x-hidden py-2 sm:gap-5 sm:py-5 lg:gap-6 lg:py-6">
               {children}
             </main>
           </ScrollArea>
+        </div>
+      </div>
+
+      <MobileAdminBottomNav
+        pathname={pathname}
+        onMenu={() => setMobileMoreOpen(true)}
+        onSearch={() => setSearchOpen(true)}
+        onPrefetch={(href) => router.prefetch(href)}
+      />
+
+      <MobileMoreModal
+        open={mobileMoreOpen}
+        pathname={pathname}
+        companyData={companyData}
+        onClose={() => setMobileMoreOpen(false)}
+        onLogout={logout}
+        onNavigate={() => setMobileMoreOpen(false)}
+        onPrefetch={(href) => router.prefetch(href)}
+      />
+
+      <MobileSearchModal
+        open={searchOpen}
+        searchRef={mobileSearchRef}
+        query={searchQuery}
+        results={searchResults}
+        activeIndex={activeSearchIndex}
+        onQueryChange={(value) => {
+          setSearchQuery(value)
+          setSearchIndex(0)
+        }}
+        onClose={() => setSearchOpen(false)}
+        onNavigate={navigateFromSearch}
+      />
+    </div>
+  )
+}
+
+const mobileAdminNavItems = [
+  { title: "Inicio", href: "/dashboard", icon: DashboardSquare01Icon },
+  { title: "Agenda", href: "/agenda", icon: Calendar03Icon },
+  { title: "Caixa", href: "/caixa", icon: Wallet02Icon },
+  { title: "Clientes", href: "/clientes", icon: UserMultipleIcon },
+] as const
+
+function MobileAdminBottomNav({
+  pathname,
+  onMenu,
+  onSearch,
+  onPrefetch,
+}: {
+  pathname: string
+  onMenu: () => void
+  onSearch: () => void
+  onPrefetch?: (href: string) => void
+}) {
+  const hasPrimaryActive = mobileAdminNavItems.some((item) =>
+    pathname.startsWith(item.href)
+  )
+
+  return (
+    <>
+      <button
+        type="button"
+        className="admin-mobile-search-fab lg:hidden"
+        onClick={onSearch}
+        aria-label="Buscar no painel"
+      >
+        <HugeiconsIcon icon={Search01Icon} size={21} aria-hidden />
+      </button>
+
+      <nav
+        className="admin-mobile-bottom-nav lg:hidden"
+        aria-label="Navegacao principal do painel"
+      >
+        <div className="admin-mobile-bottom-shell">
+          {mobileAdminNavItems.map((item) => {
+            const isActive = pathname.startsWith(item.href)
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onMouseEnter={() => onPrefetch?.(item.href)}
+                onFocus={() => onPrefetch?.(item.href)}
+                className={cn(
+                  "admin-mobile-bottom-item",
+                  isActive && "is-active"
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <HugeiconsIcon icon={item.icon} size={19} aria-hidden />
+                <span>{item.title}</span>
+              </Link>
+            )
+          })}
+
+          <button
+            type="button"
+            className={cn(
+              "admin-mobile-bottom-item",
+              !hasPrimaryActive && "is-active"
+            )}
+            onClick={onMenu}
+            aria-label="Abrir mais opcoes"
+          >
+            <HugeiconsIcon icon={ArrowDown01Icon} size={19} aria-hidden />
+            <span>Mais</span>
+          </button>
+        </div>
+      </nav>
+    </>
+  )
+}
+
+function MobileMoreModal({
+  open,
+  pathname,
+  companyData,
+  onClose,
+  onLogout,
+  onNavigate,
+  onPrefetch,
+}: {
+  open: boolean
+  pathname: string
+  companyData: { tradeName: string; logoUrl: string }
+  onClose: () => void
+  onLogout: () => void
+  onNavigate: () => void
+  onPrefetch?: (href: string) => void
+}) {
+  if (!open) return null
+
+  const mainHrefs = new Set<string>(
+    mobileAdminNavItems.map((item) => item.href)
+  )
+  const secondaryItems = navItems.filter((item) => !mainHrefs.has(item.href))
+
+  return (
+    <div
+      className="admin-mobile-modal lg:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mais opcoes do painel"
+    >
+      <button
+        type="button"
+        className="admin-mobile-modal-backdrop"
+        aria-label="Fechar opcoes"
+        onClick={onClose}
+      />
+      <div className="admin-mobile-modal-panel">
+        <div className="admin-mobile-modal-grabber" aria-hidden />
+        <div className="flex items-center gap-3 px-1">
+          {companyData.logoUrl ? (
+            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-2xl border bg-background">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={companyData.logoUrl}
+                alt={companyData.tradeName}
+                className="h-full w-full object-cover"
+              />
+            </span>
+          ) : (
+            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-2xl border bg-background">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={BIGOOD_MARK_DARK}
+                alt="Bigood"
+                className="h-full w-full object-contain"
+              />
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold">
+              {companyData.tradeName}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              Escolha uma area do painel
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-2">
+          {secondaryItems.map((item) => {
+            const isActive = pathname.startsWith(item.href)
+
+            return (
+              <div key={item.href} className="grid gap-1">
+                <Link
+                  href={item.href}
+                  onClick={onNavigate}
+                  onMouseEnter={() => onPrefetch?.(item.href)}
+                  onFocus={() => onPrefetch?.(item.href)}
+                  className={cn(
+                    "admin-mobile-more-link",
+                    isActive && "is-active"
+                  )}
+                >
+                  <HugeiconsIcon icon={item.icon} size={20} aria-hidden />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold">
+                      {item.title}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {item.description}
+                    </span>
+                  </span>
+                </Link>
+
+                {"children" in item && item.children?.length ? (
+                  <div className="grid gap-1 pl-3">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={onNavigate}
+                        onMouseEnter={() => onPrefetch?.(child.href)}
+                        onFocus={() => onPrefetch?.(child.href)}
+                        className={cn(
+                          "admin-mobile-more-child",
+                          pathname === child.href && "is-active"
+                        )}
+                      >
+                        <HugeiconsIcon
+                          icon={child.icon}
+                          size={16}
+                          aria-hidden
+                        />
+                        <span>{child.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="mt-4 grid gap-2 border-t pt-4">
+          <Link
+            href="/conta"
+            onClick={onNavigate}
+            className="admin-mobile-more-link"
+          >
+            <HugeiconsIcon icon={DashboardSquare01Icon} size={20} aria-hidden />
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold">
+                Configurar perfil
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                Conta, acesso e preferencias
+              </span>
+            </span>
+          </Link>
+
+          <button
+            type="button"
+            className="admin-mobile-more-link text-left text-destructive"
+            onClick={onLogout}
+          >
+            <HugeiconsIcon icon={Logout03Icon} size={20} aria-hidden />
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold">
+                Sair do painel
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                Encerrar sessao atual
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MobileSearchModal({
+  open,
+  searchRef,
+  query,
+  results,
+  activeIndex,
+  onQueryChange,
+  onClose,
+  onNavigate,
+}: {
+  open: boolean
+  searchRef: React.RefObject<HTMLDivElement | null>
+  query: string
+  results: SearchItem[]
+  activeIndex: number
+  onQueryChange: (value: string) => void
+  onClose: () => void
+  onNavigate: (href: string) => void
+}) {
+  if (!open) return null
+
+  return (
+    <div
+      className="admin-mobile-modal admin-mobile-search-modal lg:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Buscar no painel"
+    >
+      <button
+        type="button"
+        className="admin-mobile-modal-backdrop"
+        aria-label="Fechar busca"
+        onClick={onClose}
+      />
+      <div ref={searchRef} className="admin-mobile-search-panel">
+        <div className="admin-mobile-modal-grabber" aria-hidden />
+        <label className="admin-mobile-search-field">
+          <HugeiconsIcon icon={Search01Icon} size={19} aria-hidden />
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-muted-foreground"
+            placeholder="Buscar cliente, servico, pagina..."
+          />
+        </label>
+
+        <div className="mt-4 grid max-h-[58dvh] gap-1 overflow-y-auto pr-1">
+          {results.length ? (
+            results.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onNavigate(item.href)}
+                className={cn(
+                  "admin-mobile-search-result",
+                  index === activeIndex && "is-active"
+                )}
+              >
+                <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <HugeiconsIcon icon={Search01Icon} size={15} aria-hidden />
+                </span>
+                <span className="min-w-0 text-left">
+                  <span className="block truncate text-sm font-bold">
+                    {item.title}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {item.subtitle}
+                  </span>
+                </span>
+                {item.actionLabel ? (
+                  <span className="ml-auto rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">
+                    {item.actionLabel}
+                  </span>
+                ) : null}
+              </button>
+            ))
+          ) : (
+            <p className="rounded-2xl bg-muted/55 px-4 py-5 text-center text-sm text-muted-foreground">
+              Nenhum resultado encontrado.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -564,6 +912,20 @@ function buildSearchItems(): SearchItem[] {
   ]
 }
 
+function getAdminRouteHrefs() {
+  const hrefs = new Set<string>()
+
+  navItems.forEach((item) => {
+    hrefs.add(item.href)
+
+    if ("children" in item && item.children) {
+      item.children.forEach((child) => hrefs.add(child.href))
+    }
+  })
+
+  return Array.from(hrefs)
+}
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -575,10 +937,12 @@ function normalizeText(value: string) {
 function SidebarContent({
   pathname,
   companyData,
+  onPrefetch,
   onNavigate,
 }: {
   pathname: string
   companyData: { tradeName: string; logoUrl: string }
+  onPrefetch?: (href: string) => void
   onNavigate?: () => void
 }) {
   const activeParentHref = getParentHref(pathname)
@@ -647,6 +1011,8 @@ function SidebarContent({
                 >
                   <Link
                     href={item.href}
+                    onMouseEnter={() => onPrefetch?.(item.href)}
+                    onFocus={() => onPrefetch?.(item.href)}
                     onClick={() => handleNavigate(item.href)}
                     className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5"
                   >
@@ -689,6 +1055,8 @@ function SidebarContent({
                         <Link
                           key={child.href}
                           href={child.href}
+                          onMouseEnter={() => onPrefetch?.(child.href)}
+                          onFocus={() => onPrefetch?.(child.href)}
                           onClick={() => handleNavigate(child.href)}
                           className={cn(
                             "flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-sidebar-foreground/65 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",

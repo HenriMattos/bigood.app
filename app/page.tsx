@@ -1,17 +1,18 @@
 import type { Metadata } from "next"
 
 import { LandingPage } from "@/components/landing/landing-page"
+import { JsonLd } from "@/components/landing/json-ld"
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Bigood | Sistema de Gestao para Barbearias",
+    absolute: "Bigood | Sistema de Gestão para Barbearias",
   },
   description:
-    "Gerencie agenda, clientes, caixa, financeiro, profissionais, servicos, planos e assinaturas da sua barbearia com o Bigood.",
+    "Conheça o Bigood: sistema para gerenciar agenda, clientes, caixa, profissionais, planos e portal da sua barbearia.",
   keywords: [
     "sistema para barbearia",
     "software para barbearia",
-    "gestao de barbearia",
+    "gestão de barbearia",
     "agenda online para barbearia",
     "sistema de agendamento para barbeiros",
     "SaaS para barbearia",
@@ -19,14 +20,24 @@ export const metadata: Metadata = {
     "Bigood",
   ],
   openGraph: {
-    title: "Bigood | Cabelo, barba e gestao para o seu negocio crescer",
+    title: "Bigood | Cabelo, barba e gestão para o seu negócio crescer",
     description:
-      "Agenda, clientes, caixa, financeiro, planos e recorrencia em um unico painel para barbearias.",
+      "Agenda, clientes, caixa, planos e portal em um único painel para barbearias.",
     type: "website",
     locale: "pt_BR",
+    siteName: "Bigood",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 }
 
 export default function Page() {
-  return <LandingPage />
+  return (
+    <>
+      <JsonLd />
+      <LandingPage />
+    </>
+  )
 }

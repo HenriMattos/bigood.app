@@ -1,0 +1,23 @@
+export function JsonLd() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Bigood",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description:
+      "Sistema de gestão para barbearias com agenda online, caixa, planos de assinatura e portal do cliente.",
+    author: {
+      "@type": "Organization",
+      name: "Bigood",
+      url: "https://bigood.app",
+    },
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}

@@ -13,7 +13,11 @@ import {
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 
-import { database, toDateInputValue, toDisplayDate } from "@/components/admin/database"
+import {
+  database,
+  toDateInputValue,
+  toDisplayDate,
+} from "@/components/admin/database"
 import { EmptyState } from "@/components/admin/empty-state"
 import { OnboardingGuide } from "@/components/admin/onboarding-guide"
 import { MetricCard } from "@/components/admin/metric-card"
@@ -54,12 +58,15 @@ const todayAppointments = database.agendaEvents.filter(
 const todayRevenue = database.comandas
   .filter((comanda) => comanda.status === "paga")
   .reduce((sum, comanda) => sum + getComandaTotal(comanda), 0)
-const averageTicket = database.clients.length > 0 
-  ? Math.round(
-      database.clients.reduce((sum, client) => sum + client.averageTicket, 0) /
-        database.clients.length
-    )
-  : 0
+const averageTicket =
+  database.clients.length > 0
+    ? Math.round(
+        database.clients.reduce(
+          (sum, client) => sum + client.averageTicket,
+          0
+        ) / database.clients.length
+      )
+    : 0
 const operationalMetrics = [
   {
     title: "Faturamento hoje",
@@ -202,7 +209,7 @@ export function DashboardView() {
   return (
     <>
       <OnboardingGuide />
-      <section className="flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-3 shadow-sm sm:gap-4 sm:p-4">
+      <section className="admin-dashboard-hero flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-3 shadow-sm sm:gap-4 sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="text-sm font-medium text-muted-foreground">
@@ -211,7 +218,7 @@ export function DashboardView() {
             <h2 className="text-xl font-semibold tracking-normal">{title}</h2>
           </div>
 
-          <div className="grid w-full grid-cols-2 rounded-full border bg-muted p-1 text-xs font-medium sm:w-auto sm:text-sm">
+          <div className="admin-dashboard-mode-switch grid w-full grid-cols-2 rounded-full border bg-muted p-1 text-xs font-medium sm:w-auto sm:text-sm">
             <button
               type="button"
               aria-pressed={isOperational}

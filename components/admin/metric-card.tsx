@@ -25,7 +25,7 @@ export function MetricCard({
   tone = "green",
 }: MetricCardProps) {
   return (
-    <article className="premium-card motion-rise min-w-0 rounded-lg border bg-card p-3 text-card-foreground shadow-sm sm:p-4">
+    <article className="admin-metric-card premium-card motion-rise min-w-0 rounded-lg border bg-card p-3 text-card-foreground shadow-sm sm:p-4">
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground sm:text-sm">{title}</p>

@@ -15,12 +15,12 @@ import {
   formatCurrency,
   type ClientPortalPlan,
   type ClientProfile,
-  type PaymentMethod,
+  type ClientPortalPaymentMethod,
 } from "@/components/client-portal/client-portal-data"
 import { cn } from "@/lib/utils"
 
 const paymentMethods: Array<{
-  id: PaymentMethod
+  id: ClientPortalPaymentMethod
   label: string
   description: string
 }> = [
@@ -56,10 +56,10 @@ export function CheckoutScreen({
   plan: ClientPortalPlan | null
   profile: ClientProfile
   onClose: () => void
-  onConfirm: (plan: ClientPortalPlan, paymentMethod: PaymentMethod) => void
+  onConfirm: (plan: ClientPortalPlan, paymentMethod: ClientPortalPaymentMethod) => void
   onRequireAuth?: () => void
 }) {
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card")
+  const [paymentMethod, setPaymentMethod] = useState<ClientPortalPaymentMethod>("card")
   const [success, setSuccess] = useState(false)
 
   if (!plan) {

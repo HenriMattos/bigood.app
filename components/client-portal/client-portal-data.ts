@@ -1,4 +1,19 @@
-import { database, type Plan } from "@/components/admin/database"
+export type {
+  AppointmentStatus,
+  ClientPortalPaymentMethod,
+  BarberCompany,
+  ClientPortalService,
+  ClientPortalProfessional,
+  ClientPortalPlan,
+  ClientPortalAppointment,
+  ClientProfile,
+  ClientSubscription,
+  ClientPortalState,
+  ClientPortalData,
+} from "@/types"
+
+import { adminService } from "@/services/admin"
+import { readStringStorage } from "@/services/company"
 import {
   COMPANY_LOGO_STORAGE_KEY,
   COMPANY_PORTAL_BANNER_STORAGE_KEY,
@@ -7,136 +22,60 @@ import {
   COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY,
   COMPANY_PORTAL_SLOGAN_STORAGE_KEY,
   COMPANY_PORTAL_SLUG_STORAGE_KEY,
-} from "@/components/company/company-assets"
+} from "@/services/company"
 import { getStoredCommercialPlans } from "@/components/company/commercial-storage"
+import type {
+  ClientPortalService,
+  ClientPortalProfessional,
+  ClientPortalPlan,
+  ClientPortalData,
+  ClientPortalState,
+  Plan,
+} from "@/types"
 
 const DEFAULT_CLIENT_PORTAL_BANNER_URL =
   "https://images.pexels.com/photos/7518738/pexels-photo-7518738.jpeg"
+const DEMO_BARBERSHOP_SLUG = "barbearia-vip"
 
-export type AppointmentStatus =
-  | "confirmed"
-  | "pending"
-  | "completed"
-  | "cancelled"
-
-export type PaymentMethod = "card" | "pix" | "boleto" | "barbershop"
-
-export type BarberCompany = {
-  id: string
-  slug: string
-  name: string
-  slogan: string
-  description: string
-  logoUrl?: string
-  bannerUrl?: string
-  address?: string
-  phone?: string
-  whatsapp?: string
-  instagram?: string
-  openingHours?: string
-}
-
-export type ClientPortalService = {
-  id: string
-  name: string
-  description?: string
-  durationMinutes: number
-  price: number
-  isAvailable: boolean
-}
-
-export type ClientPortalProfessional = {
-  id: string
-  name: string
-  role: string
-}
-
-export type ClientPortalPlan = {
-  id: string
-  name: string
-  description: string
-  price: number
-  billingCycle: "monthly" | "annual" | "custom"
-  benefits: string[]
-  isRecommended?: boolean
-}
-
-export type ClientPortalAppointment = {
-  id: string
-  status: AppointmentStatus
-  serviceId: string
-  serviceName: string
-  professionalId: string
-  professionalName: string
-  date: string
-  time: string
-  price: number
-  address?: string
-  notes?: string
-}
-
-export type ClientProfile = {
-  id: string
-  name: string
-  phone: string
-  email: string
-  birthDate?: string
-  cpf?: string
-  gender?: string
-  avatarUrl?: string
-  contactPreferences: {
-    whatsapp: boolean
-    email: boolean
-    sms: boolean
+function mapPlan(plan: Plan): ClientPortalPlan {
+  const benefits = [
+    plan.benefit,
+    `${plan.servicesLimit} atendimento(s) por ciclo`,
+    "Prioridade em horarios",
+  ]
+  return {
+    id: String(plan.id),
+    name: plan.name,
+    description:
+      plan.status === "Destaque"
+        ? "Plano recomendado para manter cabelo e barba sempre alinhados."
+        : "Plano para manter sua rotina de cuidados em dia.",
+    price: plan.price,
+    billingCycle: plan.recurrence.toLowerCase().includes("anual")
+      ? "annual"
+      : "monthly",
+    benefits,
+    isRecommended: plan.status === "Destaque",
   }
-}
-
-export type ClientSubscription = {
-  planId: string
-  planName: string
-  status: "active" | "pending" | "cancelled"
-  startedAt: string
-  renewsAt: string
-  price: number
-  paymentMethod: PaymentMethod
-  benefits: string[]
-}
-
-export type ClientPortalState = {
-  profile: ClientProfile
-  appointments: ClientPortalAppointment[]
-  subscription: ClientSubscription | null
-}
-
-export type ClientPortalData = {
-  company: BarberCompany | null
-  services: ClientPortalService[]
-  professionals: ClientPortalProfessional[]
-  plans: ClientPortalPlan[]
 }
 
 export function getClientPortalData(slug: string): ClientPortalData {
   const companySlug =
     readStringStorage(COMPANY_PORTAL_SLUG_STORAGE_KEY) ||
-    database.company.slug ||
+    adminService.company.slug ||
     "bigood"
   const portalEnabled =
     readStringStorage(COMPANY_PORTAL_ENABLED_STORAGE_KEY) !== "false"
 
   if (slug !== companySlug || !portalEnabled) {
-    return {
-      company: null,
-      services: [],
-      professionals: [],
-      plans: [],
-    }
+    return { company: null, services: [], professionals: [], plans: [] }
   }
 
   return {
     company: {
       id: "company_1",
       slug: companySlug,
-      name: database.company.tradeName || "Bigood",
+      name: adminService.company.tradeName || "Bigood",
       slogan:
         readStringStorage(COMPANY_PORTAL_SLOGAN_STORAGE_KEY) ||
         "Cabelo, barba e cuidado no seu tempo.",
@@ -144,45 +83,50 @@ export function getClientPortalData(slug: string): ClientPortalData {
         readStringStorage(COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY) ||
         "Experiencia premium para agendar, acompanhar planos e cuidar do visual sem mensagens soltas.",
       logoUrl:
-        readStringStorage(COMPANY_LOGO_STORAGE_KEY) || database.company.logoUrl,
+        readStringStorage(COMPANY_LOGO_STORAGE_KEY) ||
+        adminService.company.logoUrl,
       bannerUrl:
         readStringStorage(COMPANY_PORTAL_BANNER_STORAGE_KEY) ||
         DEFAULT_CLIENT_PORTAL_BANNER_URL,
       address: [
-        database.company.address.street,
-        database.company.address.number,
-        database.company.address.neighborhood,
-        database.company.address.city,
-        database.company.address.state,
+        adminService.company.address.street,
+        adminService.company.address.number,
+        adminService.company.address.neighborhood,
+        adminService.company.address.city,
+        adminService.company.address.state,
       ]
         .filter(Boolean)
         .join(", "),
-      phone: database.company.phone,
-      whatsapp: database.company.social.whatsapp,
-      instagram: database.company.social.instagram,
+      phone: adminService.company.phone,
+      whatsapp: adminService.company.social.whatsapp,
+      instagram: adminService.company.social.instagram,
       openingHours:
         readStringStorage(COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY) ||
         "Seg a Sab, 09:00 as 19:00",
     },
-    services: database.services
+    services: adminService.services
       .filter((service) => service.status === "Ativo" && !service.hidden)
       .sort((first, second) => first.order - second.order)
-      .map((service) => ({
-        id: String(service.id),
-        name: service.name,
-        description: `${service.category} com ${service.professionals}`,
-        durationMinutes: service.durationMinutes,
-        price: service.price,
-        isAvailable: true,
-      })),
-    professionals: database.professionals
+      .map(
+        (service): ClientPortalService => ({
+          id: String(service.id),
+          name: service.name,
+          description: `${service.category} com ${service.professionals}`,
+          durationMinutes: service.durationMinutes,
+          price: service.price,
+          isAvailable: true,
+        })
+      ),
+    professionals: adminService.professionals
       .filter((professional) => professional.status === "Ativo")
-      .map((professional) => ({
-        id: String(professional.id),
-        name: professional.name,
-        role: professional.role,
-      })),
-    plans: getStoredCommercialPlans(database.plans).map(mapPlan),
+      .map(
+        (professional): ClientPortalProfessional => ({
+          id: String(professional.id),
+          name: professional.name,
+          role: professional.role,
+        })
+      ),
+    plans: getStoredCommercialPlans(adminService.plans).map(mapPlan),
   }
 }
 
@@ -190,25 +134,31 @@ export function readClientPortalState(
   slug: string,
   data: ClientPortalData
 ): ClientPortalState {
-  const fallback = getDefaultClientPortalState(data)
+  if (typeof window !== "undefined") {
+    try {
+      const raw = window.localStorage.getItem(getClientPortalStorageKey(slug))
+      if (raw) {
+        const parsed = JSON.parse(raw) as ClientPortalState
+        const isEmptyDemoState =
+          slug === DEMO_BARBERSHOP_SLUG &&
+          !parsed.profile.email &&
+          parsed.appointments.length === 0 &&
+          !parsed.subscription
 
-  if (typeof window === "undefined") {
-    return fallback
+        return isEmptyDemoState
+          ? getDefaultClientPortalState(slug, data)
+          : parsed
+      }
+    } catch {
+      return getDefaultClientPortalState(slug, data)
+    }
   }
 
-  try {
-    const raw = window.localStorage.getItem(getClientPortalStorageKey(slug))
-    return raw ? { ...fallback, ...JSON.parse(raw) } : fallback
-  } catch {
-    return fallback
-  }
+  return getDefaultClientPortalState(slug, data)
 }
 
 export function saveClientPortalState(slug: string, state: ClientPortalState) {
-  if (typeof window === "undefined") {
-    return
-  }
-
+  if (typeof window === "undefined") return
   window.localStorage.setItem(
     getClientPortalStorageKey(slug),
     JSON.stringify(state)
@@ -225,7 +175,6 @@ export function formatCurrency(value: number) {
 export function formatDateLabel(value: string) {
   const [year, month, day] = value.split("-").map(Number)
   const date = new Date(year, month - 1, day)
-
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "short",
@@ -255,77 +204,74 @@ function getClientPortalStorageKey(slug: string) {
   return `bigood.clientPortal.${slug}.state`
 }
 
-function readStringStorage(key: string) {
-  if (typeof window === "undefined") {
-    return ""
-  }
-
-  return window.localStorage.getItem(key) || ""
-}
-
-function mapPlan(plan: Plan): ClientPortalPlan {
-  const benefits = [
-    plan.benefit,
-    `${plan.servicesLimit} atendimento(s) por ciclo`,
-    "Prioridade em horarios",
-  ]
-
-  return {
-    id: String(plan.id),
-    name: plan.name,
-    description:
-      plan.status === "Destaque"
-        ? "Plano recomendado para manter cabelo e barba sempre alinhados."
-        : "Plano para manter sua rotina de cuidados em dia.",
-    price: plan.price,
-    billingCycle: plan.recurrence.toLowerCase().includes("anual")
-      ? "annual"
-      : "monthly",
-    benefits,
-    isRecommended: plan.status === "Destaque",
-  }
-}
-
 function getDefaultClientPortalState(
-  data: ClientPortalData
+  slug?: string,
+  data?: ClientPortalData
 ): ClientPortalState {
-  const service = data.services[0]
-  const professional = data.professionals[0]
-  const appointmentDate = toDateInputValue(addDays(new Date(), 5))
+  if (slug === DEMO_BARBERSHOP_SLUG) {
+    const plan =
+      data?.plans.find((item) => item.name.includes("Barba")) ?? data?.plans[0]
+    const service =
+      data?.services.find((item) => item.name.includes("Corte")) ??
+      data?.services[0]
+    const professional = data?.professionals[0]
+
+    return {
+      profile: {
+        id: "client_demo_001",
+        name: "Henrique Demo",
+        phone: "(11) 98888-0101",
+        email: "cliente@barbeariavip.com",
+        birthDate: "1994-08-12",
+        cpf: "123.456.789-00",
+        gender: "Masculino",
+        contactPreferences: { whatsapp: true, email: true, sms: false },
+      },
+      appointments:
+        service && professional
+          ? [
+              {
+                id: "appointment_demo_001",
+                status: "confirmed",
+                serviceId: service.id,
+                serviceName: service.name,
+                professionalId: professional.id,
+                professionalName: professional.name,
+                date: toDateInputValue(addDays(new Date(), 2)),
+                time: "10:00",
+                price: service.price,
+                address: data?.company?.address,
+                notes: "Proximo horario do cliente demo.",
+              },
+            ]
+          : [],
+      subscription: plan
+        ? {
+            planId: plan.id,
+            planName: plan.name,
+            status: "active",
+            startedAt: "2026-01-15",
+            renewsAt: getNextRenewalDate(),
+            price: plan.price,
+            paymentMethod: "card",
+            benefits: plan.benefits,
+          }
+        : null,
+    }
+  }
 
   return {
     profile: {
-      id: "client_1",
-      name: "Gabriel Silva",
-      phone: "(11) 98765-4321",
-      email: "gabriel@email.com",
-      birthDate: "1994-05-12",
+      id: "",
+      name: "",
+      phone: "",
+      email: "",
+      birthDate: "",
       cpf: "",
       gender: "",
-      contactPreferences: {
-        whatsapp: true,
-        email: true,
-        sms: false,
-      },
+      contactPreferences: { whatsapp: false, email: false, sms: false },
     },
-    appointments:
-      service && professional
-        ? [
-            {
-              id: "appointment_demo",
-              status: "confirmed",
-              serviceId: service.id,
-              serviceName: service.name,
-              professionalId: professional.id,
-              professionalName: professional.name,
-              date: appointmentDate,
-              time: "15:30",
-              price: service.price,
-              address: data.company?.address,
-              notes: "Chegue 5 minutos antes do horario.",
-            },
-          ]
-        : [],
+    appointments: [],
     subscription: null,
   }
 }

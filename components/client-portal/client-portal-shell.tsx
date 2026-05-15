@@ -27,7 +27,7 @@ import {
   type ClientPortalPlan,
   type ClientPortalState,
   type ClientProfile,
-  type PaymentMethod,
+  type ClientPortalPaymentMethod,
 } from "./client-portal-data"
 import { ClientPortalHeader } from "./client-portal-header"
 import { CheckoutScreen } from "./checkout-screen"
@@ -82,11 +82,7 @@ export function ClientPortalShell({ slug }: { slug: string }) {
 }
 
 function PortalContent({ slug }: { slug: string }) {
-  const {
-    user,
-    isAuthenticated,
-    logout,
-  } = useClientAuth()
+  const { user, isAuthenticated, logout } = useClientAuth()
   const [data, setData] = useState<ClientPortalData>(emptyClientPortalData)
   const [portalState, setPortalState] = useState<ClientPortalState>(
     createEmptyClientPortalState
@@ -209,7 +205,10 @@ function PortalContent({ slug }: { slug: string }) {
     }))
   }
 
-  function subscribe(plan: ClientPortalPlan, paymentMethod: PaymentMethod) {
+  function subscribe(
+    plan: ClientPortalPlan,
+    paymentMethod: ClientPortalPaymentMethod
+  ) {
     setPortalState((current) => ({
       ...current,
       subscription: {
@@ -277,7 +276,7 @@ function PortalContent({ slug }: { slug: string }) {
 
   return (
     <main className="client-portal-app min-h-dvh bg-[var(--client-bg)] text-[var(--client-primary-dark)]">
-      <div className="mx-auto min-h-dvh w-full max-w-[430px] bg-[var(--client-bg)] pb-[calc(104px+env(safe-area-inset-bottom))]">
+      <div className="mx-auto min-h-dvh w-full max-w-[430px] bg-[var(--client-bg)] pb-[calc(140px+env(safe-area-inset-bottom))]">
         {activeTab === "home" && (
           <HomeTab
             data={data}
@@ -306,8 +305,8 @@ function PortalContent({ slug }: { slug: string }) {
           />
         )}
 
-        {activeTab === "profile" && (
-          isAuthenticated ? (
+        {activeTab === "profile" &&
+          (isAuthenticated ? (
             <ProfileTab
               profile={portalState.profile}
               onSave={updateProfile}
@@ -315,8 +314,7 @@ function PortalContent({ slug }: { slug: string }) {
             />
           ) : (
             <ProfileGuestTab onAuthClick={() => openAuthModal("login")} />
-          )
-        )}
+          ))}
       </div>
 
       {user && (
@@ -450,15 +448,6 @@ function HomeTab({
             ))
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={() => onBook()}
-          className="client-button-lime mt-6 h-14 w-full uppercase"
-        >
-          <HugeiconsIcon icon={Calendar03Icon} size={18} aria-hidden />
-          Agendar agora
-        </button>
       </section>
     </>
   )
@@ -592,7 +581,9 @@ function AppointmentsTab({
                   onClick={() => setFilter(item)}
                   className={cn(
                     "h-10 min-w-max rounded-full border px-4 text-xs font-black transition active:scale-95",
-                    filter === item ? "client-filter-active" : "client-filter-idle"
+                    filter === item
+                      ? "client-filter-active"
+                      : "client-filter-idle"
                   )}
                 >
                   {item}
@@ -994,75 +985,89 @@ function PlansTab({
           title="Planos disponiveis"
           description="Arraste para comparar beneficios e valores."
         />
-        <div className="client-scroll-frame mt-4">
-          <div
-            {...plansCarousel}
-            onScroll={updateActivePlan}
-            className="client-carousel flex snap-x snap-mandatory scroll-px-2 gap-4 overflow-x-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {plans.map((plan, index) => (
-              <article
-                key={plan.id}
-                data-plan-card
-                className={cn(
-                  "client-plan-card min-w-[78%] snap-center rounded-[28px] border p-5",
-                  index === activePlanIndex
-                    ? "scale-100 opacity-100"
-                    : "scale-[0.965] opacity-80",
-                  plan.isRecommended
-                    ? "border-[rgba(216,242,58,0.35)] bg-[var(--client-primary-dark)] text-white"
-                    : "border-[var(--client-border)] bg-white"
-                )}
-              >
-                {plan.isRecommended && (
-                  <span className="rounded-full bg-[#d8f23a] px-3 py-1 text-xs font-black text-[#0a3f28]">
-                    Mais popular
-                  </span>
-                )}
-                <h3 className="mt-4 text-xl leading-6 font-black">
-                  {plan.name}
-                </h3>
-                <p
-                  className={cn(
-                    "mt-2 text-sm leading-6 font-medium",
-                    plan.isRecommended ? "text-white/70" : "text-[#6f8178]"
-                  )}
-                >
-                  {plan.description}
-                </p>
-                <p className="mt-5 text-2xl font-black">
-                  {formatCurrency(plan.price)}
-                  <span className="text-sm font-bold opacity-70">/mes</span>
-                </p>
-                <div className="mt-5 grid gap-2">
-                  {plan.benefits.map((benefit) => (
-                    <p key={benefit} className="flex items-start gap-2 text-sm">
-                      <HugeiconsIcon
-                        icon={CheckmarkCircle02Icon}
-                        size={16}
-                        className={plan.isRecommended ? "text-[#d8f23a]" : ""}
-                        aria-hidden
-                      />
-                      {benefit}
-                    </p>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onSubscribe(plan)}
-                  className={cn(
-                    "mt-6 h-12 w-full text-sm",
-                    plan.isRecommended
-                      ? "client-button-lime"
-                      : "client-button-dark"
-                  )}
-                >
-                  Assinar
-                </button>
-              </article>
-            ))}
+
+        {plans.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState
+              title="Nenhum plano disponivel"
+              description="Esta barbearia ainda nao possui planos de assinatura. Volte mais tarde."
+            />
           </div>
-        </div>
+        ) : null}
+        {plans.length > 0 && (
+          <div className="client-scroll-frame mt-4">
+            <div
+              {...plansCarousel}
+              onScroll={updateActivePlan}
+              className="client-carousel flex snap-x snap-mandatory scroll-px-2 gap-4 overflow-x-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {plans.map((plan, index) => (
+                <article
+                  key={plan.id}
+                  data-plan-card
+                  className={cn(
+                    "client-plan-card min-w-[78%] snap-center rounded-[28px] border p-5",
+                    index === activePlanIndex
+                      ? "scale-100 opacity-100"
+                      : "scale-[0.965] opacity-80",
+                    plan.isRecommended
+                      ? "border-[rgba(216,242,58,0.35)] bg-[var(--client-primary-dark)] text-white"
+                      : "border-[var(--client-border)] bg-white"
+                  )}
+                >
+                  {plan.isRecommended && (
+                    <span className="rounded-full bg-[#d8f23a] px-3 py-1 text-xs font-black text-[#0a3f28]">
+                      Mais popular
+                    </span>
+                  )}
+                  <h3 className="mt-4 text-xl leading-6 font-black">
+                    {plan.name}
+                  </h3>
+                  <p
+                    className={cn(
+                      "mt-2 text-sm leading-6 font-medium",
+                      plan.isRecommended ? "text-white/70" : "text-[#6f8178]"
+                    )}
+                  >
+                    {plan.description}
+                  </p>
+                  <p className="mt-5 text-2xl font-black">
+                    {formatCurrency(plan.price)}
+                    <span className="text-sm font-bold opacity-70">/mes</span>
+                  </p>
+                  <div className="mt-5 grid gap-2">
+                    {plan.benefits.map((benefit) => (
+                      <p
+                        key={benefit}
+                        className="flex items-start gap-2 text-sm"
+                      >
+                        <HugeiconsIcon
+                          icon={CheckmarkCircle02Icon}
+                          size={16}
+                          className={plan.isRecommended ? "text-[#d8f23a]" : ""}
+                          aria-hidden
+                        />
+                        {benefit}
+                      </p>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onSubscribe(plan)}
+                    className={cn(
+                      "mt-6 h-12 w-full text-sm",
+                      plan.isRecommended
+                        ? "client-button-lime"
+                        : "client-button-dark"
+                    )}
+                  >
+                    Assinar
+                  </button>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </PageFrame>
   )
@@ -1213,11 +1218,7 @@ function EmptyState({
   )
 }
 
-function ProfileGuestTab({
-  onAuthClick,
-}: {
-  onAuthClick: () => void
-}) {
+function ProfileGuestTab({ onAuthClick }: { onAuthClick: () => void }) {
   return (
     <PageFrame
       eyebrow="Minha conta"

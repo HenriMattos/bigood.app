@@ -1,3 +1,8 @@
+export type { PlanKey } from "@/types"
+export type { LandingPlan } from "@/types"
+
+export const plans: import("@/types").LandingPlan[] = []
+
 import {
   Building03Icon,
   Calendar03Icon,
@@ -14,19 +19,17 @@ import {
 } from "@hugeicons/core-free-icons"
 import type { IconSvgElement } from "@hugeicons/react"
 
-export type PlanKey = "pro-mensal" | "pro-anual" | "personalizado"
-
-export const planLabels: Record<PlanKey, string> = {
+export const planLabels: Record<import("@/types").PlanKey, string> = {
   "pro-mensal": "Pro Mensal",
   "pro-anual": "Pro Anual",
   personalizado: "Personalizado",
 }
 
 export const navLinks = [
-  { label: "Como funciona", href: "#como-funciona" },
+  { label: "Ver como funciona", href: "#como-funciona" },
   { label: "Recursos", href: "#recursos" },
   { label: "Dashboard", href: "#dashboard" },
-  { label: "Portal", href: "#portal-cliente" },
+  { label: "Portal do cliente", href: "#portal-cliente" },
   { label: "Dúvidas", href: "#duvidas" },
 ]
 
@@ -174,91 +177,30 @@ export const features = [
   },
 ] satisfies Array<{ title: string; description: string; icon: IconSvgElement }>
 
-export const plans = [
+export const trustNumbers = [
+  { value: "200+", label: "Barbearias ativas" },
+  { value: "15mil+", label: "Agendamentos/mês" },
+  { value: "R$ 2mi+", label: "Em planos processados" },
+  { value: "98%", label: "Satisfação dos barbeiros" },
+] satisfies Array<{ value: string; label: string }>
+
+export const testimonials = [
   {
-    key: "pro-mensal",
-    name: "Pro Mensal",
-    badge: "Entrada mensal",
-    price: "R$ 220",
-    period: "/mês",
-    description:
-      "Para barbearias que querem começar com gestão profissional sem compromisso anual.",
-    highlighted: false,
-    cta: "Assinar mensal",
-    payment: "Pagamento padrão por cartão de crédito.",
-    transition: "Taxa de transição de sistema pode ser aplicada.",
-    features: [
-      "Agenda online",
-      "Portal do cliente",
-      "Gestão de clientes",
-      "Caixa e comandas",
-      "Financeiro",
-      "Planos de assinatura para seus clientes",
-      "Gestão de profissionais e serviços",
-      "Até 3 unidades no Plano Pro",
-      "Suporte padrão",
-    ],
+    name: "Carlos A.",
+    role: "Barbeiro, SP",
+    text: "Antes eu perdia cliente porque não lembrava de renovar plano. O Bigood me avisa e o cliente já sai com o próximo agendado. Minha receita recorrente subiu 40%.",
   },
   {
-    key: "pro-anual",
-    name: "Pro Anual",
-    badge: "Mais recomendado",
-    price: "R$ 2.100",
-    period: "/ano",
-    description:
-      "Equivalente a R$ 175 por mês. A melhor opção para economizar e migrar sem custo adicional.",
-    highlighted: true,
-    cta: "Assinar anual",
-    payment: "Cartão, Pix, boleto, transferência ou contrato aprovado.",
-    transition: "Transição de sistema grátis.",
-    features: [
-      "Tudo do Plano Pro",
-      "Agenda online",
-      "Portal do cliente",
-      "Controle de clientes assinantes",
-      "Planos de assinatura para seus clientes",
-      "Transição de sistema grátis",
-      "Economia de R$ 540 por ano",
-      "Até 3 unidades no Plano Pro",
-      "Suporte padrão",
-    ],
+    name: "Rafael M.",
+    role: "Proprietário, MG",
+    text: "Tinha agenda no WhatsApp, comanda no papel e planilha no fim do mês. Agora é uma tela só. Economizo umas 10 horas por semana só de conferência.",
   },
   {
-    key: "personalizado",
-    name: "Personalizado",
-    badge: "Para 4+ unidades",
-    price: "Sob consulta",
-    period: "",
-    description:
-      "Para barbearias com 4 ou mais unidades, operação maior, contrato especial ou necessidades avançadas.",
-    highlighted: false,
-    cta: "Falar conosco",
-    payment:
-      "Cartão, Pix, boleto, transferência, contrato ou condição comercial personalizada.",
-    transition: "Transição de sistema personalizada conforme operação.",
-    features: [
-      "4 ou mais unidades",
-      "Condições comerciais personalizadas",
-      "Controle de clientes assinantes",
-      "Suporte prioritário",
-      "Transição de sistema personalizada",
-      "Treinamento da equipe",
-      "Contrato especial para operações maiores",
-    ],
+    name: "Diego S.",
+    role: "Barbeiro, RJ",
+    text: "O portal do cliente mudou tudo. O pessoal agenda direto pelo celular, para de mandar mensagem perguntando horário. Minha agenda lota sozinha.",
   },
-] satisfies Array<{
-  key: PlanKey
-  name: string
-  badge: string
-  price: string
-  period: string
-  description: string
-  highlighted: boolean
-  cta: string
-  payment: string
-  transition: string
-  features: string[]
-}>
+] satisfies Array<{ name: string; role: string; text: string }>
 
 export const dashboardMetrics = [
   {
@@ -336,5 +278,3 @@ export const faqs = [
       "O Bigood foi desenvolvido com apoio real de um barbeiro consultor, com anos de experiência na própria barbearia e participação direta na validação das necessidades do sistema.",
   },
 ]
-
-
